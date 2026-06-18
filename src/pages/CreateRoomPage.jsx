@@ -49,7 +49,7 @@ export default function CreateRoomPage() {
     [selectedTierId, tiers]
   );
 
-  const bet = selectedTier?.entryFee?.amount ?? 100.0;
+  const bet = selectedTier?.entryFee?.amount ?? 100;
   const formattedBet = useMemo(() => Number(bet || 0).toLocaleString('en-US'), [bet]);
 
   const handleCreateRoom = async () => {
