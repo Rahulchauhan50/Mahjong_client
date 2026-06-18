@@ -266,22 +266,22 @@ function DailyLoginPopup({ status, onClose, onClaim }) {
 }
 
 
-function AddFriendPopup({ value, onChange, onAccept, onCancel }) {
+function AddFriendPopup({ value, onChange, onAccept, onCancel, t }) {
   return (
-    <div className="add-friend-overlay" role="dialog" aria-modal="true" aria-label="Add friend">
+    <div className="add-friend-overlay" role="dialog" aria-modal="true" aria-label={t('addFriendTitle')}>
       <div className="add-friend-modal">
-        <h2>Enter Friend Name</h2>
+        <h2>{t('addFriendTitle')}</h2>
         <input
           className="add-friend-input"
           type="text"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Enter friend name"
+          placeholder={t('addFriendPlaceholder')}
           autoFocus
         />
         <div className="add-friend-actions">
-          <button className="add-friend-accept" type="button" onClick={onAccept}>Accept</button>
-          <button className="add-friend-cancel" type="button" onClick={onCancel}>Cancel</button>
+          <button className="add-friend-accept" type="button" onClick={onAccept}>{t('accept')}</button>
+          <button className="add-friend-cancel" type="button" onClick={onCancel}>{t('cancel')}</button>
         </div>
       </div>
     </div>
@@ -493,9 +493,9 @@ export default function MainMenuPage() {
             <button
               className="square-top-button friends-menu-button"
               type="button"
-              aria-label="Add friend"
+              aria-label={t('addFriendTitle')}
               onClick={() => setIsAddFriendOpen(true)}
-              title="Add friend"
+              title={t('addFriendTitle')}
             >
               <img src="/assets/friends/icon-friends.png" alt="" />
             </button>
@@ -607,6 +607,7 @@ export default function MainMenuPage() {
             value={friendName}
             onChange={setFriendName}
             onAccept={handleAcceptAddFriend}
+            t={t}
             onCancel={() => {
               setFriendName('');
               setIsAddFriendOpen(false);
