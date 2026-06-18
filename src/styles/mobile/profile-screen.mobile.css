@@ -1,0 +1,984 @@
+/* Mobile-only styles for profile-screen. Edit this file without touching desktop. */
+/* Profile screen styles. */
+
+/* Phase 2.6 — Profile Screen */
+
+.app-shell[data-device='mobile'] .profile-screen-ui {
+position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 252px 1fr;
+  color: #f5f2ff;
+  background: transparent;
+  overflow: hidden;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .profile-screen-ui::before {
+content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 10%, rgba(130, 89, 255, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(10, 9, 28, 0.14), rgba(4, 4, 15, 0.24));
+  pointer-events: none;
+}
+
+.app-shell[data-device='mobile'] .profile-sidebar,
+.app-shell[data-device='mobile'] .profile-content {
+position: relative;
+  z-index: 1;
+}
+
+.app-shell[data-device='mobile'] .profile-sidebar {
+padding: 8px 14px 0 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 7, 22, 0.28);
+}
+
+.app-shell[data-device='mobile'] .profile-sidebar--compact {
+padding-top: 14px;
+}
+
+.app-shell[data-device='mobile'] .profile-sidebar--compact .profile-back-line {
+margin-top: 4px;
+}
+
+.app-shell[data-device='mobile'] .profile-back-line {
+height: 30px;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(244, 244, 255, 0.78);
+  background: transparent;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-back-line img {
+width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .profile-tabs {
+margin-top: 38px;
+  display: grid;
+  gap: 12px;
+}
+
+.app-shell[data-device='mobile'] .profile-tabs button {
+height: 56px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 13px;
+  color: rgba(255, 255, 255, 0.96);
+  background: transparent;
+  text-align: left;
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-tabs button.active {
+background: linear-gradient(180deg, rgba(124, 60, 211, 0.98), rgba(92, 39, 162, 0.96));
+  box-shadow:
+    inset 0 0 0 2px rgba(176, 101, 255, 0.32),
+    0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.app-shell[data-device='mobile'] .profile-content {
+min-width: 0;
+  display: grid;
+  grid-template-rows: 150px 270px 1fr;
+}
+
+.app-shell[data-device='mobile'] .profile-header {
+display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 12px 0 32px;
+}
+
+.app-shell[data-device='mobile'] .profile-identity {
+display: flex;
+  align-items: flex-start;
+  gap: 22px;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar {
+width: 116px;
+  height: 116px;
+  border-radius: 999px;
+  object-fit: cover;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.38));
+}
+
+.app-shell[data-device='mobile'] .profile-name-block h1 {
+margin: 6px 0 10px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-row {
+display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-row img {
+width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-row strong,
+.app-shell[data-device='mobile'] .profile-rank-row span {
+display: block;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-row strong {
+font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 500;
+  color: #eee8f8;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-row span {
+color: rgba(236, 232, 250, 0.66);
+  font-size: 13px;
+  line-height: 1.05;
+}
+
+.app-shell[data-device='mobile'] .profile-xp-bar {
+display: block;
+  width: 170px;
+  height: 12px;
+  object-fit: fill;
+  margin: 3px 0 0 16px;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-copy {
+display: flex;
+  flex-direction: column;
+}
+
+.app-shell[data-device='mobile'] .profile-title-selector {
+margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-shell[data-device='mobile'] .profile-title-selector__label {
+color: rgba(255, 248, 234, 0.92);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-device='mobile'] .profile-title-selector__options {
+display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 340px;
+}
+
+.app-shell[data-device='mobile'] .profile-title-option {
+padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(18, 17, 39, 0.58);
+  color: rgba(255, 248, 234, 0.88);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.app-shell[data-device='mobile'] .profile-title-option:hover,
+.app-shell[data-device='mobile'] .profile-title-option:focus-visible {
+border-color: rgba(255, 232, 181, 0.62);
+  background: rgba(54, 42, 94, 0.78);
+  transform: translateY(-1px);
+}
+
+.app-shell[data-device='mobile'] .profile-title-option--active {
+border-color: rgba(255, 220, 122, 0.88);
+  background: linear-gradient(180deg, rgba(255, 217, 107, 0.98) 0%, rgba(225, 153, 56, 0.98) 100%);
+  color: #381307;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+}
+
+.app-shell[data-device='mobile'] .profile-title-option:disabled {
+opacity: 0.7;
+  cursor: wait;
+}
+
+.app-shell[data-device='mobile'] .profile-title-save-state {
+margin: 0;
+  color: rgba(255, 248, 234, 0.78);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.app-shell[data-device='mobile'] .profile-title-save-state--error {
+color: #ffc7c7;
+}
+
+.app-shell[data-device='mobile'] .profile-title-inline-button {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #eee8f8;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.05;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.app-shell[data-device='mobile'] .profile-title-inline-button:hover,
+.app-shell[data-device='mobile'] .profile-title-inline-button:focus-visible {
+  color: #ffe59a;
+  text-shadow: 0 0 10px rgba(255, 213, 100, 0.55);
+  outline: none;
+}
+
+.app-shell[data-device='mobile'] .profile-title-inline-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal {
+  width: min(430px, calc(100vw - 44px));
+}
+
+.app-shell[data-device='mobile'] .profile-title-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal-option {
+  min-height: 62px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(18, 17, 39, 0.68);
+  color: rgba(255, 248, 234, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal-option span {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal-option strong {
+  color: #381307;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal-option:hover,
+.app-shell[data-device='mobile'] .profile-title-modal-option:focus-visible {
+  border-color: rgba(255, 232, 181, 0.68);
+  background: rgba(54, 42, 94, 0.82);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal-option.active {
+  border-color: rgba(255, 220, 122, 0.92);
+  background: linear-gradient(180deg, rgba(255, 217, 107, 0.98) 0%, rgba(225, 153, 56, 0.98) 100%);
+  color: #381307;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.app-shell[data-device='mobile'] .profile-title-modal-option:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel {
+width: 330px;
+  height: 88px;
+  margin-top: 24px;
+  margin-right: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(18, 17, 39, 0.52);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel div {
+height: 50px;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel div:last-child {
+border-right: 0;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel span,
+.app-shell[data-device='mobile'] .profile-stat-panel strong {
+display: block;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel span {
+color: rgba(239, 237, 248, 0.7);
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel strong {
+margin-top: 8px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.app-shell[data-device='mobile'] .profile-section {
+border-top: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(4, 4, 18, 0.1);
+}
+
+.app-shell[data-device='mobile'] .profile-section h2 {
+margin: 11px 0 0 17px;
+  color: #fff8ea;
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-grid {
+height: calc(100% - 42px);
+  padding: 13px 28px 31px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 36px;
+  align-items: stretch;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card {
+position: relative;
+  border-radius: 8px;
+  background-size: 100% 100%;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 12px 15px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card h3 {
+margin: 0 0 13px;
+  color: rgba(246, 244, 255, 0.9);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card p {
+margin: 0 0 35px;
+  color: rgba(237, 233, 252, 0.58);
+  font-size: 13px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card span {
+position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 13px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card span.completed {
+bottom: 14px;
+  height: 24px;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 18px;
+}
+
+.app-shell[data-device='mobile'] .tile-section {
+min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.app-shell[data-device='mobile'] .favorite-tile-row {
+flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 15px 75px 22px 20px;
+}
+
+.app-shell[data-device='mobile'] .favorite-tiles {
+width: 528px;
+  max-width: 62%;
+  height: auto;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .profile-change-button {
+position: relative;
+  width: 176px;
+  height: 62px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-change-button img {
+position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.app-shell[data-device='mobile'] .profile-change-button span {
+position: relative;
+  z-index: 1;
+}
+
+/* Removed legacy viewport media block: @media (max-width: 900px) */
+
+/* Profile achievements stretch patch */
+
+.app-shell[data-device='mobile'] .profile-content {
+grid-template-rows: 150px 330px 1fr;
+}
+
+.app-shell[data-device='mobile'] .achievements-section {
+min-height: 330px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-grid {
+height: calc(100% - 42px);
+  align-items: stretch;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card {
+min-height: 286px;
+}
+
+.app-shell[data-device='mobile'] .lui-3959dd14 {
+width: 79px;
+  height: 72px;
+  transform: translate(1px, -6px);
+}
+
+.app-shell[data-device='mobile'] .lui-232a07a4 {
+width: 281px;
+  height: 123px;
+  transform: translate(-46px, 91px);
+}
+
+/* Auth/Profile API states */
+
+.app-shell[data-device='mobile'] .profile-api-meta {
+margin: -4px 0 8px;
+  color: rgba(236, 232, 250, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.app-shell[data-device='mobile'] .profile-load-error {
+align-self: flex-start;
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 154, 154, 0.32);
+  border-radius: 9px;
+  color: #ffd6d6;
+  background: rgba(98, 17, 35, 0.32);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Mobile profile stat text fix: keep Total Games / Win Rate / MVP aligned and readable. */
+.app-shell[data-device='mobile'] .profile-stat-panel {
+  width: 360px;
+  height: 80px;
+  padding: 0 8px;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel div {
+  height: 54px;
+  display: grid;
+  grid-template-rows: 24px 22px;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel span {
+  width: 100%;
+  color: rgba(239, 237, 248, 0.78);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel strong {
+  margin-top: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Profile avatar-name edit button + form */
+.app-shell[data-device='mobile'] .profile-name-display-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+}
+
+.app-shell[data-device='mobile'] .profile-name-display-row h1 {
+  margin: 6px 0 10px;
+}
+
+.app-shell[data-device='mobile'] .profile-edit-name-button,
+.app-shell[data-device='mobile'] .profile-name-save-button,
+.app-shell[data-device='mobile'] .profile-name-cancel-button {
+  min-width: 88px;
+  height: 30px;
+  border: 1px solid rgba(255, 225, 154, 0.42);
+  border-radius: 8px;
+  color: #fff7e6;
+  background: linear-gradient(180deg, rgba(121, 74, 216, 0.94), rgba(69, 31, 140, 0.94));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-edit-name-button {
+  transform: translateY(-2px);
+}
+
+.app-shell[data-device='mobile'] .profile-name-save-button:disabled,
+.app-shell[data-device='mobile'] .profile-name-cancel-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.app-shell[data-device='mobile'] .profile-name-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 50px;
+  margin: 3px 0 8px;
+}
+
+.app-shell[data-device='mobile'] .profile-name-edit-form input {
+  width: 190px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9px;
+  padding: 0 12px;
+  color: #fff7e8;
+  background: rgba(10, 9, 28, 0.68);
+  outline: none;
+  font-size: 15px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+}
+
+.app-shell[data-device='mobile'] .profile-name-edit-form input:focus {
+  border-color: rgba(255, 226, 145, 0.72);
+  box-shadow: 0 0 18px rgba(180, 116, 255, 0.24);
+}
+
+.app-shell[data-device='mobile'] .profile-name-cancel-button {
+  min-width: 78px;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(20, 18, 43, 0.72);
+}
+
+.app-shell[data-device='mobile'] .profile-save-error,
+.app-shell[data-device='mobile'] .profile-save-success {
+  margin: -4px 0 6px;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+}
+
+.app-shell[data-device='mobile'] .profile-save-error {
+  color: #ffd1d1;
+}
+
+.app-shell[data-device='mobile'] .profile-save-success {
+  color: #d7ffd8;
+}
+
+/* Profile achievements API-ready XP panel patch */
+.app-shell[data-device='mobile'] .profile-xp-progress {
+  --xp-progress: 0%;
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.app-shell[data-device='mobile'] .profile-xp-progress-track,
+.app-shell[data-device='mobile'] .profile-xp-progress-fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+
+.app-shell[data-device='mobile'] .profile-xp-progress-fill-clip {
+  position: absolute;
+  inset: 0;
+  width: var(--xp-progress);
+  overflow: hidden;
+  border-radius: inherit;
+  transition: width 220ms ease-out;
+  z-index: 2;
+}
+
+.app-shell[data-device='mobile'] .profile-rank-xp-bar {
+  width: 176px;
+  height: 18px;
+  margin: 4px 0 -10px;
+  border-radius: 999px;
+}
+
+.app-shell[data-device='mobile'] .profile-xp-bar {
+  display: none;
+}
+
+.app-shell[data-device='mobile'] .achievements-section {
+  min-height: 340px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-grid {
+  height: calc(100% - 42px);
+  grid-template-columns: repeat(4, 197px);
+  justify-content: start;
+  gap: 34px;
+  padding: 13px 28px 31px 20px;
+  align-items: stretch;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card {
+  width: 197px;
+  height: 286px;
+  min-height: 286px;
+  border: 0;
+  border-radius: 14px;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: center;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: 104px 17px 18px;
+  text-align: center;
+  overflow: hidden;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.32));
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-copy {
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  min-height: 0;
+  padding-bottom: 10px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card h3 {
+  margin: 0 0 7px;
+  max-width: 150px;
+  color: rgba(255, 248, 232, 0.96);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.08;
+  font-weight: 700;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.72);
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card p {
+  margin: 0;
+  max-width: 150px;
+  color: rgba(235, 228, 255, 0.76);
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.62);
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-footer {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  z-index: 2;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-xp-bar {
+  width: 148px;
+  height: 15px;
+  border-radius: 999px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card .profile-achievement-progress-text {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: auto;
+  height: auto;
+  display: block;
+  color: rgba(255, 246, 218, 0.9);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 900;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-complete-button {
+  width: 118px;
+  height: 24px;
+  border: 2px solid rgba(7, 46, 10, 0.82);
+  border-radius: 8px;
+  color: #fff9df;
+  background: linear-gradient(180deg, #67df38 0%, #28a820 46%, #116d16 100%);
+  box-shadow:
+    0 0 12px rgba(100, 255, 72, 0.22),
+    inset 0 2px 0 rgba(233, 255, 199, 0.38),
+    inset 0 -3px 0 rgba(0, 34, 5, 0.26);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.48);
+  cursor: pointer;
+}
+
+
+/* Avatar picker patch */
+.app-shell[data-device='mobile'] .profile-avatar-button {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-button .profile-avatar {
+  display: block;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-button:hover .profile-avatar,
+.app-shell[data-device='mobile'] .profile-avatar-button:focus-visible .profile-avatar {
+  filter: drop-shadow(0 0 18px rgba(221, 116, 255, 0.72));
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-edit-badge {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  width: 31px;
+  height: 31px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff7e5;
+  background: linear-gradient(180deg, #f6be44 0%, #b87813 100%);
+  box-shadow:
+    0 0 0 2px rgba(255, 241, 160, 0.82),
+    0 0 18px rgba(255, 183, 38, 0.48);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 1, 12, 0.68);
+  backdrop-filter: blur(8px);
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-modal {
+  width: 610px;
+  padding: 22px 24px 28px;
+  border: 2px solid rgba(223, 91, 255, 0.95);
+  border-radius: 18px;
+  color: #fff8ff;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(167, 49, 180, 0.32), transparent 32%),
+    linear-gradient(180deg, rgba(22, 14, 51, 0.98), rgba(5, 5, 24, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(255, 196, 255, 0.34) inset,
+    0 0 38px rgba(216, 75, 255, 0.42),
+    0 20px 46px rgba(0, 0, 0, 0.48);
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-modal-header h2 {
+  margin: 0;
+  color: #fff8ff;
+  font-size: 27px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(227, 143, 255, 0.44);
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-modal-close {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(218, 149, 255, 0.58);
+  border-radius: 12px;
+  color: #f6ecff;
+  background: rgba(74, 45, 130, 0.7);
+  cursor: pointer;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option {
+  position: relative;
+  min-height: 170px;
+  border: 1px solid rgba(164, 111, 219, 0.58);
+  border-radius: 16px;
+  padding: 12px 10px 13px;
+  color: #f7f2ff;
+  background: linear-gradient(180deg, rgba(34, 28, 72, 0.92), rgba(12, 11, 35, 0.94));
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option:hover,
+.app-shell[data-device='mobile'] .profile-avatar-option:focus-visible,
+.app-shell[data-device='mobile'] .profile-avatar-option.active {
+  border-color: rgba(255, 211, 90, 0.96);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 236, 156, 0.24),
+    0 0 22px rgba(255, 185, 48, 0.34);
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option img {
+  display: block;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+  object-fit: cover;
+  filter: drop-shadow(0 8px 13px rgba(0, 0, 0, 0.36));
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option span,
+.app-shell[data-device='mobile'] .profile-avatar-option strong {
+  display: block;
+  text-align: center;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option span {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar-option strong {
+  margin-top: 5px;
+  color: #ffd45c;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.app-shell[data-device='mobile'] .profile-logout-button {
+  margin-top: 18px;
+  min-width: 138px;
+  height: 42px;
+  border: 1px solid rgba(255, 220, 140, 0.42);
+  border-radius: 10px;
+  color: #ffe8a8;
+  background: linear-gradient(180deg, rgba(127, 58, 35, 0.82), rgba(74, 30, 32, 0.88));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-logout-button:hover {
+  filter: brightness(1.08);
+}

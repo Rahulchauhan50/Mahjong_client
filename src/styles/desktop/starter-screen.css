@@ -1,0 +1,455 @@
+/* Desktop-only styles for starter-screen. */
+/* Start screen styles. */
+
+/* Phase 2.2 — Start Screen UI */
+
+.app-shell[data-device='desktop'] .start-screen-ui {
+position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  color: #fff8ee;
+  background: linear-gradient(180deg, rgba(2, 1, 11, 0.02) 0%, rgba(2, 1, 11, 0.06) 58%, rgba(3, 2, 11, 0.78) 100%);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.app-shell[data-device='desktop'] .start-screen-ui::before {
+content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 202, 126, 0.11), transparent 28%),
+    radial-gradient(circle at 14% 10%, rgba(255, 83, 165, 0.16), transparent 22%),
+    radial-gradient(circle at 90% 12%, rgba(255, 83, 165, 0.12), transparent 24%);
+}
+
+.app-shell[data-device='desktop'] .start-screen-ui::after {
+content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.48), inset 0 -120px 120px rgba(3, 2, 12, 0.68);
+}
+
+.app-shell[data-device='desktop'] .start-screen-sparkles {
+z-index: 1;
+}
+
+.app-shell[data-device='desktop'] .start-topbar,
+.app-shell[data-device='desktop'] .start-hero,
+.app-shell[data-device='desktop'] .start-feature-strip,
+.app-shell[data-device='desktop'] .start-footer {
+position: relative;
+  z-index: 2;
+}
+
+.app-shell[data-device='desktop'] .start-topbar {
+height: 82px;
+  padding: 24px 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.app-shell[data-device='desktop'] .start-brand {
+display: flex;
+  align-items: center;
+  gap: 11px;
+  filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.58));
+}
+
+.app-shell[data-device='desktop'] .brand-flower {
+width: 29px;
+  height: 29px;
+  display: inline-grid;
+  place-items: center;
+  border: 2px solid rgba(210, 183, 255, 0.92);
+  background: rgba(255, 211, 232, 0.16);
+  color: #ffd7e9;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(255, 90, 170, 0.72);
+}
+
+.app-shell[data-device='desktop'] .start-brand strong,
+.app-shell[data-device='desktop'] .start-brand small {
+display: block;
+  letter-spacing: 0.12em;
+}
+
+.app-shell[data-device='desktop'] .start-brand strong {
+font-size: 24px;
+  line-height: 0.92;
+  font-weight: 900;
+}
+
+.app-shell[data-device='desktop'] .start-brand small {
+margin-top: 3px;
+  font-size: 10px;
+  color: rgba(255, 248, 238, 0.9);
+}
+
+.app-shell[data-device='desktop'] .language-select {
+min-width: 158px;
+  height: 43px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff8ee;
+  background: rgba(4, 3, 15, 0.58);
+  backdrop-filter: blur(7px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+
+.app-shell[data-device='desktop'] .language-select span {
+font-size: 24px;
+  line-height: 0;
+}
+
+.app-shell[data-device='desktop'] .language-select b {
+font-weight: 400;
+  color: rgba(255, 248, 238, 0.76);
+}
+
+.app-shell[data-device='desktop'] .start-hero {
+width: min(560px, 52vw);
+  margin: -18px auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.app-shell[data-device='desktop'] .start-logo {
+width: clamp(420px, 33vw, 540px);
+  max-width: 100%;
+  margin: 0 0 -18px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.42));
+  pointer-events: none;
+}
+
+.app-shell[data-device='desktop'] .start-tagline {
+margin: 0;
+  color: rgba(255, 246, 225, 0.94);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.035em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+}
+
+.app-shell[data-device='desktop'] .start-divider {
+width: 250px;
+  height: 14px;
+  margin: 20px 0 94px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-shell[data-device='desktop'] .start-divider::before,
+.app-shell[data-device='desktop'] .start-divider::after {
+content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(228, 187, 99, 0.75));
+}
+
+.app-shell[data-device='desktop'] .start-divider::after {
+background: linear-gradient(90deg, rgba(228, 187, 99, 0.75), transparent);
+}
+
+.app-shell[data-device='desktop'] .start-divider span {
+width: 9px;
+  height: 9px;
+  margin: 0 10px;
+  border: 1px solid #e4bb63;
+  transform: rotate(45deg);
+}
+
+.app-shell[data-device='desktop'] .start-actions {
+width: clamp(285px, 22vw, 330px);
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+
+.app-shell[data-device='desktop'] .start-image-button {
+width: 100%;
+  height: 72px;
+  border: 0;
+  color: #fff;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+.app-shell[data-device='desktop'] .start-image-button:hover {
+transform: translateY(-2px);
+  filter: brightness(1.08) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.32));
+}
+
+.app-shell[data-device='desktop'] .start-play-button {
+background-image: url("/assets/start-screen/play-button.png");
+  color: #4e3920;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.app-shell[data-device='desktop'] .start-login-button {
+width: 92%;
+position: relative;
+  top: 0px;
+  height: 59px;
+  background-image: url("/assets/start-screen/login-button.png");
+  color: #fff7e8;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.app-shell[data-device='desktop'] .start-feature-strip {
+position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 48px;
+  min-height: 116px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(5, 4, 17, 0.72);
+  backdrop-filter: blur(4px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.app-shell[data-device='desktop'] .start-feature-card {
+min-width: 0px;
+  padding: 19px 28px;
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.app-shell[data-device='desktop'] .start-feature-card + .start-feature-card {
+border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-shell[data-device='desktop'] .start-feature-card img {
+width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 7px 10px rgba(0, 0, 0, 0.46));
+}
+
+.app-shell[data-device='desktop'] .start-feature-card h2 {
+margin: 0 0 6px;
+  color: #fff3d8;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-device='desktop'] .start-feature-card p {
+margin: 0;
+  color: rgba(255, 248, 238, 0.7);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.app-shell[data-device='desktop'] .start-footer {
+position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 8px;
+  height: 34px;
+  padding: 0 28px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 7px;
+  background: rgba(3, 2, 12, 0.62);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  color: rgba(255, 248, 238, 0.64);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+}
+
+.app-shell[data-device='desktop'] .start-footer nav {
+display: flex;
+  justify-content: center;
+  gap: 28px;
+}
+
+.app-shell[data-device='desktop'] .start-footer button {
+border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-shell[data-device='desktop'] .start-socials {
+display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.app-shell[data-device='desktop'] .start-socials button {
+width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+}
+
+.app-shell[data-device='desktop'] .mock-login-placeholder {
+background:
+    linear-gradient(rgba(5, 3, 18, 0.78), rgba(5, 3, 18, 0.94)),
+    url("/assets/start-screen/bg.png") center / cover no-repeat;
+}
+
+/* Removed legacy viewport media block: @media (max-width: 1100px) */
+
+/* Removed legacy viewport media block: @media (max-width: 900px) */
+
+/* Desktop polish pass — Start Screen fixed-resolution layout. */
+.app-shell[data-device='desktop'] .start-topbar {
+  height: 66px;
+  padding: 18px 36px 0;
+}
+
+.app-shell[data-device='desktop'] .start-brand {
+  gap: 10px;
+}
+
+.app-shell[data-device='desktop'] .brand-flower {
+  width: 26px;
+  height: 26px;
+  font-size: 21px;
+}
+
+.app-shell[data-device='desktop'] .start-brand strong {
+  font-size: 21px;
+  line-height: .92;
+}
+
+.app-shell[data-device='desktop'] .start-brand small {
+  margin-top: 2px;
+  font-size: 9px;
+}
+
+.app-shell[data-device='desktop'] .language-select {
+  min-width: 132px;
+  height: 38px;
+  padding: 0 12px;
+  gap: 9px;
+  font-size: 13px;
+}
+
+.app-shell[data-device='desktop'] .language-select span {
+  font-size: 19px;
+}
+
+.app-shell[data-device='desktop'] .start-hero {
+  width: 500px;
+  margin: -4px auto 0;
+}
+
+.app-shell[data-device='desktop'] .start-logo {
+  width: 368px;
+  margin: -6px 0 -12px;
+}
+
+.app-shell[data-device='desktop'] .start-tagline {
+  font-size: 13px;
+  letter-spacing: .03em;
+}
+
+.app-shell[data-device='desktop'] .start-divider {
+  width: 220px;
+  height: 12px;
+  margin: 13px 0 18px;
+}
+
+.app-shell[data-device='desktop'] .start-actions {
+  width: 272px;
+  gap: 8px;
+}
+
+.app-shell[data-device='desktop'] .start-play-button {
+  height: 60px;
+  font-size: 16px;
+}
+
+.app-shell[data-device='desktop'] .start-login-button {
+  width: 88%;
+  height: 48px;
+  font-size: 12px;
+}
+
+.app-shell[data-device='desktop'] .start-feature-strip {
+  left: 36px;
+  right: 36px;
+  bottom: 42px;
+  min-height: 90px;
+  border-radius: 9px;
+}
+
+.app-shell[data-device='desktop'] .start-feature-card {
+  padding: 13px 24px;
+  grid-template-columns: 42px 1fr;
+  gap: 14px;
+}
+
+.app-shell[data-device='desktop'] .start-feature-card img {
+  width: 44px;
+  height: 44px;
+}
+
+.app-shell[data-device='desktop'] .start-feature-card h2 {
+  margin-bottom: 4px;
+  font-size: 12px;
+  letter-spacing: .075em;
+}
+
+.app-shell[data-device='desktop'] .start-feature-card p {
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.app-shell[data-device='desktop'] .start-footer {
+  left: 36px;
+  right: 36px;
+  bottom: 8px;
+  height: 28px;
+  padding: 0 22px;
+  gap: 14px;
+  font-size: 9px;
+}
+
+.app-shell[data-device='desktop'] .start-footer nav {
+  gap: 24px;
+}
+
+.app-shell[data-device='desktop'] .start-socials button {
+  width: 22px;
+  height: 22px;
+  font-size: 9px;
+}

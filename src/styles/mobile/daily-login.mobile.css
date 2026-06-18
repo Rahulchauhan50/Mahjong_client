@@ -1,0 +1,40 @@
+.app-shell[data-device='mobile'] .daily-login-panel {
+  width: 1160px;
+  height: 653px;
+}
+
+.app-shell[data-device='mobile'] .daily-login-streak {
+  top: 143px;
+  height: 52px;
+  font-size: 22px;
+}
+
+.app-shell[data-device='mobile'] .daily-login-cards {
+  left: 38px;
+  right: 38px;
+  bottom: 48px;
+  gap: 15px;
+}
+
+.app-shell[data-device='mobile'] .daily-login-card {
+  height: 340px;
+}
+
+.app-shell[data-device='mobile'] .daily-login-claim {
+  width: 112px;
+  height: 48px;
+  font-size: 20px;
+}
+
+
+/* Keep the Daily Login gift visible even when generic topbar square buttons are hidden. */
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions .square-top-button.daily-login-menu-button {
+  display: grid !important;
+  place-items: center;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions .daily-login-menu-button img {
+  width: 30px !important;
+  height: 30px !important;
+  object-fit: contain;
+}

@@ -1,0 +1,40 @@
+/* Main stylesheet entrypoint.
+   This file intentionally contains imports only.
+   Screen edits belong in src/styles/desktop or src/styles/mobile. */
+@import './base/reset.css';
+@import './base/layout.css';
+@import './base/components.css';
+@import './base/fixed-resolution-guard.css';
+@import './base/orientation-guard.css';
+@import './base/live-ui-overrides.css';
+
+@import './desktop/starter-screen.css';
+@import './desktop/login-screen.css';
+@import './desktop/loading-screen.css';
+@import './desktop/main-menu.css';
+@import './desktop/shop.css';
+@import './desktop/daily-login.css';
+@import './desktop/profile-screen.css';
+@import './desktop/create-room.css';
+@import './desktop/join-room.css';
+@import './desktop/room-select.css';
+@import './desktop/gameplay.css';
+@import './desktop/matchmaking.css';
+@import './desktop/help-screen.css';
+@import './desktop/win-screen.css';
+
+@import './mobile/layout.css';
+@import './mobile/starter-screen.mobile.css';
+@import './mobile/login-screen.mobile.css';
+@import './mobile/loading-screen.mobile.css';
+@import './mobile/main-menu.mobile.css';
+@import './mobile/shop.mobile.css';
+@import './mobile/daily-login.mobile.css';
+@import './mobile/profile-screen.mobile.css';
+@import './mobile/create-room.mobile.css';
+@import './mobile/join-room.mobile.css';
+@import './mobile/room-select.mobile.css';
+@import './mobile/gameplay.mobile.css';
+@import './mobile/matchmaking.mobile.css';
+@import './mobile/help-screen.mobile.css';
+@import './mobile/win-screen.mobile.css';

@@ -1,0 +1,375 @@
+/* Desktop-only styles for login-screen. */
+/* Phase 2.3 — Mock Login Screen */
+
+.app-shell[data-device='desktop'] .mock-login-screen {
+position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff8f6;
+  font-family: Georgia, "Times New Roman", serif;
+  background: transparent;
+}
+
+.app-shell[data-device='desktop'] .mock-login-sparkles {
+z-index: 1;
+}
+
+.app-shell[data-device='desktop'] .mock-login-logo {
+position: absolute;
+  z-index: 2;
+  left: 12.1%;
+  top: 10.9%;
+  width: 30.4%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45));
+}
+
+.app-shell[data-device='desktop'] .mock-login-card {
+position: absolute;
+  z-index: 3;
+  right: 4.6%;
+  top: 4.0%;
+  width: 39.5%;
+  height: 87.0%;
+  margin: 0;
+}
+
+.app-shell[data-device='desktop'] .mock-login-panel-art {
+position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.app-shell[data-device='desktop'] .mock-login-title {
+position: absolute;
+  top: 6.6%;
+  left: 15%;
+  right: 15%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.app-shell[data-device='desktop'] .mock-login-title span {
+display: block;
+  color: #fff6c5;
+  font-size: clamp(24px, 2.45vw, 34px);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+.app-shell[data-device='desktop'] .mock-login-title small {
+display: block;
+  margin-top: 9px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: clamp(10px, 1.1vw, 15px);
+}
+
+.app-shell[data-device='desktop'] .mock-login-fields {
+position: absolute;
+  left: 10%;
+  top: 24.0%;
+  width: 80%;
+  display: grid;
+  gap: 13px;
+}
+
+.app-shell[data-device='desktop'] .mock-login-input {
+height: 42px;
+  border: 1px solid rgba(128, 63, 151, 0.76);
+  border-radius: 6px;
+  background: rgba(8, 6, 25, 0.56);
+  display: flex;
+  align-items: center;
+  padding: 0 13px;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='desktop'] .mock-login-input input {
+flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #e8e4e9;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.app-shell[data-device='desktop'] .mock-login-input input::placeholder {
+color: rgba(255, 255, 255, 0.58);
+}
+
+.app-shell[data-device='desktop'] .mock-eye-toggle,
+.app-shell[data-device='desktop'] .mock-forgot-button,
+.app-shell[data-device='desktop'] .mock-social-row button,
+.app-shell[data-device='desktop'] .mock-create-account,
+.app-shell[data-device='desktop'] .mock-guest-button {
+border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-shell[data-device='desktop'] .mock-eye-toggle {
+color: rgba(255, 255, 255, 0.72);
+  font-size: 15px;
+  padding: 0;
+}
+
+.app-shell[data-device='desktop'] .mock-login-options {
+position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 41.3%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.app-shell[data-device='desktop'] .mock-check {
+width: 18px;
+  height: 18px;
+  border: 1px solid rgba(226, 164, 255, 0.45);
+  border-radius: 3px;
+  color: transparent;
+  background: rgba(142, 55, 186, 0.36);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.app-shell[data-device='desktop'] .mock-check.checked {
+color: #fff;
+  background: linear-gradient(180deg, #9b46d4, #7932b1);
+}
+
+.app-shell[data-device='desktop'] .mock-forgot-button {
+margin-left: auto;
+  color: #ffe067;
+  font: inherit;
+  font-size: 12px;
+}
+
+.app-shell[data-device='desktop'] .mock-gold-login {
+position: absolute;
+  left: 10%;
+  top: 49.1%;
+  width: 80%;
+  height: 9.2%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff8ef;
+  background: linear-gradient(180deg, #f3ce85, #c58b42 50%, #7a481d 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 230, 160, 0.42),
+    0 10px 22px rgba(0, 0, 0, 0.24);
+  letter-spacing: 0.08em;
+  font-weight: 900;
+  font-size: clamp(15px, 1.35vw, 19px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+.app-shell[data-device='desktop'] .mock-login-divider {
+position: absolute;
+  left: 24%;
+  right: 24%;
+  top: 60.5%;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.82);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.app-shell[data-device='desktop'] .mock-login-divider::before,
+.app-shell[data-device='desktop'] .mock-login-divider::after {
+content: "";
+  position: absolute;
+  top: 50%;
+  width: 39%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(214, 164, 74, 0.78));
+}
+
+.app-shell[data-device='desktop'] .mock-login-divider::before {
+left: 0;
+}
+
+.app-shell[data-device='desktop'] .mock-login-divider::after {
+right: 0;
+  transform: scaleX(-1);
+}
+
+.app-shell[data-device='desktop'] .mock-social-row {
+position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 66.6%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.app-shell[data-device='desktop'] .mock-social-row button {
+height: 36px;
+  padding: 0;
+}
+
+.app-shell[data-device='desktop'] .mock-social-row img,
+.app-shell[data-device='desktop'] .mock-create-account img,
+.app-shell[data-device='desktop'] .mock-guest-button img {
+display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.app-shell[data-device='desktop'] .mock-account-row {
+position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 4.4%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.app-shell[data-device='desktop'] .mock-create-account,
+.app-shell[data-device='desktop'] .mock-guest-button {
+height: 38px;
+  padding: 0;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card button:hover {
+filter: brightness(1.08);
+}
+
+/* Removed legacy viewport media block: @media (max-width: 900px) */
+
+/* Register mode additions */
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-login-title {
+  top: 5.2%;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-login-fields {
+  top: 19.0%;
+  gap: 10px;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-login-input {
+  height: 39px;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-login-options {
+  top: 42.6%;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-gold-login {
+  top: 50.2%;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-login-divider {
+  top: 60.9%;
+}
+
+.app-shell[data-device='desktop'] .mock-login-card.is-register-mode .mock-social-row {
+  top: 66.8%;
+}
+
+.app-shell[data-device='desktop'] .mock-login-error,
+.app-shell[data-device='desktop'] .mock-login-success {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 45.6%;
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  z-index: 4;
+}
+
+.app-shell[data-device='desktop'] .mock-login-error {
+  color: #ffd6d6;
+}
+
+.app-shell[data-device='desktop'] .mock-login-success {
+  color: #d8ffd6;
+}
+
+.app-shell[data-device='desktop'] .mock-auth-switch-row {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 60.3%;
+  display: flex;
+  justify-content: center;
+  z-index: 4;
+}
+
+.app-shell[data-device='desktop'] .mock-auth-switch-text {
+  border: 0;
+  background: transparent;
+  color: #ffe067;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.app-shell[data-device='desktop'] .mock-auth-switch-text:disabled,
+.app-shell[data-device='desktop'] .mock-create-account:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+/* Font patch: increase Login/Create Account text by 20%. */
+.app-shell[data-device='desktop'] .mock-login-title span {
+  font-size: clamp(28.8px, 2.94vw, 40.8px);
+}
+
+.app-shell[data-device='desktop'] .mock-login-title small {
+  font-size: clamp(12px, 1.32vw, 18px);
+}
+
+.app-shell[data-device='desktop'] .mock-login-input input {
+  font-size: 15.6px;
+}
+
+.app-shell[data-device='desktop'] .mock-eye-toggle {
+  font-size: 18px;
+}
+
+.app-shell[data-device='desktop'] .mock-login-options,
+.app-shell[data-device='desktop'] .mock-forgot-button,
+.app-shell[data-device='desktop'] .mock-login-divider,
+.app-shell[data-device='desktop'] .mock-login-error,
+.app-shell[data-device='desktop'] .mock-login-success,
+.app-shell[data-device='desktop'] .mock-auth-switch-text {
+  font-size: 14.4px;
+}
+
+.app-shell[data-device='desktop'] .mock-gold-login {
+  font-size: clamp(18px, 1.62vw, 22.8px);
+}

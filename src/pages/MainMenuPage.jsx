@@ -1,0 +1,647 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../router/routes.js';
+import { claimDailyReward, getBalances, getDailyRewardStatus } from '../services/economyService.js';
+import { saveMatchmakingContext } from '../store/gameStore.js';
+import { mockFeaturedRooms } from '../mocks/mockRooms.js';
+import { mockPlayerProfile } from '../mocks/mockProfile.js';
+import { getStoredAuthUser } from '../services/authService.js';
+import { getRoomTiers } from '../services/roomService.js';
+import { useLanguage } from '../i18n/useLanguage.js';
+
+const asset = (name) => `/assets/main-menu/${name}`;
+const profileAsset = (name) => `/assets/profile/${name}`;
+const dailyAsset = (name) => `/assets/daily-login/${name}`;
+const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
+
+function getStoredProfileAvatar() {
+  try {
+    return window.localStorage.getItem(PROFILE_AVATAR_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function getMainMenuAvatarSrc(profile) {
+  const avatarValue = getStoredProfileAvatar() || profile?.avatarUrl || profile?.imageUrl || profile?.avatar || profile?.avatarId;
+
+  if (typeof avatarValue !== 'string') {
+    return asset('friend-girl.png');
+  }
+
+  const avatar = avatarValue.trim();
+
+  if (!avatar) {
+    return asset('friend-girl.png');
+  }
+
+  if (/^(https?:)?\/\//i.test(avatar) || avatar.startsWith('/')) {
+    return avatar;
+  }
+
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(avatar)) {
+    return profileAsset(avatar);
+  }
+
+  return asset('friend-girl.png');
+}
+
+const fallbackRoomCards = [
+  {
+    title: 'SAKURA GARDEN',
+    level: 'Beginner',
+    bg: 'room-card-green.png',
+    character: 'panda.png',
+    players: '4,326',
+    fee: '500',
+    prize: '2,000',
+    button: 'button-green.png',
+    route: ROUTES.matchmaking,
+  },
+  {
+    title: 'BLOSSOM TABLE',
+    level: 'Intermediate',
+    bg: 'room-card-blue.png',
+    character: 'fox.png',
+    players: '1,842',
+    fee: '1,000',
+    prize: '5,000',
+    button: 'button-blue.png',
+    route: ROUTES.matchmaking,
+  },
+  {
+    title: 'LUCKY BAMBOO',
+    level: 'Advanced',
+    bg: 'room-card-purple.png',
+    character: 'bunny.png',
+    players: '812',
+    fee: '5,000',
+    prize: '20,000',
+    button: 'button-violet.png',
+    route: ROUTES.matchmaking,
+  },
+  {
+    title: 'DRAGON PAVILION',
+    level: 'Master',
+    bg: 'room-card-gold.png',
+    character: 'bird.png',
+    players: '320',
+    fee: '50,000',
+    prize: '200,000',
+    button: 'button-gold.png',
+    route: ROUTES.matchmaking,
+  },
+];
+
+const friends = [
+  { name: 'Momo', state: 'Online', action: 'INVITE', avatar: 'friend-panda.png' },
+  { name: 'Panda', state: 'In Lobby', action: 'INVITE', avatar: 'friend-panda.png' },
+  { name: 'Bunbun', state: 'Playing', action: 'WATCH', avatar: 'friend-bunny.png' },
+  { name: 'Ryu', state: 'Online', action: 'INVITE', avatar: 'friend-dragon.png' },
+  { name: 'Kiki', state: 'Online', action: 'INVITE', avatar: 'friend-bird.png' },
+  { name: 'Stevie', state: 'In Game', action: 'WATCH', avatar: 'friend-girl.png' },
+];
+
+const initialFriendRequests = [
+  { id: 'req-luna', name: 'Luna', level: 'Level 12', avatar: 'friend-girl.png' },
+  { id: 'req-milo', name: 'Milo', level: 'Level 9', avatar: 'friend-bunny.png' },
+  { id: 'req-hana', name: 'Hana', level: 'Level 18', avatar: 'friend-panda.png' },
+];
+
+function formatCurrencyValue(value, fallback = '—') {
+  if (value === null || value === undefined || value === '') {
+    return fallback;
+  }
+
+  const numericValue = Number(String(value).replace(/,/g, ''));
+
+  if (Number.isFinite(numericValue)) {
+    return numericValue.toLocaleString();
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return value;
+  }
+
+  return fallback;
+}
+
+function CurrencyPill({ icon, value }) {
+  return (
+    <div className="currency-pill">
+      <img src={asset(icon)} alt="" />
+      <span>{value}</span>
+    </div>
+  );
+}
+
+function SakuraBrand() {
+  return (
+    <div className="sakura-brand" aria-label="Sakura Mahjong">
+      <span className="sakura-brand-flower">✿</span>
+      <div className="sakura-brand-text">
+        <strong>SAKURA</strong>
+        <span>MAHJONG</span>      </div>
+    </div>
+  );
+}
+
+function SakuraPass({ onOpen }) {
+  return (
+    <aside className='sakura-pass-card' style={{ backgroundImage: `url(${asset('sakura-pass.png')})` }}>
+      <div className='pass-copy'>              </div>          </aside>
+  );
+}
+
+function getRoomSparkleTheme(roomBg = '') {
+  if (roomBg.includes('green')) return 'room-theme-green';
+  if (roomBg.includes('blue')) return 'room-theme-blue';
+  if (roomBg.includes('purple') || roomBg.includes('violet')) return 'room-theme-purple';
+  if (roomBg.includes('gold') || roomBg.includes('yellow') || roomBg.includes('orange')) return 'room-theme-gold';
+  return 'room-theme-green';
+}
+
+function RoomCard({ room, onPlay, t, tx }) {
+  const sparkleTheme = getRoomSparkleTheme(room.bg);
+
+  return (
+    <article className={`sakura-room-card ${sparkleTheme}`} style={{ backgroundImage: `url(${asset(room.bg)})` }}>
+      <div className="room-card-sparkles" aria-hidden="true">
+        <span className="card-sparkle sparkle-1" />
+        <span className="card-sparkle sparkle-2" />
+        <span className="card-sparkle sparkle-3" />
+        <span className="card-sparkle sparkle-4" />
+        <span className="card-sparkle sparkle-5" />
+        <span className="card-sparkle sparkle-6" />
+        <span className="card-sparkle sparkle-7" />
+        <span className="card-sparkle sparkle-8" />
+        <span className="card-sparkle sparkle-9" />
+        <span className="card-sparkle sparkle-10" />
+        <span className="card-sparkle sparkle-11" />
+        <span className="card-sparkle sparkle-12" />
+      </div>
+
+      <div className="room-card-header">
+        <h3>{room.title}</h3>
+        <p>{tx(room.level)}</p>
+      </div>
+      <div className='room-character-wrap' aria-hidden="true">
+        <img className='room-character' src={asset(room.character)} alt="" />
+      </div>
+      <div className='room-stat-list'>
+        <div><span className='lui-c65c7da8 lui-1e673fb0'>{t('playersOnline')}</span><strong className='lui-f014cab0 lui-16b816a0'>{room.players}</strong></div>
+        <div><span className='lui-6646a870 lui-a7479fb4'>{t('bet')}</span><strong className='lui-80d469b8 lui-bdcac1ee lui-d210bc28'><img src={asset('coin.png')} alt="" />{room.fee}</strong></div>
+        <div><span className='lui-589aefc0 lui-5c5e0744'>{t('prizePool')}</span><strong className='lui-249bee60 lui-8ff2b4fc'><img src={asset('prize.png')} alt="" />{room.prize}</strong></div>
+      </div>
+      <button className="image-button room-play-button" type="button" onClick={onPlay} style={{ backgroundImage: `url(${asset(room.button)})` }}>
+        {t('playNow')}
+      </button>
+    </article>
+  );
+}
+
+
+
+const dailyRewards = [
+  { day: 1, image: 'day-1.png' },
+  { day: 2, image: 'day-2.png' },
+  { day: 3, image: 'day-3.png' },
+  { day: 4, image: 'day-4.png' },
+  { day: 5, image: 'day-5.png' },
+  { day: 6, image: 'day-6.png' },
+  { day: 7, image: 'day-7.png' },
+];
+
+function DailyLoginPopup({ status, onClose, onClaim }) {
+  const rawStreak = Number(status?.currentStreak ?? status?.streak ?? status?.newStreak ?? 1);
+  const streak = Number.isFinite(rawStreak) && rawStreak > 0 ? rawStreak : 1;
+  const canClaimToday = Boolean(status?.canClaimToday);
+  const activeDay = Math.min(Math.max(streak, 1), dailyRewards.length);
+  const streakUnit = activeDay === 1 ? 'Day' : 'Days';
+
+  return (
+    <div className="daily-login-overlay" role="dialog" aria-modal="true" aria-label="Daily Login rewards">
+      <div className="daily-login-panel" style={{ backgroundImage: `url(${dailyAsset('panel.png')})` }}>
+        <button className="daily-login-close" type="button" onClick={onClose} aria-label="Close daily login">×</button>
+
+        <div className="daily-login-streak">
+          <img src={dailyAsset('gift.png')} alt="" />
+          <span>Current Streak:</span>
+          <strong>{activeDay} {streakUnit}</strong>
+        </div>
+
+        <div className="daily-login-cards">
+          {dailyRewards.map((reward) => {
+            const isClaimable = reward.day === activeDay && canClaimToday;
+            const isClaimed = reward.day < activeDay || (reward.day === activeDay && !canClaimToday);
+            const isLocked = reward.day > activeDay;
+
+            return (
+              <article className={`daily-login-card${isClaimable ? ' is-active' : ''}`} key={reward.day}>
+                <img className="daily-login-card-art" src={dailyAsset(reward.image)} alt={`Day ${reward.day}`} />
+
+                {isClaimed && (
+                  <div className="daily-login-claimed">
+                    <span>✓</span>
+                    <strong>CLAIMED</strong>
+                  </div>
+                )}
+
+                {isClaimable && (
+                  <button className="daily-login-claim" type="button" onClick={onClaim} style={{ backgroundImage: `url(${dailyAsset('claim-button.png')})` }}>
+                    CLAIM
+                  </button>
+                )}
+
+                {isLocked && (
+                  <img className="daily-login-lock" src={dailyAsset('lock.png')} alt="Locked" />
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function AddFriendPopup({ value, onChange, onAccept, onCancel }) {
+  return (
+    <div className="add-friend-overlay" role="dialog" aria-modal="true" aria-label="Add friend">
+      <div className="add-friend-modal">
+        <h2>Enter Friend Name</h2>
+        <input
+          className="add-friend-input"
+          type="text"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Enter friend name"
+          autoFocus
+        />
+        <div className="add-friend-actions">
+          <button className="add-friend-accept" type="button" onClick={onAccept}>Accept</button>
+          <button className="add-friend-cancel" type="button" onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FriendRequestModal({ requests, onClose, onAccept, onDecline }) {
+  return (
+    <div className="friend-request-overlay" role="dialog" aria-modal="true" aria-label="Friend Requests">
+      <div className="friend-request-modal">
+        <div className="friend-request-header">
+          <div>
+            <strong>FRIEND REQUESTS</strong>
+            <span>{requests.length} pending</span>
+          </div>
+          <button className="friend-request-close" type="button" onClick={onClose} aria-label="Close friend requests">×</button>
+        </div>
+
+        <div className="friend-request-list">
+          {requests.length ? (
+            requests.map((request) => (
+              <div className="friend-request-row" key={request.id}>
+                <img src={asset(request.avatar)} alt="" />
+                <div className="friend-request-copy">
+                  <strong>{request.name}</strong>
+                  <span>{request.level}</span>
+                </div>
+                <div className="friend-request-actions">
+                  <button className="accept-request" type="button" onClick={() => onAccept(request)}>ACCEPT</button>
+                  <button className="decline-request" type="button" onClick={() => onDecline(request.id)}>DECLINE</button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="friend-request-empty">No pending requests</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FriendRow({ friend, tx }) {
+  return (
+    <div className="friend-row">
+      <img src={asset(friend.avatar)} alt="" />
+      <div>
+        <strong>{friend.name}</strong>
+        <span>{tx(friend.state)}</span>
+      </div>
+      <button type="button">{tx(friend.action)}</button>
+    </div>
+  );
+}
+
+export default function MainMenuPage() {
+  const navigate = useNavigate();
+  const { t, tx } = useLanguage();
+  const [roomCards, setRoomCards] = useState(fallbackRoomCards);
+  const [profile, setProfile] = useState(() => getStoredAuthUser() || mockPlayerProfile);
+  const [friendList, setFriendList] = useState(friends);
+  const [friendRequests, setFriendRequests] = useState(initialFriendRequests);
+  const [isFriendRequestsOpen, setIsFriendRequestsOpen] = useState(false);
+  const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
+  const [friendName, setFriendName] = useState('');
+  const [isDailyLoginOpen, setIsDailyLoginOpen] = useState(false);
+  const [balances, setBalances] = useState(() => ({
+    coins: null,
+    diamonds: null,
+  }));
+  const [dailyRewardStatus, setDailyRewardStatus] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.allSettled([getBalances(), getDailyRewardStatus(), getRoomTiers()])
+      .then(([balancesResult, rewardResult, roomTiersResult]) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const economyBalances = balancesResult.status === 'fulfilled' ? balancesResult.value : null;
+        const rewardStatus = rewardResult.status === 'fulfilled' ? rewardResult.value : null;
+
+        if (balancesResult.status === 'rejected') {
+          console.error('Failed to load balances:', balancesResult.reason);
+        }
+
+        if (rewardResult.status === 'rejected') {
+          console.error('Failed to load daily reward status:', rewardResult.reason);
+        }
+
+        const roomTiers = roomTiersResult.status === 'fulfilled' ? roomTiersResult.value : null;
+
+        if (roomTiersResult.status === 'rejected') {
+          console.error('Failed to load room tiers:', roomTiersResult.reason);
+        }
+
+        setRoomCards(roomTiers?.length ? roomTiers : mockFeaturedRooms);
+        setProfile((current) => current || mockPlayerProfile);
+
+        if (economyBalances) {
+          setBalances({
+            coins: economyBalances.coins ?? null,
+            diamonds: economyBalances.diamonds ?? economyBalances.gems ?? null,
+          });
+        }
+
+        setDailyRewardStatus(rewardStatus || null);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleClaimDailyReward = async () => {
+    if (!dailyRewardStatus?.canClaimToday) {
+      return;
+    }
+
+    try {
+      const response = await claimDailyReward();
+      const claimPayload = response?.data || response || {};
+      const claimBalances = claimPayload.balances;
+
+      if (claimBalances) {
+        setBalances((current) => ({
+          coins: claimBalances.coins ?? current.coins,
+          diamonds: claimBalances.diamonds ?? claimBalances.gems ?? current.diamonds,
+        }));
+      }
+
+      const [balancesResult, rewardStatusResult] = await Promise.allSettled([
+        getBalances(),
+        getDailyRewardStatus(),
+      ]);
+
+      if (balancesResult.status === 'fulfilled') {
+        setBalances({
+          coins: balancesResult.value?.coins ?? null,
+          diamonds: balancesResult.value?.diamonds ?? balancesResult.value?.gems ?? null,
+        });
+      }
+
+      if (rewardStatusResult.status === 'fulfilled') {
+        setDailyRewardStatus(rewardStatusResult.value || null);
+      } else {
+        setDailyRewardStatus((current) => ({
+          ...(current || {}),
+          canClaimToday: false,
+          currentStreak: claimPayload.streak?.current ?? claimPayload.newStreak ?? claimPayload.currentStreak ?? current?.currentStreak ?? 1,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to claim daily reward:', error);
+    }
+  };
+
+  const handleAcceptAddFriend = () => {
+    const nextFriendName = friendName.trim();
+
+    if (!nextFriendName) {
+      return;
+    }
+
+    setFriendList((current) => [
+      ...current,
+      { name: nextFriendName, state: 'Online', action: 'INVITE', avatar: 'friend-girl.png' },
+    ]);
+    setFriendName('');
+    setIsAddFriendOpen(false);
+  };
+
+  const acceptFriendRequest = (request) => {
+    setFriendList((current) => [
+      ...current,
+      { name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
+    ]);
+    setFriendRequests((current) => current.filter((item) => item.id !== request.id));
+  };
+
+  const declineFriendRequest = (requestId) => {
+    setFriendRequests((current) => current.filter((item) => item.id !== requestId));
+  };
+
+  return (
+    <section className="main-menu-ui main-menu-reference">
+      <aside className="sakura-sidebar">
+        <SakuraBrand />
+        <SakuraPass onOpen={() => navigate(ROUTES.profile)} />
+      </aside>
+
+      <div className="main-menu-content">
+        <header className="sakura-topbar">
+          <div className="topbar-spacer" />
+          <div className="topbar-actions">
+            <CurrencyPill icon="coin.png" value={formatCurrencyValue(balances.coins)} />
+            <CurrencyPill icon="gem.png" value={formatCurrencyValue(balances.diamonds)} />
+            <button
+              className="square-top-button shop-menu-button"
+              type="button"
+              aria-label="Open shop"
+              onClick={() => navigate(ROUTES.shop)}
+              title="Open shop"
+            >
+              <img src="/assets/shop/icon-shop.png" alt="" />
+            </button>
+            <button
+              className="square-top-button friends-menu-button"
+              type="button"
+              aria-label="Add friend"
+              onClick={() => setIsAddFriendOpen(true)}
+              title="Add friend"
+            >
+              <img src="/assets/friends/icon-friends.png" alt="" />
+            </button>
+            <button
+              className="square-top-button daily-login-menu-button"
+              type="button"
+              aria-label={t('rewards')}
+              onClick={() => setIsDailyLoginOpen(true)}
+              title="Open daily login"
+            >
+              <img src={dailyAsset('gift.png')} alt="" />
+            </button>
+            <button className="square-top-button has-badge" type="button" aria-label={t('notifications')}>🔔<span>3</span></button>
+            <button className="profile-pill" type="button" onClick={() => navigate(ROUTES.profile)} aria-label={t('openProfile')}>
+              <img src={getMainMenuAvatarSrc(profile)} alt="" />
+              <span>⌄</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="main-dashboard">
+          <main className='room-section'>
+            <div className="hero-banner" style={{ backgroundImage: `url(${asset('bg.png')})` }} aria-hidden="true" />
+
+            <div className="sakura-room-grid">
+              {roomCards.map((room) => (
+                <RoomCard
+                  key={room.title}
+                  room={room}
+                  t={t}
+                  tx={tx}
+                  onPlay={() => {
+                    saveMatchmakingContext({
+                      roomId: room.id || room.roomId || room.title,
+                      maxPlayers: room.maxPlayers || 3,
+                      source: 'room-card',
+                    });
+                    navigate(ROUTES.matchmaking, {
+                      state: {
+                        roomId: room.id || room.roomId || room.title,
+                        maxPlayers: room.maxPlayers || 3,
+                        source: 'room-card',
+                      },
+                    });
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="bottom-room-actions">
+              <section className="small-action-panel private-room" style={{ backgroundImage: `url(${asset('private-room-art.png')})` }}>
+                <div>
+                  <h3>{t('createPrivateRoom')}</h3>
+                  <p>{t('createPrivateRoomText')}</p>
+                  <button type="button" onClick={() => navigate(ROUTES.createRoom)}>{t('createRoom')}</button>
+                </div>
+              </section>
+
+              <section className="small-action-panel room-code join-room-entry-panel" style={{ backgroundImage: `url(${asset('room-code-art.png')})` }}>
+                <div>
+                  <h3>{t('joinRoom')}</h3>
+                  <p>{t('joinRoomPanelText')}</p>
+                  <button type="button" onClick={() => navigate(ROUTES.joinRoom)}>
+                    {t('joinRoom')}
+                  </button>
+                </div>
+              </section>
+            </div>
+          </main>
+
+          <aside className="right-panel">
+            <section className="friends-panel">
+              <div className="friends-panel-header">
+                <h2>{t('friendsOnline')} • {friendList.length}</h2>
+                <button className="friend-requests-button" type="button" onClick={() => setIsFriendRequestsOpen(true)} aria-label="Open friend requests">
+                  REQ
+                  {friendRequests.length > 0 && <span>{friendRequests.length}</span>}
+                </button>
+              </div>
+              <div className="friend-list">
+                {friendList.map((friend) => (
+                  <FriendRow key={`${friend.name}-${friend.state}`} friend={friend} tx={tx} />
+                ))}
+              </div>
+              <button className="view-all" type="button">{t('viewAllFriends')} <span>›</span></button>
+            </section>
+
+            <section className="cup-panel">
+              <img src={asset('sakura-cup.png')} alt="" />
+              <div className="cup-copy">                <p>{t('prizePool')}</p>
+                <strong><img src={asset('coin.png')} alt="" />50,000</strong>
+                <small>{t('endsIn')}</small>
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveMatchmakingContext({ roomId: 'sakura_cup', maxPlayers: 3, source: 'sakura-cup' });
+                    navigate(ROUTES.matchmaking, { state: { roomId: 'sakura_cup', maxPlayers: 3, source: 'sakura-cup' } });
+                  }}
+                >
+                  {t('joinNow')}
+                </button>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        {isAddFriendOpen && (
+          <AddFriendPopup
+            value={friendName}
+            onChange={setFriendName}
+            onAccept={handleAcceptAddFriend}
+            onCancel={() => {
+              setFriendName('');
+              setIsAddFriendOpen(false);
+            }}
+          />
+        )}
+
+        {isDailyLoginOpen && (
+          <DailyLoginPopup
+            status={dailyRewardStatus}
+            onClose={() => setIsDailyLoginOpen(false)}
+            onClaim={handleClaimDailyReward}
+          />
+        )}
+
+        {isFriendRequestsOpen && (
+          <FriendRequestModal
+            requests={friendRequests}
+            onClose={() => setIsFriendRequestsOpen(false)}
+            onAccept={acceptFriendRequest}
+            onDecline={declineFriendRequest}
+          />
+        )}
+
+        <footer className="sakura-footer">
+          <div>
+            <strong>{t('fairPlayGuaranteed')}</strong>
+            <small>{t('fairPlayText')}</small>
+          </div>
+          <span>{t('terms')}</span>
+          <span>{t('privacy')}</span>
+          <span>{t('support')}</span>
+          <span>{t('copyright').replace('© ', '')}</span>
+        </footer>
+      </div>
+    </section>
+  );
+}

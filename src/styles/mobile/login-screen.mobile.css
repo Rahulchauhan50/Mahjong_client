@@ -1,0 +1,512 @@
+/* Mobile-only styles for login-screen. Edit this file without touching desktop. */
+/* Phase 2.3 — Mock Login Screen */
+
+.app-shell[data-device='mobile'] .mock-login-screen {
+position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff8f6;
+  font-family: Georgia, "Times New Roman", serif;
+  background: transparent;
+}
+
+.app-shell[data-device='mobile'] .mock-login-sparkles {
+z-index: 1;
+}
+
+.app-shell[data-device='mobile'] .mock-login-logo {
+position: absolute;
+  z-index: 2;
+  left: 12.1%;
+  top: 10.9%;
+  width: 30.4%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45));
+}
+
+.app-shell[data-device='mobile'] .mock-login-card {
+position: absolute;
+  z-index: 3;
+  right: 4.6%;
+  top: 4.0%;
+  width: 39.5%;
+  height: 87.0%;
+  margin: 0;
+}
+
+.app-shell[data-device='mobile'] .mock-login-panel-art {
+position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.app-shell[data-device='mobile'] .mock-login-title {
+position: absolute;
+  top: 6.6%;
+  left: 15%;
+  right: 15%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.app-shell[data-device='mobile'] .mock-login-title span {
+display: block;
+  color: #fff6c5;
+  font-size: clamp(29.28px, 2.989vw, 41.48px);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+.app-shell[data-device='mobile'] .mock-login-title small {
+display: block;
+  margin-top: 9px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: clamp(12.2px, 1.342vw, 18.3px);
+}
+
+.app-shell[data-device='mobile'] .mock-login-fields {
+position: absolute;
+  left: 10%;
+  top: 24.0%;
+  width: 80%;
+  display: grid;
+  gap: 13px;
+}
+
+.app-shell[data-device='mobile'] .mock-login-input {
+height: 42px;
+  border: 1px solid rgba(128, 63, 151, 0.76);
+  border-radius: 6px;
+  background: rgba(8, 6, 25, 0.56);
+  display: flex;
+  align-items: center;
+  padding: 0 13px;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .mock-login-input input {
+flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #e8e4e9;
+  background: transparent;
+  font: inherit;
+  font-size: 15.86px;
+  font-weight: 600;
+}
+
+.app-shell[data-device='mobile'] .mock-login-input input::placeholder {
+color: rgba(255, 255, 255, 0.58);
+}
+
+.app-shell[data-device='mobile'] .mock-eye-toggle,
+.app-shell[data-device='mobile'] .mock-forgot-button,
+.app-shell[data-device='mobile'] .mock-social-row button,
+.app-shell[data-device='mobile'] .mock-create-account,
+.app-shell[data-device='mobile'] .mock-guest-button {
+border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .mock-eye-toggle {
+color: rgba(255, 255, 255, 0.72);
+  font-size: 18.3px;
+  padding: 0;
+}
+
+.app-shell[data-device='mobile'] .mock-login-options {
+position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 41.3%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14.64px;
+}
+
+.app-shell[data-device='mobile'] .mock-check {
+width: 18px;
+  height: 18px;
+  border: 1px solid rgba(226, 164, 255, 0.45);
+  border-radius: 3px;
+  color: transparent;
+  background: rgba(142, 55, 186, 0.36);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.app-shell[data-device='mobile'] .mock-check.checked {
+color: #fff;
+  background: linear-gradient(180deg, #9b46d4, #7932b1);
+}
+
+.app-shell[data-device='mobile'] .mock-forgot-button {
+margin-left: auto;
+  color: #ffe067;
+  font: inherit;
+  font-size: 14.64px;
+}
+
+.app-shell[data-device='mobile'] .mock-gold-login {
+position: absolute;
+  left: 10%;
+  top: 49.1%;
+  width: 80%;
+  height: 9.2%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff8ef;
+  background: linear-gradient(180deg, #f3ce85, #c58b42 50%, #7a481d 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 230, 160, 0.42),
+    0 10px 22px rgba(0, 0, 0, 0.24);
+  letter-spacing: 0.08em;
+  font-weight: 900;
+  font-size: clamp(18.3px, 1.647vw, 23.18px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .mock-login-divider {
+position: absolute;
+  left: 24%;
+  right: 24%;
+  top: 60.5%;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.82);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14.64px;
+}
+
+.app-shell[data-device='mobile'] .mock-login-divider::before,
+.app-shell[data-device='mobile'] .mock-login-divider::after {
+content: "";
+  position: absolute;
+  top: 50%;
+  width: 39%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(214, 164, 74, 0.78));
+}
+
+.app-shell[data-device='mobile'] .mock-login-divider::before {
+left: 0;
+}
+
+.app-shell[data-device='mobile'] .mock-login-divider::after {
+right: 0;
+  transform: scaleX(-1);
+}
+
+.app-shell[data-device='mobile'] .mock-social-row {
+position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 66.6%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.app-shell[data-device='mobile'] .mock-social-row button {
+height: 36px;
+  padding: 0;
+}
+
+.app-shell[data-device='mobile'] .mock-social-row img,
+.app-shell[data-device='mobile'] .mock-create-account img,
+.app-shell[data-device='mobile'] .mock-guest-button img {
+display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.app-shell[data-device='mobile'] .mock-account-row {
+position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 4.4%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.app-shell[data-device='mobile'] .mock-create-account,
+.app-shell[data-device='mobile'] .mock-guest-button {
+height: 38px;
+  padding: 0;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card button:hover {
+filter: brightness(1.08);
+}
+
+/* Removed legacy viewport media block: @media (max-width: 900px) */
+
+/* Register mode additions */
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-title {
+  top: 5.2%;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-fields {
+  top: 19.0%;
+  gap: 10px;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-input {
+  height: 39px;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-options {
+  top: 42.6%;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-gold-login {
+  top: 50.2%;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-divider {
+  top: 60.9%;
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-social-row {
+  top: 66.8%;
+}
+
+.app-shell[data-device='mobile'] .mock-login-error,
+.app-shell[data-device='mobile'] .mock-login-success {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 45.6%;
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14.64px;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  z-index: 4;
+}
+
+.app-shell[data-device='mobile'] .mock-login-error {
+  color: #ffd6d6;
+}
+
+.app-shell[data-device='mobile'] .mock-login-success {
+  color: #d8ffd6;
+}
+
+.app-shell[data-device='mobile'] .mock-auth-switch-row {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 60.3%;
+  display: flex;
+  justify-content: center;
+  z-index: 4;
+}
+
+.app-shell[data-device='mobile'] .mock-auth-switch-text {
+  border: 0;
+  background: transparent;
+  color: #ffe067;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14.64px;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .mock-auth-switch-text:disabled,
+.app-shell[data-device='mobile'] .mock-create-account:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+
+/* Keyboard mode: Android/iOS landscape keyboards cover most of the viewport.
+   Keep the fixed game frame stable and compress only the auth panel while an input is focused. */
+@media (orientation: landscape) {
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-screen,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-screen {
+    overflow: visible;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-logo,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-logo {
+    opacity: 1;
+    pointer-events: none;
+    transform: translateY(-8px) scale(0.92);
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card {
+    right: 3.2%;
+    top: 2.0%;
+    width: 37.2%;
+    height: 78.0%;
+    transform: scale(0.82);
+    transform-origin: top right;
+    transition:
+      right 120ms ease,
+      top 120ms ease,
+      width 120ms ease,
+      height 120ms ease,
+      transform 120ms ease;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-title,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-title,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-title,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-title {
+    top: 3.4%;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-title span,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-title span {
+    font-size: clamp(32px, 2.95vw, 42px);
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-title small,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-title small {
+    margin-top: 4px;
+    font-size: clamp(13px, 1.35vw, 18px);
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-fields,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-fields,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-fields,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-fields {
+    top: 17.0%;
+    gap: 8px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-input,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-input,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-input,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-input {
+    height: 35px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-input input,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-input input {
+    font-size: 18px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-eye-toggle,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-eye-toggle {
+    font-size: 20px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-options,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-options,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-options,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-login-options {
+    top: 39.2%;
+    font-size: 15.5px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-check,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-check {
+    width: 15px;
+    height: 15px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-forgot-button,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-forgot-button {
+    font-size: 15.5px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-error,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-error,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-success,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-success {
+    top: 44.1%;
+    font-size: 14.5px;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-gold-login,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-gold-login,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-gold-login,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-register-mode .mock-gold-login {
+    top: 47.2%;
+    height: 8%;
+    min-height: 34px;
+    font-size: clamp(19px, 1.75vw, 23px);
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-auth-switch-row,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-auth-switch-row {
+    top: 57.2%;
+  }
+
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-auth-switch-text,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-auth-switch-text,
+  html.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-login-mode .mock-auth-switch-text,
+  body.keyboard-open .app-shell[data-device='mobile'] .mock-login-card.is-login-mode .mock-auth-switch-text {
+    font-size: 16px;
+  }
+}
+
+/* Mobile Login only: increase the Create Account switch text by 22%. */
+.app-shell[data-device='mobile'] .mock-login-card.is-login-mode .mock-auth-switch-text {
+  font-size: 17.86px;
+}
+
+/* Font patch: increase Login/Create Account text by 20%. */
+.app-shell[data-device='mobile'] .mock-login-title span {
+  font-size: clamp(35.14px, 3.587vw, 49.78px);
+}
+
+.app-shell[data-device='mobile'] .mock-login-title small {
+  font-size: clamp(14.64px, 1.61vw, 21.96px);
+}
+
+.app-shell[data-device='mobile'] .mock-login-input input {
+  font-size: 19.03px;
+}
+
+.app-shell[data-device='mobile'] .mock-eye-toggle {
+  font-size: 21.96px;
+}
+
+.app-shell[data-device='mobile'] .mock-login-options,
+.app-shell[data-device='mobile'] .mock-forgot-button,
+.app-shell[data-device='mobile'] .mock-login-divider,
+.app-shell[data-device='mobile'] .mock-login-error,
+.app-shell[data-device='mobile'] .mock-login-success,
+.app-shell[data-device='mobile'] .mock-auth-switch-text {
+  font-size: 17.57px;
+}
+
+.app-shell[data-device='mobile'] .mock-gold-login {
+  font-size: clamp(21.96px, 1.976vw, 27.82px);
+}
+
+.app-shell[data-device='mobile'] .mock-login-card.is-login-mode .mock-auth-switch-text {
+  font-size: 21.43px;
+}

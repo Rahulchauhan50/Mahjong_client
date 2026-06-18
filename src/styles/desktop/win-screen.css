@@ -1,0 +1,629 @@
+/* Desktop-only styles for win-screen. */
+/* Win/result screen styles. */
+
+/* Phase 2.10 — Win Screen */
+
+.app-shell[data-device='desktop'] .win-screen {
+position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: transparent;
+}
+
+.app-shell[data-device='desktop'] .win-screen-bg {
+position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.app-shell[data-device='desktop'] .win-screen-vignette {
+position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(255, 194, 65, 0.10), transparent 26%),
+    radial-gradient(circle at 8% 88%, rgba(255, 72, 176, 0.22), transparent 24%),
+    radial-gradient(circle at 93% 16%, rgba(255, 87, 188, 0.18), transparent 24%),
+    linear-gradient(180deg, rgba(3, 2, 18, 0.18), rgba(5, 2, 20, 0.10) 45%, rgba(5, 2, 20, 0.18));
+}
+
+.app-shell[data-device='desktop'] .win-header,
+.app-shell[data-device='desktop'] .win-content {
+position: relative;
+  z-index: 2;
+}
+
+.app-shell[data-device='desktop'] .win-header {
+position: absolute;
+  left: 27px;
+  top: 22px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  z-index: 5;
+}
+
+.app-shell[data-device='desktop'] .win-back-button {
+width: 72px;
+  height: 66px;
+  padding: 0;
+  border: 2px solid rgba(255, 195, 69, 0.78);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background:
+    linear-gradient(180deg, rgba(65, 39, 122, 0.98), rgba(26, 16, 62, 0.98));
+  box-shadow:
+    inset 0 0 0 2px rgba(150, 76, 232, 0.58),
+    inset 0 -10px 24px rgba(10, 3, 38, 0.42),
+    0 9px 16px rgba(0, 0, 0, 0.42);
+  font-size: 52px;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.app-shell[data-device='desktop'] .win-header h1 {
+margin: 0;
+  color: #fbf9ff;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: 0.045em;
+  font-weight: 950;
+  text-transform: uppercase;
+  text-shadow: 0 3px 9px rgba(0, 0, 0, 0.72);
+}
+
+.app-shell[data-device='desktop'] .win-content {
+height: 100%;
+  padding: 78px 96px 40px;
+  display: grid;
+  grid-template-rows: 124px 1fr 88px;
+  gap: 14px;
+}
+
+.app-shell[data-device='desktop'] .win-title {
+margin: 6px 0 0;
+  text-align: center;
+  color: #ffd75c;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 94px;
+  line-height: 0.95;
+  letter-spacing: 0.045em;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 #fff2a2,
+    0 5px 0 #aa4a05,
+    0 0 12px rgba(255, 211, 77, 0.95),
+    0 0 34px rgba(255, 157, 24, 0.62),
+    0 13px 26px rgba(0, 0, 0, 0.82);
+}
+
+.app-shell[data-device='desktop'] .win-layout {
+min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.76fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.app-shell[data-device='desktop'] .winner-panel,
+.app-shell[data-device='desktop'] .round-summary-panel {
+position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 2px solid rgba(255, 183, 56, 0.88);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 87% 7%, rgba(234, 63, 161, 0.22), transparent 22%),
+    radial-gradient(circle at 9% 18%, rgba(232, 72, 173, 0.10), transparent 25%),
+    linear-gradient(180deg, rgba(41, 12, 55, 0.78), rgba(6, 4, 23, 0.92));
+  box-shadow:
+    inset 0 0 0 2px rgba(94, 41, 132, 0.72),
+    inset 0 0 42px rgba(132, 49, 143, 0.22),
+    0 18px 34px rgba(0, 0, 0, 0.35);
+}
+
+.app-shell[data-device='desktop'] .winner-panel::before,
+.app-shell[data-device='desktop'] .round-summary-panel::before {
+content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(255, 202, 105, 0.30);
+  border-radius: 15px;
+  pointer-events: none;
+}
+
+.app-shell[data-device='desktop'] .winner-panel::after,
+.app-shell[data-device='desktop'] .round-summary-panel::after {
+content: "✿";
+  position: absolute;
+  right: 24px;
+  top: 14px;
+  color: rgba(255, 108, 188, 0.36);
+  font-size: 44px;
+  text-shadow: 28px 18px 0 rgba(255, 93, 181, 0.16), -36px 36px 0 rgba(255, 93, 181, 0.12);
+  pointer-events: none;
+}
+
+.app-shell[data-device='desktop'] .winner-main-row {
+position: relative;
+  z-index: 1;
+  height: 42%;
+  padding: 16px 46px 12px 52px;
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  align-items: center;
+  gap: 26px;
+  border-bottom: 1px solid rgba(255, 125, 179, 0.34);
+  background: linear-gradient(180deg, rgba(64, 16, 78, 0.38), rgba(23, 8, 45, 0.18));
+}
+
+.app-shell[data-device='desktop'] .winner-avatar {
+width: 146px;
+  height: 146px;
+  justify-self: center;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 4px solid rgba(255, 214, 89, 0.92);
+  box-shadow:
+    inset 0 0 0 3px rgba(92, 28, 106, 0.76),
+    0 0 0 4px rgba(49, 14, 64, 0.92),
+    0 8px 14px rgba(0, 0, 0, 0.58);
+}
+
+.app-shell[data-device='desktop'] .winner-info {
+min-width: 0;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 12px;
+}
+
+.app-shell[data-device='desktop'] .winner-name {
+color: #fff;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.62);
+}
+
+.app-shell[data-device='desktop'] .winner-score {
+color: #ffd24a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 70px;
+  line-height: 0.84;
+  font-weight: 900;
+  letter-spacing: 0.025em;
+  text-shadow:
+    0 2px 0 #fff0a7,
+    0 5px 0 #8c3903,
+    0 0 18px rgba(255, 190, 45, 0.74),
+    0 9px 18px rgba(0, 0, 0, 0.70);
+}
+
+.app-shell[data-device='desktop'] .winner-badge {
+width: 190px;
+  height: 42px;
+  border: 2px solid rgba(255, 233, 128, 0.88);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff9e9;
+  background: linear-gradient(180deg, #ffcf45 0%, #df9218 48%, #a95807 100%);
+  box-shadow:
+    inset 0 4px 10px rgba(255, 255, 255, 0.35),
+    inset 0 -4px 8px rgba(117, 47, 0, 0.40),
+    0 7px 13px rgba(0, 0, 0, 0.42);
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.42);
+}
+
+.app-shell[data-device='desktop'] .loser-list {
+position: relative;
+  z-index: 1;
+  height: 58%;
+  display: grid;
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.app-shell[data-device='desktop'] .loser-row {
+min-height: 0;
+  display: grid;
+  grid-template-columns: 104px 1fr 168px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 34px 8px 34px;
+  border-bottom: 1px solid rgba(255, 125, 179, 0.22);
+  background: linear-gradient(180deg, rgba(13, 7, 32, 0.30), rgba(9, 5, 27, 0.18));
+}
+
+.app-shell[data-device='desktop'] .loser-row:last-child {
+border-bottom: 0;
+}
+
+.app-shell[data-device='desktop'] .loser-avatar {
+width: 66px;
+  height: 66px;
+  justify-self: center;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 181, 45, 0.82);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.50);
+}
+
+.app-shell[data-device='desktop'] .loser-name {
+color: #fff;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.01em;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.58);
+}
+
+.app-shell[data-device='desktop'] .loser-score {
+justify-self: end;
+  color: #ff5665;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.035em;
+  text-shadow: 0 0 10px rgba(255, 60, 82, 0.22);
+}
+
+.app-shell[data-device='desktop'] .summary-panel-content {
+position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 28px 34px 24px;
+  display: grid;
+  grid-template-rows: 46px 1px minmax(0, 1fr) 28px 56px;
+  gap: 13px;
+}
+
+.app-shell[data-device='desktop'] .summary-panel-content h3 {
+margin: 0;
+  align-self: center;
+  color: #ffd66c;
+  text-align: center;
+  font-size: 31px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 rgba(88, 39, 3, 0.72),
+    0 0 15px rgba(255, 218, 118, 0.35),
+    0 4px 10px rgba(0, 0, 0, 0.62);
+}
+
+.app-shell[data-device='desktop'] .summary-panel-content h3 span {
+color: rgba(255, 118, 186, 0.58);
+  font-size: 25px;
+  vertical-align: 3px;
+}
+
+.app-shell[data-device='desktop'] .summary-divider,
+.app-shell[data-device='desktop'] .summary-footer-divider {
+position: relative;
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 188, 91, 0.48), transparent);
+}
+
+.app-shell[data-device='desktop'] .summary-rows {
+display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  gap: 0;
+  min-height: 0;
+}
+
+.app-shell[data-device='desktop'] .summary-row {
+display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 22px;
+  align-items: center;
+  min-height: 0;
+  color: #fff;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.app-shell[data-device='desktop'] .summary-row span {
+color: rgba(255, 255, 255, 0.96);
+  white-space: nowrap;
+}
+
+.app-shell[data-device='desktop'] .summary-row strong {
+color: #fff;
+  font-weight: 950;
+  white-space: nowrap;
+  text-shadow: 0 3px 7px rgba(0, 0, 0, 0.48);
+}
+
+.app-shell[data-device='desktop'] .summary-footer-divider {
+align-self: center;
+}
+
+.app-shell[data-device='desktop'] .summary-footer-divider span {
+position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  translate: -50% -50%;
+  text-align: center;
+  color: rgba(255, 139, 190, 0.62);
+  background: #0a071e;
+  font-size: 22px;
+}
+
+.app-shell[data-device='desktop'] .summary-total {
+display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
+  color: #ffd84e;
+  font-size: 30px;
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 205, 62, 0.32);
+}
+
+.app-shell[data-device='desktop'] .summary-total-value {
+display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #ffd84e;
+  white-space: nowrap;
+}
+
+.app-shell[data-device='desktop'] .summary-coin {
+width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 241, 122, 0.95);
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  color: #ffe971;
+  background: radial-gradient(circle at 35% 28%, #fff284 0 12%, #ffc73c 30%, #eb8d04 68%, #a85204 100%);
+  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.46), 0 5px 10px rgba(0, 0, 0, 0.44);
+  font-size: 26px;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(130, 59, 0, 0.65);
+}
+
+.app-shell[data-device='desktop'] .win-actions {
+display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 38px;
+  align-items: center;
+  padding: 0 132px;
+}
+
+.app-shell[data-device='desktop'] .win-image-button {
+height: 78px;
+  border: 0;
+  border-radius: 20px;
+  color: #fff;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: center;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.045em;
+  text-shadow:
+    0 2px 0 rgba(25, 13, 35, 0.54),
+    0 4px 6px rgba(0, 0, 0, 0.58);
+  cursor: pointer;
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+.app-shell[data-device='desktop'] .win-image-button:hover {
+transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.app-shell[data-device='desktop'] .win-image-button.lobby {
+background-image: url("/assets/win-screen/B1.png");
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.app-shell[data-device='desktop'] .win-image-button.again {
+width: 377px;
+  height: 81px;
+  background-image: url("/assets/win-screen/B2.png");
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* Removed legacy viewport media block: @media (min-width: 821px) and (max-width: 1180px) */
+
+/* Removed legacy viewport media block: @media (min-width: 821px) and (max-width: 920px) */
+
+.app-shell[data-device='desktop'] .lui-4bf92a4e {
+width: 283px;
+  height: 59px;
+}
+
+.app-shell[data-device='desktop'] .lui-1ee70624 {
+width: 94px;
+  height: 607px;
+}
+
+.app-shell[data-device='desktop'] .lui-22d8cd14 {
+transform: translate(28px, 0px);
+}
+
+.app-shell[data-device='desktop'] .lui-8fe287f1 {
+transform: translate(-16px, -43px);
+  width: 993px;
+  height: 523px;
+}
+
+.app-shell[data-device='desktop'] .lui-9c5d8fac {
+width: 993px;
+  height: 523px;
+  transform: translate(-15px, -10px);
+}
+
+.app-shell[data-device='desktop'] .lui-8a3a1b0b {
+transform: translate(88px, 40px);
+  width: 1099px;
+  height: 654px;
+}
+
+.app-shell[data-device='desktop'] .lui-9e5d4e50 {
+transform: translate(4px, 26px);
+  width: 133px;
+  height: 134px;
+}
+
+.app-shell[data-device='desktop'] .lui-03745e18 {
+width: 161px;
+  height: 67px;
+  transform: translate(7px, -53px);
+}
+
+.app-shell[data-device='desktop'] .lui-f67b9c4c {
+width: 1117px;
+  height: 713px;
+}
+
+.app-shell[data-device='desktop'] .lui-9d1b1028 {
+transform: translate(-50px, -37px);
+  width: 126px;
+  height: 120px;
+}
+
+.app-shell[data-device='desktop'] .lui-5da0f8d4 {
+width: 70px;
+  height: 69px;
+  transform: translate(-11px, 48px);
+}
+
+.app-shell[data-device='desktop'] .lui-5cd38973 {
+width: 540px;
+  height: 129px;
+}
+
+.app-shell[data-device='desktop'] .lui-7be1903b {
+transform: translate(-1px, 6px);
+}
+
+.app-shell[data-device='desktop'] .lui-1cecbb50 {
+width: 578px;
+  height: 396px;
+  transform: translate(-40px, -49px);
+}
+
+.app-shell[data-device='desktop'] .lui-44644da3 {
+transform: translate(37px, -46px);
+}
+
+.app-shell[data-device='desktop'] .lui-66b0533b {
+transform: translate(-37px, -32px);
+}
+
+.app-shell[data-device='desktop'] .lui-6f005bc4 {
+transform: translate(-18px, -72px);
+}
+
+.app-shell[data-device='desktop'] .lui-a5f4b0c8 {
+transform: translate(-17px, -12px);
+}
+
+.app-shell[data-device='desktop'] .lui-f507c988 {
+transform: translate(-37px, -32px);
+}
+
+.app-shell[data-device='desktop'] .lui-977f0b7b {
+transform: translate(200px, 94px);
+}
+
+.app-shell[data-device='desktop'] .lui-51dd6f13 {
+width: 540px;
+  height: 129px;
+  transform: translate(-8px, -104px);
+}
+
+.app-shell[data-device='desktop'] .lui-3a0dc28c {
+transform: translate(-154px, -141px);
+}
+
+.app-shell[data-device='desktop'] .lui-37aeb3e4 {
+transform: translate(-169px, -144px);
+}
+
+.app-shell[data-device='desktop'] .lui-1e8f528c {
+transform: translate(-148px, -25px);
+  width: 407px;
+  height: 152px;
+}
+
+.app-shell[data-device='desktop'] .lui-d30322bd {
+width: 126px;
+  height: 120px;
+  transform: translate(-55px, -69px);
+}
+
+.app-shell[data-device='desktop'] .lui-ce8c2674 {
+transform: translate(-124px, -50px);
+  width: 544px;
+  height: 74px;
+}
+
+.app-shell[data-device='desktop'] .lui-7d0f6cf8 {
+transform: translate(78px, -1px);
+}
+
+.app-shell[data-device='desktop'] .lui-752b6e7c {
+transform: translate(2px, -15px);
+  width: 63px;
+  height: 53px;
+}
+
+.app-shell[data-device='desktop'] .lui-df015ad4 {
+transform: translate(141px, -130px);
+  width: 597px;
+  height: 148px;
+}
+
+.app-shell[data-device='desktop'] .lui-7dce5c5c {
+transform: translate(-103px, -9px);
+  width: 599px;
+  height: 348px;
+}
+
+.app-shell[data-device='desktop'] .lui-532de35b {
+transform: translate(4px, -10px);
+}
+
+.app-shell[data-device='desktop'] .lui-055d6cd4 {
+transform: translate(3px, 7px);
+}
+
+.app-shell[data-device='desktop'] .lui-0882d630 {
+transform: translate(21px, 3px);
+}
+
+.app-shell[data-device='desktop'] .lui-fe2c13f8 {
+transform: translate(1px, -1px);
+}

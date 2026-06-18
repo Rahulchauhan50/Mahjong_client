@@ -1,0 +1,42 @@
+/* Live UI Editor generated overrides. Keep this file imported last. */
+
+/* neutralize old Live UI Editor overrides that were breaking the layout */
+.main-menu-reference .lui-c82da83c,
+.main-menu-reference .lui-ff1efabc,
+.main-menu-reference .lui-fca7e444,
+.main-menu-reference .lui-054c0a60,
+.main-menu-reference .lui-490b5348,
+.main-menu-reference .lui-503e76d8,
+.main-menu-reference .lui-51b27880,
+.main-menu-reference .lui-e08bf734,
+.main-menu-reference .lui-dc601d00 {
+  transform: none !important;
+}
+
+
+
+
+/* Live UI overrides that were previously appended in global.css */
+.lui-1e673fb0 {
+transform: translate(23px, 0px);
+}
+
+.lui-16b816a0 {
+transform: translate(-19px, 0px);
+}
+
+.lui-d210bc28 {
+transform: translate(-18px, 0px);
+}
+
+.lui-8ff2b4fc {
+transform: translate(-16px, -1px);
+}
+
+.lui-5c5e0744 {
+transform: translate(23px, 0px);
+}
+
+.lui-a7479fb4 {
+transform: translate(26px, 1px);
+}

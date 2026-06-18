@@ -1,0 +1,21 @@
+/* Mobile-only platform behavior.
+   Do not place screen positions here; edit the per-screen .mobile.css files instead. */
+html[data-device='mobile'],
+html[data-device='mobile'] body,
+html[data-device='mobile'] #root {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+html[data-device='mobile'] body {
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+html[data-device='mobile'] button,
+html[data-device='mobile'] input,
+html[data-device='mobile'] select {
+  -webkit-tap-highlight-color: transparent;
+}

@@ -1,0 +1,165 @@
+.daily-login-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 0, 18, 0.46);
+  backdrop-filter: blur(2px);
+}
+
+.daily-login-panel {
+  position: relative;
+  width: 1120px;
+  height: 631px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  filter: drop-shadow(0 24px 42px rgba(0, 0, 0, 0.42));
+}
+
+.daily-login-close {
+  position: absolute;
+  top: 14px;
+  right: 22px;
+  width: 62px;
+  height: 62px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+
+.daily-login-streak {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+  height: 50px;
+  padding: 0 28px;
+  border: 1px solid rgba(179, 86, 207, 0.45);
+  border-radius: 11px;
+  background: rgba(46, 14, 75, 0.56);
+  color: rgba(255, 236, 255, 0.88);
+  font-size: 21px;
+  font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.daily-login-streak img {
+  width: 35px;
+  height: 39px;
+  object-fit: contain;
+}
+
+.daily-login-streak strong {
+  color: #ffc677;
+  font-weight: 900;
+}
+
+.daily-login-cards {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  bottom: 46px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.daily-login-card {
+  position: relative;
+  height: 330px;
+  border-radius: 16px;
+  overflow: visible;
+}
+
+.daily-login-card-art {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  border-radius: 16px;
+}
+
+.daily-login-card.is-active {
+  filter: drop-shadow(0 0 10px rgba(255, 92, 183, 0.95)) drop-shadow(0 0 20px rgba(255, 113, 190, 0.65));
+}
+
+.daily-login-claimed {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #42f576;
+  font-size: 16px;
+  font-weight: 900;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.daily-login-claimed span {
+  font-size: 27px;
+  line-height: 1;
+}
+
+.daily-login-claim {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: 107px;
+  height: 46px;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 900;
+  text-shadow: 0 2px 8px rgba(119, 0, 77, 0.8);
+  cursor: pointer;
+}
+
+.daily-login-lock {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  width: 27px;
+  height: 35px;
+  transform: translateX(-50%);
+  object-fit: contain;
+  opacity: 0.88;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.65));
+}
+
+.square-top-button img[src$='/daily-login/gift.png'] {
+  width: 34px;
+  height: 38px;
+  object-fit: contain;
+}
+
+
+/* Keep the Daily Login gift visible even when generic topbar square buttons are hidden. */
+.app-shell[data-device='desktop'] .main-menu-reference .topbar-actions .square-top-button.daily-login-menu-button {
+  display: grid !important;
+  place-items: center;
+}
+
+.app-shell[data-device='desktop'] .main-menu-reference .topbar-actions .daily-login-menu-button img {
+  width: 30px !important;
+  height: 30px !important;
+  object-fit: contain;
+}

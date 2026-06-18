@@ -1,0 +1,3617 @@
+/* Mobile-only styles for main-menu. Edit this file without touching desktop. */
+/* Main menu and room-select/dashboard styles. */
+
+/* Phase 2.1 — Main Menu UI */
+
+.app-shell[data-device='mobile'] .main-menu-ui {
+height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 204px 1fr;
+  overflow: hidden;
+  color: #fff8ff;
+  background: transparent;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.app-shell[data-device='mobile'] .sakura-sidebar {
+min-width: 0;
+  padding: 16px 14px 14px;
+  background: linear-gradient(180deg, #0a061a 0%, #080518 58%, #050314 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .sakura-logo {
+width: 168px;
+  height: auto;
+  object-fit: contain;
+  align-self: flex-start;
+  filter: drop-shadow(0 8px 22px rgba(255, 52, 148, 0.18));
+}
+
+.app-shell[data-device='mobile'] .side-menu-list {
+display: grid;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.app-shell[data-device='mobile'] .side-menu-button {
+position: relative;
+  height: 43px;
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  padding: 0 10px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: rgba(255, 255, 255, 0.86);
+  background: transparent;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .side-menu-button.active {
+background: linear-gradient(90deg, rgba(178, 52, 185, 0.82), rgba(80, 26, 115, 0.64));
+  box-shadow: inset 0 0 0 1px rgba(255, 169, 230, 0.28), 0 8px 20px rgba(176, 42, 202, 0.18);
+}
+
+.app-shell[data-device='mobile'] .side-menu-button:hover {
+background-color: rgba(255, 255, 255, 0.07);
+}
+
+.app-shell[data-device='mobile'] .side-menu-button img {
+width: 23px;
+  height: 23px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.app-shell[data-device='mobile'] .side-menu-button i {
+margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #ff465f;
+  box-shadow: 0 0 12px rgba(255, 70, 95, 0.9);
+}
+
+.app-shell[data-device='mobile'] .pass-card {
+min-height: 174px;
+  margin-top: auto;
+  border-radius: 8px;
+  padding: 18px 14px 14px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 74, 179, 0.22);
+  box-shadow: inset 0 -40px 80px rgba(10, 3, 27, 0.72);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.app-shell[data-device='mobile'] .pass-text strong {
+display: block;
+  font-size: 22px;
+  line-height: 1.02;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.app-shell[data-device='mobile'] .pass-text span {
+display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: #ffe7ff;
+}
+
+.app-shell[data-device='mobile'] .pass-progress {
+height: 10px;
+  margin-top: 11px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 3, 35, 0.86);
+}
+
+.app-shell[data-device='mobile'] .pass-progress span {
+display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7d35ff, #ff5ebd);
+}
+
+.app-shell[data-device='mobile'] .pass-card button,
+.app-shell[data-device='mobile'] .fair-play button {
+border: 0;
+}
+
+.app-shell[data-device='mobile'] .pass-card button {
+margin-top: 12px;
+  height: 36px;
+  border-radius: 7px;
+  color: #fff;
+  background: linear-gradient(180deg, #ba42bd, #542089);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .fair-play {
+min-height: 70px;
+  padding: 10px 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.app-shell[data-device='mobile'] .fair-play span {
+width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-shell[data-device='mobile'] .fair-play strong,
+.app-shell[data-device='mobile'] .fair-play small {
+display: block;
+}
+
+.app-shell[data-device='mobile'] .fair-play strong {
+font-size: 13px;
+}
+
+.app-shell[data-device='mobile'] .fair-play small {
+margin-top: 4px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.app-shell[data-device='mobile'] .main-menu-content {
+min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+.app-shell[data-device='mobile'] .sakura-topbar {
+height: 70px;
+  padding: 0 14px 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(6, 4, 22, 0.72);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.app-shell[data-device='mobile'] .top-tabs {
+height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.app-shell[data-device='mobile'] .top-tabs button {
+position: relative;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .top-tabs button.active {
+color: #fff;
+  font-weight: 800;
+}
+
+.app-shell[data-device='mobile'] .top-tabs button.active::after {
+content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 11px;
+  width: 45px;
+  height: 3px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: #ff4fa8;
+  box-shadow: 0 0 16px rgba(255, 79, 168, 0.85);
+}
+
+.app-shell[data-device='mobile'] .topbar-actions {
+display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-shell[data-device='mobile'] .currency-pill,
+.app-shell[data-device='mobile'] .square-top-button,
+.app-shell[data-device='mobile'] .profile-pill {
+height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(16, 9, 38, 0.78);
+  color: #fff;
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.03);
+}
+
+.app-shell[data-device='mobile'] .currency-pill {
+min-width: 128px;
+  border-radius: 10px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.app-shell[data-device='mobile'] .currency-pill img {
+width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .currency-pill button {
+margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .square-top-button {
+position: relative;
+  width: 50px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .square-top-button img {
+width: 27px;
+  height: 27px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .square-top-button span {
+position: absolute;
+  top: 5px;
+  right: 7px;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #f04e80;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.app-shell[data-device='mobile'] .profile-pill {
+width: 92px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .profile-pill img {
+width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 999px;
+  transform: translateY(-2px);
+}
+
+.app-shell[data-device='mobile'] .main-dashboard {
+flex: 1;
+  min-height: 0;
+  padding: 28px 16px 0 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 212px;
+  gap: 18px;
+}
+
+.app-shell[data-device='mobile'] .room-section {
+min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .hero-row {
+height: 82px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.app-shell[data-device='mobile'] .hero-row h1 {
+margin: 4px 0 4px;
+  font-size: 35px;
+  line-height: 1;
+  letter-spacing: 0.13em;
+  color: #fff7ea;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.app-shell[data-device='mobile'] .hero-row p {
+margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 15px;
+}
+
+.app-shell[data-device='mobile'] .help-actions {
+margin-top: 1px;
+  display: flex;
+  gap: 10px;
+}
+
+.app-shell[data-device='mobile'] .help-actions button {
+height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  padding: 0 13px;
+  color: #fff;
+  background: rgba(20, 9, 44, 0.82);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .room-filters {
+height: 45px;
+  display: grid;
+  grid-template-columns: 1.2fr repeat(4, 1fr);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(10, 6, 27, 0.7);
+}
+
+.app-shell[data-device='mobile'] .room-filters button {
+border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(17, 8, 38, 0.68);
+  color: rgba(255, 255, 255, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .room-filters button:last-child {
+border-right: 0;
+}
+
+.app-shell[data-device='mobile'] .room-filters button.active {
+color: #fff;
+  background: linear-gradient(90deg, rgba(170, 51, 163, 0.84), rgba(98, 30, 120, 0.76));
+  box-shadow: inset 0 0 0 1px rgba(255, 124, 210, 0.3);
+}
+
+.app-shell[data-device='mobile'] .room-filters img {
+width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .sakura-room-grid {
+display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .sakura-room-card {
+position: relative;
+  min-height: 318px;
+  padding: 17px 16px 14px;
+  border-radius: 9px;
+  overflow: hidden;
+  background-size: 100% 100%;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
+}
+
+.app-shell[data-device='mobile'] .room-card-header {
+position: absolute;
+  top: 15px;
+  left: 10px;
+  right: 10px;
+  text-align: center;
+  z-index: 2;
+}
+
+.app-shell[data-device='mobile'] .room-card-header h3 {
+margin: 0;
+  color: #fff0c8;
+  font-size: 15px;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px #000;
+}
+
+.app-shell[data-device='mobile'] .room-card-header p {
+margin: 5px 0 0;
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .room-character {
+position: absolute;
+  top: 60px;
+  left: 50%;
+  width: 148px;
+  height: 148px;
+  object-fit: contain;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.36));
+}
+
+.app-shell[data-device='mobile'] .room-stat-list {
+position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 7px;
+  padding-top: 156px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+}
+
+.app-shell[data-device='mobile'] .room-stat-list div {
+display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.app-shell[data-device='mobile'] .room-stat-list strong {
+display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #fff2c4;
+  font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .room-stat-list img {
+width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .image-button {
+position: relative;
+  z-index: 2;
+  border: 0;
+  color: #fff;
+  background-color: transparent;
+  background-size: 100% 100%;
+  background-position: center;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.app-shell[data-device='mobile'] .room-play-button {
+width: 100%;
+  height: 40px;
+  margin-top: 10px;
+}
+
+.app-shell[data-device='mobile'] .bottom-room-actions {
+display: grid;
+  grid-template-columns: .95fr 1.1fr;
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .small-action-panel {
+min-height: 94px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center right;
+  overflow: hidden;
+  padding: 17px 20px;
+  box-shadow: inset 0 0 38px rgba(0, 0, 0, 0.28);
+}
+
+.app-shell[data-device='mobile'] .small-action-panel h3 {
+margin: 0;
+  color: #fff7ef;
+  font-size: 17px;
+  letter-spacing: 0.07em;
+}
+
+.app-shell[data-device='mobile'] .small-action-panel p {
+margin: 7px 0 12px;
+  color: rgba(255, 255, 255, 0.67);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .small-action-panel button {
+height: 35px;
+  min-width: 142px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: linear-gradient(180deg, #7131bd, #3b1c7c);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .room-code label {
+display: flex;
+  width: min(100%, 260px);
+}
+
+.app-shell[data-device='mobile'] .room-code input {
+min-width: 0;
+  height: 36px;
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
+  padding: 0 13px;
+  color: #fff;
+  background: rgba(2, 2, 13, 0.55);
+  outline: 0;
+}
+
+.app-shell[data-device='mobile'] .room-code label button {
+min-width: 74px;
+  border-radius: 0 6px 6px 0;
+}
+
+.app-shell[data-device='mobile'] .right-panel {
+min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 260px) minmax(0, 1fr);
+  gap: 13px;
+}
+
+.app-shell[data-device='mobile'] .friends-panel,
+.app-shell[data-device='mobile'] .cup-panel {
+border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  background: rgba(7, 4, 24, 0.82);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.app-shell[data-device='mobile'] .friends-panel {
+padding: 17px 16px 11px;
+}
+
+.app-shell[data-device='mobile'] .friends-panel h2 {
+margin: 0 0 12px;
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.app-shell[data-device='mobile'] .friend-list {
+display: grid;
+  gap: 9px;
+}
+
+.app-shell[data-device='mobile'] .friend-row {
+display: grid;
+  grid-template-columns: 35px 1fr 52px;
+  align-items: center;
+  gap: 8px;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .friend-row img {
+width: 35px;
+  height: 35px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.app-shell[data-device='mobile'] .friend-row strong,
+.app-shell[data-device='mobile'] .friend-row span {
+display: block;
+}
+
+.app-shell[data-device='mobile'] .friend-row strong {
+font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .friend-row span {
+margin-top: 1px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
+}
+
+.app-shell[data-device='mobile'] .friend-row button {
+height: 27px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  background: linear-gradient(180deg, #7939c3, #48228f);
+  font-size: 9px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .view-all {
+width: 100%;
+  margin-top: 11px;
+  border: 0;
+  color: rgba(255, 255, 255, 0.82);
+  background: transparent;
+  text-align: left;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .cup-panel {
+position: relative;
+  display: grid;
+  place-items: stretch;
+}
+
+.app-shell[data-device='mobile'] .cup-panel > img {
+width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-shell[data-device='mobile'] .cup-copy {
+position: absolute;
+  inset: 0;
+  padding: 18px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(18, 4, 37, 0.08) 10%, rgba(18, 4, 37, 0.56) 56%, rgba(18, 4, 37, 0.92) 100%);
+}
+
+.app-shell[data-device='mobile'] .cup-copy h2 {
+position: absolute;
+  top: 16px;
+  margin: 0;
+  color: #ffe2df;
+  font-size: 23px;
+  letter-spacing: 0.08em;
+}
+
+.app-shell[data-device='mobile'] .cup-copy p,
+.app-shell[data-device='mobile'] .cup-copy small {
+margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .cup-copy p {
+font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .cup-copy strong {
+margin: 4px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffd879;
+  font-size: 24px;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .cup-copy strong img {
+width: 22px;
+  height: 22px;
+}
+
+.app-shell[data-device='mobile'] .cup-copy small {
+font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .cup-copy button {
+width: 100%;
+  height: 40px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff5bb2, #9e2b77);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .sakura-footer {
+height: 54px;
+  margin: 12px 14px 11px 26px;
+  padding: 0 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 54px;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(4, 3, 18, 0.72);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.app-shell[data-device='mobile'] .sakura-footer span:last-child {
+margin-left: auto;
+}
+
+/* Removed legacy viewport media block: @media (max-width: 1100px) */
+
+/* Profile/Main Menu precision pass — fixes requested after Phase 2.6 */
+
+.app-shell[data-device='mobile'] .pass-card-clean {
+padding: 0 13px 12px;
+  justify-content: flex-end;
+}
+
+.app-shell[data-device='mobile'] .pass-card-clean .pass-progress {
+margin-top: 0;
+}
+
+.app-shell[data-device='mobile'] .cup-copy-clean {
+padding-top: 0;
+}
+
+.app-shell[data-device='mobile'] .profile-screen-ui {
+grid-template-columns: 252px minmax(0, 1fr);
+}
+
+.app-shell[data-device='mobile'] .profile-sidebar {
+padding: 8px 14px 0 14px;
+}
+
+.app-shell[data-device='mobile'] .profile-tabs {
+margin-top: 40px;
+  gap: 12px;
+}
+
+.app-shell[data-device='mobile'] .profile-tabs button {
+height: 56px;
+  border-radius: 7px;
+  padding-left: 14px;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.app-shell[data-device='mobile'] .profile-content {
+grid-template-rows: 150px 270px 1fr;
+}
+
+.app-shell[data-device='mobile'] .profile-header {
+padding: 16px 12px 0 32px;
+  align-items: flex-start;
+}
+
+.app-shell[data-device='mobile'] .profile-identity {
+gap: 20px;
+}
+
+.app-shell[data-device='mobile'] .profile-avatar {
+width: 106px;
+  height: 106px;
+}
+
+.app-shell[data-device='mobile'] .profile-name-block h1 {
+margin: 8px 0 10px;
+  font-size: 34px;
+}
+
+.app-shell[data-device='mobile'] .profile-stat-panel {
+width: 330px;
+  height: 88px;
+  margin-top: 23px;
+}
+
+.app-shell[data-device='mobile'] .profile-section h2 {
+margin: 14px 0 0 18px;
+  font-size: 17px;
+  letter-spacing: 0.09em;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-grid {
+padding: 18px 29px 31px 24px;
+  gap: 38px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card {
+min-height: 178px;
+  padding-bottom: 15px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card h3 {
+margin-bottom: 13px;
+  font-size: 20px;
+}
+
+.app-shell[data-device='mobile'] .profile-achievement-card p {
+margin-bottom: 36px;
+  font-size: 13px;
+}
+
+.app-shell[data-device='mobile'] .tile-section h2 {
+margin-top: 14px;
+}
+
+.app-shell[data-device='mobile'] .favorite-tile-row {
+padding: 30px 77px 22px 40px;
+  align-items: center;
+}
+
+.app-shell[data-device='mobile'] .favorite-tiles {
+width: 495px;
+  max-width: 58%;
+}
+
+.app-shell[data-device='mobile'] .profile-change-button {
+width: 175px;
+  height: 58px;
+  font-size: 23px;
+}
+
+/* UI cleanup patch — remove requested navigation/filter strips */
+
+.app-shell[data-device='mobile'] .main-menu-ui-clean {
+grid-template-columns: 1fr;
+}
+
+.app-shell[data-device='mobile'] .main-menu-ui-clean .main-menu-content {
+width: 100%;
+}
+
+.app-shell[data-device='mobile'] .sakura-topbar-clean {
+justify-content: flex-end;
+  padding-left: 18px;
+}
+
+.app-shell[data-device='mobile'] .hero-row-clean {
+height: 58px;
+  align-items: center;
+}
+
+.app-shell[data-device='mobile'] .hero-row-clean h1 {
+margin: 0;
+}
+
+.app-shell[data-device='mobile'] .main-menu-ui-clean .main-dashboard {
+padding-left: 22px;
+}
+
+/* Main Menu reference rebuild */
+
+.app-shell[data-device='mobile'] .main-menu-reference {
+grid-template-columns: 184px 1fr;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #030316;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-sidebar {
+padding: 28px 20px 20px;
+  background: linear-gradient(180deg, #080520 0%, #050318 62%, #050214 100%);
+  border-right: 1px solid rgba(128, 84, 202, 0.24);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-brand {
+flex: 1;
+  min-height: 325px;
+  display: grid;
+  grid-template-rows: 64px 1fr;
+  justify-items: center;
+  align-items: start;
+  color: #fff7e9;
+}
+
+.app-shell[data-device='mobile'] .sakura-brand-flower {
+width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  color: #ffd9e8;
+  font-size: 57px;
+  line-height: 1;
+  text-shadow: 0 0 18px rgba(255, 86, 170, 0.6);
+}
+
+.app-shell[data-device='mobile'] .sakura-brand-text {
+writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  letter-spacing: .11em;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, .8);
+}
+
+.app-shell[data-device='mobile'] .sakura-brand-text strong {
+font-size: 42px;
+  font-weight: 500;
+  line-height: .9;
+}
+
+.app-shell[data-device='mobile'] .sakura-brand-text span {
+color: #f5d88d;
+  font-size: 22px;
+  letter-spacing: .22em;
+}
+
+.app-shell[data-device='mobile'] .sakura-brand-text small {
+color: #ff5c9b;
+  font-size: 14px;
+  letter-spacing: .28em;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-pass-card {
+position: relative;
+  height: 178px;
+  border: 1px solid rgba(255, 93, 178, .7);
+  border-radius: 9px;
+  overflow: hidden;
+  padding: 14px 12px 10px;
+  background-size: 126% auto;
+  background-position: center top;
+  box-shadow:
+    inset 0 -58px 70px rgba(23, 3, 41, .94),
+    0 14px 32px rgba(0, 0, 0, .38);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-pass-card::before {
+content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(5, 2, 19, .74), rgba(5, 2, 19, .08) 58%, rgba(5, 2, 19, .7));
+  pointer-events: none;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-pass-card > * {
+position: relative;
+  z-index: 1;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .pass-copy strong {
+display: block;
+  color: #fff5d8;
+  font-size: 18px;
+  line-height: .92;
+  letter-spacing: .07em;
+  text-shadow: 0 3px 8px #000;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .pass-copy span {
+display: block;
+  margin-top: 4px;
+  color: #ffddea;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .pass-level {
+margin-top: 52px;
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .pass-progress {
+height: 9px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: rgba(24, 3, 35, .9);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  overflow: hidden;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .pass-progress span {
+display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7a37ff, #ff4dab);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-pass-card button {
+width: 100%;
+  height: 34px;
+  margin-top: 9px;
+  border: 1px solid rgba(255, 157, 231, .4);
+  border-radius: 6px;
+  color: #fff;
+  background: linear-gradient(180deg, #b43cc0 0%, #69228e 100%);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .main-menu-content {
+position: relative;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 60% 0%, rgba(255, 72, 170, .16), transparent 32%),
+    linear-gradient(180deg, #07051b 0%, #050317 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-topbar {
+height: 64px;
+  flex: 0 0 64px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: rgba(2, 3, 18, .82);
+  border-bottom: 1px solid rgba(119, 83, 183, .22);
+  backdrop-filter: blur(4px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions {
+display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .currency-pill,
+.app-shell[data-device='mobile'] .main-menu-reference .square-top-button,
+.app-shell[data-device='mobile'] .main-menu-reference .profile-pill {
+height: 38px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(10, 7, 31, .86);
+  color: #fff;
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, .03), 0 8px 18px rgba(0, 0, 0, .22);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .currency-pill {
+min-width: 120px;
+  padding: 0 12px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .currency-pill img {
+width: 23px;
+  height: 23px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .square-top-button {
+position: relative;
+  width: 45px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .square-top-button img {
+width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .square-top-button.has-badge span {
+position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #f64b75;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .profile-pill {
+width: 72px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .profile-pill img {
+width: 35px;
+  height: 35px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .main-dashboard {
+flex: 1;
+  min-height: 0;
+  padding: 20px 24px 0 30px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 172px;
+  gap: 22px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-section {
+min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .hero-banner {
+height: 137px;
+  flex: 0 0 137px;
+  border-radius: 2px;
+  background-size: 100% auto;
+  background-position: center 44%;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 -32px 56px rgba(4, 3, 18, .16);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-grid {
+display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+position: relative;
+  height: 192px;
+  min-height: 0;
+  padding: 10px 12px 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-size: 100% 100%;
+  background-position: center;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, .32);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header {
+position: absolute;
+  top: 10px;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
+  text-align: center;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header h3 {
+margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: .03em;
+  color: #fff1bd;
+  text-shadow: 0 2px 7px #000;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header p {
+margin: 1px 0 0;
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-shadow: 0 2px 7px #000;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+position: relative;
+  z-index: 2;
+  padding-top: 114px;
+  display: grid;
+  gap: 4px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 9px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div {
+display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: rgba(255, 255, 255, .84);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list strong {
+display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff1c1;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list img {
+width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .image-button {
+position: relative;
+  z-index: 2;
+  border: 0;
+  color: #fff;
+  background-color: transparent;
+  background-size: 100% 100%;
+  background-position: center;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 1000;
+  letter-spacing: .03em;
+  cursor: pointer;
+  text-shadow: 0 2px 7px rgba(0, 0, 0, .5);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-play-button {
+height: 28px;
+  width: 100%;
+  margin-top: 7px;
+  font-size: 13px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .bottom-room-actions {
+display: grid;
+  grid-template-columns: .95fr 1.1fr;
+  gap: 14px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel {
+min-height: 89px;
+  height: 89px;
+  border: 1px solid rgba(140, 91, 238, .6);
+  border-radius: 8px;
+  padding: 13px 16px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center right;
+  box-shadow: inset 0 0 34px rgba(0, 0, 0, .32);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel h3 {
+margin: 0;
+  color: #fff7f7;
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: .04em;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel p {
+margin: 5px 0 10px;
+  color: rgba(255, 255, 255, .72);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel button {
+height: 30px;
+  min-width: 118px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: linear-gradient(180deg, #7330bb, #3a1675);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label {
+display: flex;
+  width: min(100%, 255px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code input {
+min-width: 0;
+  height: 31px;
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
+  padding: 0 12px;
+  color: #fff;
+  background: rgba(2, 2, 13, .64);
+  outline: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label button {
+min-width: 86px;
+  height: 31px;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .right-panel {
+min-width: 0;
+  display: grid;
+  grid-template-rows: 258px 1fr;
+  gap: 12px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel,
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel {
+border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 8px;
+  background: rgba(5, 4, 20, .88);
+  box-shadow: 0 13px 28px rgba(0, 0, 0, .32);
+  overflow: hidden;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel {
+padding: 14px 12px 10px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel h2 {
+margin: 0 0 10px;
+  color: rgba(255, 255, 255, .84);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-list {
+display: grid;
+  gap: 6px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row {
+display: grid;
+  grid-template-columns: 29px 1fr 41px;
+  align-items: center;
+  gap: 7px;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row img {
+width: 29px;
+  height: 29px;
+  object-fit: cover;
+  border-radius: 7px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row strong,
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row span {
+display: block;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row strong {
+font-size: 10px;
+  line-height: 1;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row span {
+margin-top: 2px;
+  color: #54ff8d;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row button {
+height: 21px;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  background: linear-gradient(180deg, #7b39c8, #471a92);
+  font-size: 7px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .view-all {
+width: 100%;
+  height: 33px;
+  margin-top: 9px;
+  padding: 0 2px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  color: #fff;
+  background: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel {
+position: relative;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel > img {
+width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy {
+position: absolute;
+  inset: 0;
+  padding: 9px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(18, 4, 37, .02) 22%, rgba(18, 4, 37, .42) 56%, rgba(18, 4, 37, .94) 100%);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy h2 {
+position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  color: #ffd6e8;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: .05em;
+  text-shadow: 0 2px 8px #000;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy p,
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy small {
+margin: 0;
+  color: rgba(255, 255, 255, .74);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy p {
+font-size: 10px;
+  font-weight: 700;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy strong {
+margin: 3px 0 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffd76d;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 1000;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy strong img {
+width: 19px;
+  height: 19px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy small {
+font-size: 9px;
+  font-weight: 700;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy button {
+width: 100%;
+  height: 31px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff5ead, #a52275);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer {
+height: 50px;
+  flex: 0 0 50px;
+  margin: 8px 24px 10px 30px;
+  padding: 0 26px;
+  border: 1px solid rgba(94, 60, 164, .34);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  color: rgba(255, 255, 255, .78);
+  background: rgba(2, 2, 15, .78);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 9px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer div {
+margin-right: auto;
+  color: #fff;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer strong,
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer small {
+display: block;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer strong {
+font-size: 15px;
+  line-height: 1;
+  font-weight: 1000;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer small {
+margin-top: 3px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, .78);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer span:last-child {
+margin-left: auto;
+}
+
+/* Removed legacy viewport media block: @media (max-width: 1100px) */
+
+.app-shell[data-device='mobile'] .lui-490b5348 {
+transform: translate(5px, 12px);
+  width: 174px;
+  height: 178px;
+}
+
+.app-shell[data-device='mobile'] .lui-fca7e444 {
+width: 136px;
+  height: 162px;
+  transform: translate(-60px, -6px);
+}
+
+.app-shell[data-device='mobile'] .lui-c82da83c {
+width: 207px;
+  height: 264px;
+  transform: translate(1px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-dc601d00 {
+width: 64%;
+}
+
+.app-shell[data-device='mobile'] .lui-e08bf734 {
+transform: translate(-10px, -6px);
+  width: 161px;
+  height: 195px;
+}
+
+.app-shell[data-device='mobile'] .lui-ff1efabc {
+width: 202px;
+  height: 305px;
+  transform: translate(-1px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-be221808 {
+transform: translate(-29px, 4px);
+}
+
+.app-shell[data-device='mobile'] .lui-6395eacc {
+width: 380px;
+  height: 57px;
+  transform: translate(-24px, -2px);
+}
+
+.app-shell[data-device='mobile'] .lui-208c9614 {
+transform: translate(-2px, -32px);
+  width: 164px;
+  height: 32px;
+}
+
+.app-shell[data-device='mobile'] .lui-28150694 {
+transform: translate(-4px, -28px);
+}
+
+.app-shell[data-device='mobile'] .lui-3a1371cc {
+transform: translate(-5px, -8px);
+}
+
+.app-shell[data-device='mobile'] .lui-c8bd0ff4 {
+transform: translate(-61px, -17px);
+  width: 133px;
+  height: 131px;
+}
+
+.app-shell[data-device='mobile'] .lui-8d5746d0 {
+transform: translate(-39px, 1px);
+}
+
+.app-shell[data-device='mobile'] .lui-613d8f20 {
+transform: translate(-17px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-f155ac3b {
+transform: translate(-56px, -11px);
+}
+
+.app-shell[data-device='mobile'] .lui-95d32e6f {
+transform: translate(-46px, -5px);
+}
+
+.app-shell[data-device='mobile'] .lui-85f70a04 {
+width: 377px;
+  height: 81px;
+}
+
+/* Room select layout correction patch — match reference spacing/proportions */
+
+.app-shell[data-device='mobile'] .main-menu-reference {
+grid-template-columns: 184px minmax(0, 1fr);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .main-menu-content {
+width: 100%;
+  min-width: 0;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-topbar {
+height: 64px;
+  flex-basis: 64px;
+  padding: 0 24px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .main-dashboard {
+width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 20px 28px 0 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 178px;
+  column-gap: 20px;
+  align-items: start;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-section {
+width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .hero-banner {
+width: 100%;
+  height: clamp(112px, 15vh, 140px);
+  flex: 0 0 clamp(112px, 15vh, 140px);
+  background-size: cover;
+  background-position: center 44%;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-grid {
+width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.1vw, 18px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+width: 100% !important;
+  height: clamp(260px, 35vh, 320px) !important;
+  min-height: 0;
+  transform: none !important;
+  padding: 12px 14px 12px;
+  border-radius: 9px;
+  background-size: 100% 100%;
+  background-position: center;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header {
+top: 10px;
+  left: 10px;
+  right: 10px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header h3 {
+font-size: clamp(13px, .95vw, 17px);
+  line-height: 1;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header p {
+font-size: clamp(11px, .8vw, 14px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+width: 100% !important;
+  height: auto !important;
+  transform: none !important;
+  padding-top: clamp(150px, 21vh, 200px);
+  gap: 8px;
+  font-size: clamp(9px, .62vw, 11px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div {
+min-height: 18px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list strong {
+font-size: clamp(9px, .68vw, 12px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-play-button {
+width: 100%;
+  height: clamp(30px, 4.2vh, 39px);
+  margin-top: auto;
+  font-size: clamp(12px, .9vw, 16px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .bottom-room-actions {
+width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1.08fr;
+  gap: 16px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel {
+height: clamp(78px, 10.5vh, 94px);
+  min-height: 78px;
+  padding: 12px 16px;
+  background-size: cover;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel h3 {
+font-size: clamp(17px, 1.35vw, 23px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .right-panel {
+width: 178px;
+  min-width: 178px;
+  display: grid;
+  grid-template-rows: 258px minmax(0, 1fr);
+  gap: 13px;
+  justify-self: end;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel {
+height: 258px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel {
+height: clamp(360px, 51vh, 430px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel > img {
+width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer {
+height: 50px;
+  flex: 0 0 50px;
+  margin: 8px 28px 10px 26px;
+}
+
+/* Precise room-select adjustment: stretch room cards downward and push action panels lower */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+height: clamp(318px, 39.5vh, 350px) !important;
+  padding: 13px 14px 13px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+padding-top: clamp(192px, 25.5vh, 226px);
+  gap: 8px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-play-button {
+height: clamp(34px, 4.4vh, 42px);
+  margin-top: auto;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .bottom-room-actions {
+margin-top: clamp(16px, 2.4vh, 26px);
+}
+
+/* Final fix — make room cards clearly taller and push create/join panels lower */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+height: clamp(365px, 45vh, 405px) !important;
+  min-height: clamp(365px, 45vh, 405px) !important;
+  padding: 14px 14px 14px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header {
+top: 12px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+padding-top: clamp(226px, 28vh, 266px) !important;
+  gap: 9px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-play-button {
+height: clamp(38px, 4.8vh, 46px) !important;
+  margin-top: auto !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .bottom-room-actions {
+margin-top: clamp(48px, 6vh, 68px) !important;
+}
+
+/* Object proportion correction patch
+   Keep the room cards stretched downward while preserving every object ratio and keeping content inside the card. */
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-section {
+gap: 16px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-grid {
+align-items: start !important;
+  gap: clamp(28px, 3.1vw, 56px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+box-sizing: border-box !important;
+  width: 100% !important;
+  aspect-ratio: 207 / 264 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  border-radius: 9px !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header {
+top: 4.2% !important;
+  left: 5% !important;
+  right: 5% !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header h3 {
+font-size: clamp(15px, 1vw, 20px) !important;
+  line-height: .95 !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header p {
+margin-top: 2px !important;
+  font-size: clamp(12px, .82vw, 15px) !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+position: absolute !important;
+  left: 5.2% !important;
+  right: 5.2% !important;
+  bottom: 14.5% !important;
+  width: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  gap: clamp(7px, .85vh, 10px) !important;
+  font-size: clamp(10px, .62vw, 12px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div {
+min-height: clamp(18px, 2.1vh, 23px) !important;
+  padding: 0 0 4px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list strong {
+font-size: clamp(10px, .7vw, 13px) !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list img {
+width: 13px !important;
+  height: 13px !important;
+  object-fit: contain !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-play-button {
+position: absolute !important;
+  left: 6.2% !important;
+  right: 6.2% !important;
+  bottom: 4.2% !important;
+  width: auto !important;
+  height: 8.4% !important;
+  min-height: 30px !important;
+  max-height: 42px !important;
+  margin: 0 !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  font-size: clamp(13px, .9vw, 17px) !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .bottom-room-actions {
+margin-top: clamp(44px, 5.4vh, 64px) !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel {
+box-sizing: border-box !important;
+  height: clamp(108px, 13.2vh, 132px) !important;
+  min-height: clamp(108px, 13.2vh, 132px) !important;
+  padding: 16px 18px !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center right !important;
+  overflow: hidden !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel h3 {
+font-size: clamp(20px, 1.45vw, 27px) !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel p {
+margin: 7px 0 12px !important;
+  font-size: clamp(10px, .66vw, 12px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel button {
+height: 34px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label {
+width: min(100%, 305px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code input,
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label button {
+height: 34px !important;
+}
+
+.app-shell[data-device='mobile'] .lui-249bee60 {
+transform: translate(-14px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-589aefc0 {
+transform: translate(11px, 1px);
+}
+
+.app-shell[data-device='mobile'] .lui-80d469b8 {
+transform: translate(-8px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-6646a870 {
+transform: translate(14px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-f014cab0 {
+transform: translate(-14px, -1px);
+}
+
+.app-shell[data-device='mobile'] .lui-c65c7da8 {
+transform: translate(12px, -1px);
+}
+
+.app-shell[data-device='mobile'] .lui-bdcac1ee {
+transform: translate(-16px, 0px);
+}
+
+.app-shell[data-device='mobile'] .lui-f6c5a7a8 {
+width: 345px;
+  height: 552px;
+  transform: translate(-39px, 2px);
+}
+
+.app-shell[data-device='mobile'] .lui-c8c2bb58 {
+width: 775px;
+  height: 555px;
+}
+
+/* Remove Sakura Pass card from sidebar */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-pass-card,
+.app-shell[data-device='mobile'] .main-menu-reference .pass-card,
+.app-shell[data-device='mobile'] .sakura-pass-card,
+.app-shell[data-device='mobile'] .pass-card {
+display: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-brand {
+flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Room card stat readability patch: larger labels, values, and currency/prize icons */
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+left: 6% !important;
+  right: 6% !important;
+  bottom: 13.2% !important;
+  gap: clamp(8px, 1vh, 12px) !important;
+  font-size: clamp(12px, .78vw, 15px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div {
+min-height: clamp(22px, 2.5vh, 28px) !important;
+  padding-bottom: 5px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list span {
+font-size: clamp(13px, .86vw, 16px) !important;
+  line-height: 1.08 !important;
+  font-weight: 700 !important;
+  color: rgba(255, 255, 255, .94) !important;
+  letter-spacing: .01em !important;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, .75) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list strong {
+gap: 6px !important;
+  font-size: clamp(13px, .86vw, 16px) !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+  color: #fff5c9 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .78) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list img {
+width: clamp(17px, 1.05vw, 21px) !important;
+  height: clamp(17px, 1.05vw, 21px) !important;
+  margin-right: 2px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .65)) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-c65c7da8,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-6646a870,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-589aefc0 {
+transform: translate(8px, 0) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-f014cab0,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-80d469b8,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-bdcac1ee,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list .lui-249bee60 {
+transform: translate(-10px, 0) !important;
+}
+
+/* Room card sparkle pass */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  --card-sparkle-core: rgba(186, 255, 195, 0.96);
+  --card-sparkle-line: rgba(119, 255, 152, 0.95);
+  --card-sparkle-glow: rgba(59, 255, 114, 0.7);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card.room-theme-green {
+--card-sparkle-core: rgba(234, 255, 221, 0.96);
+  --card-sparkle-line: rgba(111, 255, 146, 0.95);
+  --card-sparkle-glow: rgba(51, 236, 105, 0.7);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card.room-theme-blue {
+--card-sparkle-core: rgba(225, 242, 255, 0.96);
+  --card-sparkle-line: rgba(107, 171, 255, 0.96);
+  --card-sparkle-glow: rgba(44, 122, 255, 0.72);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card.room-theme-purple {
+--card-sparkle-core: rgba(247, 223, 255, 0.96);
+  --card-sparkle-line: rgba(223, 109, 255, 0.96);
+  --card-sparkle-glow: rgba(182, 48, 255, 0.72);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card.room-theme-gold {
+--card-sparkle-core: rgba(255, 248, 207, 0.96);
+  --card-sparkle-line: rgba(255, 194, 74, 0.96);
+  --card-sparkle-glow: rgba(255, 152, 32, 0.72);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card > *:not(.room-card-sparkles) {
+position: relative;
+  z-index: 2;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-sparkles {
+position: absolute;
+  inset: 10px 10px 12px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .card-sparkle {
+position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  opacity: 0;
+  background: var(--card-sparkle-core);
+  box-shadow:
+    0 0 8px var(--card-sparkle-core),
+    0 0 16px var(--card-sparkle-line),
+    0 0 28px var(--card-sparkle-glow);
+  animation: roomCardSparkleTwinkle 3s ease-in-out infinite;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .card-sparkle::before,
+.app-shell[data-device='mobile'] .main-menu-reference .card-sparkle::after {
+content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: var(--card-sparkle-line);
+  box-shadow: 0 0 10px var(--card-sparkle-glow);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .card-sparkle::before {
+width: 17px;
+  height: 2px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .card-sparkle::after {
+width: 2px;
+  height: 17px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-1 {
+left: 8%;  top: 11%; animation-delay: 0s;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-2 {
+left: 31%; top: 18%; animation-delay: .35s; transform: scale(.72);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-3 {
+left: 71%; top: 16%; animation-delay: .9s; transform: scale(.95);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-4 {
+left: 87%; top: 9%;  animation-delay: 1.3s; transform: scale(.78);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-5 {
+left: 18%; top: 39%; animation-delay: 1.7s; transform: scale(.66);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-6 {
+left: 82%; top: 44%; animation-delay: 2.05s; transform: scale(.86);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-7 {
+left: 10%; top: 61%; animation-delay: 2.35s; transform: scale(.8);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-8 {
+left: 48%; top: 64%; animation-delay: 2.75s; transform: scale(.68);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-9 {
+left: 90%; top: 67%; animation-delay: 3.05s; transform: scale(.92);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-10 {
+left: 20%; top: 82%; animation-delay: 3.35s; transform: scale(.7);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-11 {
+left: 57%; top: 84%; animation-delay: 3.7s; transform: scale(.84);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sparkle-12 {
+left: 83%; top: 88%; animation-delay: 4.05s; transform: scale(.72);
+}
+
+@keyframes roomCardSparkleTwinkle {
+0% {
+    opacity: 0;
+    transform: translateY(10px) scale(.35) rotate(0deg);
+  }
+
+  18% {
+    opacity: .95;
+  }
+
+  48% {
+    opacity: .78;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(1) rotate(90deg);
+  }
+}
+
+/* Room card alignment patch: center characters in the upper artwork area and keep stat text above divider lines */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list {
+bottom: 13.6% !important;
+  gap: clamp(5px, .75vh, 8px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list div {
+position: relative !important;
+  min-height: clamp(24px, 2.8vh, 30px) !important;
+  padding: 0 0 clamp(7px, .9vh, 10px) !important;
+  align-items: flex-start !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .09) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list span,
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list strong {
+position: relative !important;
+  top: -1px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list strong {
+align-items: flex-start !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list img {
+transform: translateY(-2px) !important;
+}
+
+/* Final room card visual alignment pass
+   Animals are centered in the upper artwork area; stat text sits clearly above divider lines. */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list {
+left: 6.5% !important;
+  right: 6.5% !important;
+  bottom: 12% !important;
+  gap: clamp(7px, .82vh, 10px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list div {
+min-height: clamp(24px, 2.7vh, 30px) !important;
+  padding: 0 0 clamp(8px, .95vh, 11px) !important;
+  align-items: flex-start !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .13) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list span,
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list strong {
+position: relative !important;
+  top: -3px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list strong {
+align-items: flex-start !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list strong img {
+position: relative !important;
+  top: -2px !important;
+}
+
+/* PC/Web visual polish: hover glow, floating animals, button glow, Sakura Cup glow, subtle background particles */
+
+
+
+@keyframes mainMenuParticlesDrift {
+0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-80px, -55px, 0); }
+}
+
+@keyframes roomAnimalFloat {
+0%, 100% {
+    translate: -50% -50%;
+  }
+
+  50% {
+    translate: -50% calc(-50% - 7px);
+  }
+}
+
+@keyframes roomButtonSoftPulse {
+0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.09); }
+}
+
+@keyframes sakuraCupAura {
+0%, 100% { opacity: .64; transform: scale(.98) rotate(0deg); }
+  50% { opacity: .98; transform: scale(1.05) rotate(2deg); }
+}
+
+@keyframes sakuraCupLightSweep {
+0%, 42% { left: -58%; opacity: 0; }
+  52% { opacity: .9; }
+  76%, 100% { left: 118%; opacity: 0; }
+}
+
+@keyframes sakuraCupImageGlow {
+0%, 100% { filter: brightness(1) saturate(1); }
+  50% { filter: brightness(1.12) saturate(1.12); }
+}
+
+@keyframes sakuraCupButtonPulse {
+0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+}
+
+/* Final PC-only alignment pass: enlarge room animals, keep them fitted, and move Sakura Cup copy fully inside the card. */
+
+
+
+/* Final PC-only pass: raise animals more and refine Sakura Cup panel sizing/layout. */
+
+
+
+/* PC visual polish pass: banner slow movement, friends online pulse, page entrance animation. */
+
+
+
+@keyframes mainHeroSlowPan {
+0% {
+    background-position: 42% 50%;
+    filter: saturate(1) brightness(1);
+  }
+  100% {
+    background-position: 58% 50%;
+    filter: saturate(1.08) brightness(1.04);
+  }
+}
+
+@keyframes mainHeroSoftGlow {
+0%, 100% { opacity: .42; transform: translateX(-1.5%); }
+  50% { opacity: .82; transform: translateX(1.5%); }
+}
+
+@keyframes friendOnlineTextPulse {
+0%, 100% { opacity: .86; }
+  50% { opacity: 1; }
+}
+
+@keyframes friendOnlineDotPulse {
+0%, 100% {
+    opacity: .7;
+    transform: scale(.85);
+    box-shadow: 0 0 7px rgba(83, 255, 143, .55);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+    box-shadow: 0 0 14px rgba(83, 255, 143, .95);
+  }
+}
+
+@keyframes mainHeroEntrance {
+from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mainCardEntrance {
+from {
+    opacity: 0;
+    transform: translateY(24px) scale(.965);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mainRightPanelEntrance {
+from {
+    opacity: 0;
+    transform: translateX(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes mainBottomPanelsEntrance {
+from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mainFooterEntrance {
+from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Room card cleanup: remove visible stat divider lines inside room cards. */
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list div,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div {
+border-bottom: 0 !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list div::before,
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-stat-list div::after,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div::before,
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div::after {
+content: none !important;
+  display: none !important;
+}
+
+/* =========================================================
+   FINAL ROOM ANIMALS CONTROL - WEB PC
+   Edit only this block to move/resize room animals.
+   top: less = up, more = down
+   left: less = left, more = right
+   width/max-height: size control
+   ========================================================= */
+
+
+
+
+/* =========================================================
+   MOBILE MAIN MENU FINAL POLISH
+   This block is intentionally at the end of the mobile file.
+   Edit here for Main Menu mobile only. Desktop is not affected.
+   ========================================================= */
+
+.app-shell[data-device='mobile'] .main-menu-reference {
+  grid-template-columns: 128px minmax(0, 1fr) !important;
+  width: 1280px !important;
+  height: 720px !important;
+  background: transparent !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-sidebar {
+  width: 128px !important;
+  min-width: 128px !important;
+  padding: 22px 12px 14px !important;
+  gap: 0 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-brand {
+  min-height: 0 !important;
+  height: 100% !important;
+  grid-template-rows: 54px 1fr !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-brand-flower {
+  width: 54px !important;
+  height: 54px !important;
+  font-size: 48px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-brand-text strong {
+  font-size: 34px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-brand-text span {
+  font-size: 17px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .main-menu-content {
+  width: 100% !important;
+  height: 720px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-topbar {
+  height: 54px !important;
+  flex: 0 0 54px !important;
+  padding: 0 18px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions {
+  gap: 8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .currency-pill {
+  min-width: 104px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .currency-pill img {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .square-top-button {
+  width: 38px !important;
+  height: 34px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .square-top-button img {
+  width: 21px !important;
+  height: 21px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .profile-pill {
+  width: 60px !important;
+  height: 34px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .profile-pill img {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .main-dashboard {
+  width: 100% !important;
+  height: calc(720px - 54px) !important;
+  flex: 1 1 auto !important;
+  padding: 14px 18px 0 18px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 150px !important;
+  gap: 14px !important;
+  align-items: start !important;
+  overflow: hidden !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-section {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  overflow: visible !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .hero-banner {
+  width: 100% !important;
+  height: 88px !important;
+  flex: 0 0 88px !important;
+  border-radius: 3px !important;
+  background-size: cover !important;
+  background-position: center 44% !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 207 / 264 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 292px !important;
+  padding: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  border-radius: 9px !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header {
+  top: 4.5% !important;
+  left: 6% !important;
+  right: 6% !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header h3 {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-card-header p {
+  margin-top: 2px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card {
+  --animal-top: 33%;
+  --animal-left: 50%;
+  --animal-width: 53%;
+  --animal-max-height: 43%;
+  --animal-scale:0.8;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card:nth-child(2) {
+  --animal-width: 55%;
+  --animal-max-height: 44%;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card:nth-child(3) {
+  --animal-width: 52%;
+  --animal-max-height: 43%;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card:nth-child(4) {
+  --animal-width: 51%;
+  --animal-max-height: 42.5%;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-character-wrap {
+  position: absolute !important;
+  top: var(--animal-top) !important;
+  left: var(--animal-left) !important;
+  width: var(--animal-width) !important;
+  height: var(--animal-max-height) !important;
+  transform: translate(-50%, -50%) scale(var(--animal-scale)) !important;
+  transform-origin: center center !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  will-change: transform;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card .room-character-wrap .room-character {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  translate: none !important;
+  transform: translateY(0) scale(1);
+  transform-origin: center center !important;
+  z-index: 2 !important;
+  animation: roomAnimalFloatInner 3.8s ease-in-out infinite !important;
+  filter:
+    drop-shadow(0 11px 16px rgba(0, 0, 0, .42))
+    drop-shadow(0 0 8px rgba(255, 255, 255, .12));
+  will-change: transform, filter;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card:nth-child(2) .room-character-wrap .room-character {
+  animation-delay: .45s !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card:nth-child(3) .room-character-wrap .room-character {
+  animation-delay: .9s !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-room-card:nth-child(4) .room-character-wrap .room-character {
+  animation-delay: 1.25s !important;
+}
+
+@keyframes roomAnimalFloatInner {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.015);
+  }
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list {
+  position: absolute !important;
+  left: 7% !important;
+  right: 7% !important;
+  bottom: 13.5% !important;
+  width: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: grid !important;
+  gap: 5px !important;
+  font-size: 10px !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list div {
+  min-height: 16px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list span {
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-stat-list strong {
+  gap: 2px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 1000 !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-play-button {
+  position: absolute !important;
+  left: 7% !important;
+  right: 7% !important;
+  bottom: 4.2% !important;
+  width: auto !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 34px !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .bottom-room-actions {
+  width: 100% !important;
+  margin-top: 2px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1.08fr !important;
+  gap: 14px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel {
+  height: 84px !important;
+  min-height: 84px !important;
+  padding: 12px 15px !important;
+  border-radius: 8px !important;
+  background-size: cover !important;
+  background-position: center right !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel h3 {
+  font-size: 15px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel p {
+  margin: 5px 0 8px !important;
+  font-size: 9px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel button,
+.app-shell[data-device='mobile'] .main-menu-reference .room-code input,
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label button {
+  height: 28px !important;
+  font-size: 10px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .small-action-panel button {
+  min-width: 108px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label {
+  width: min(100%, 260px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .room-code label button {
+  min-width: 70px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .right-panel {
+  width: 150px !important;
+  min-width: 150px !important;
+  display: grid !important;
+  grid-template-rows: 228px 320px !important;
+  gap: 10px !important;
+  justify-self: end !important;
+  overflow: hidden !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel {
+  height: 228px !important;
+  padding: 10px 9px 8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel h2 {
+  margin-bottom: 7px !important;
+  font-size: 8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-list {
+  gap: 4px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row {
+  grid-template-columns: 24px 1fr 34px !important;
+  gap: 5px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row img {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row strong {
+  font-size: 8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row span {
+  font-size: 7px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row button {
+  height: 18px !important;
+  font-size: 6px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .view-all {
+  display: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel {
+  height: 320px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy {
+  padding: 8px 9px 9px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy strong {
+  font-size: 17px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy strong img {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy button {
+  height: 28px !important;
+  font-size: 10px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .sakura-footer {
+  display: none !important;
+}
+
+/* Mobile Main Menu Sakura Cup visibility fix: keep prize and JOIN NOW inside the card. */
+.app-shell[data-device='mobile'] .main-menu-reference .right-panel {
+  grid-template-rows: 212px 360px !important;
+  overflow: visible !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel {
+  height: 360px !important;
+  min-height: 360px !important;
+  overflow: hidden !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-panel > img {
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  transform: none !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy {
+  position: absolute !important;
+  inset: 0 !important;
+  padding: 178px 9px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 2px !important;
+  text-align: center !important;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 5, 35, 0) 0%,
+    rgba(20, 5, 35, 0.08) 42%,
+    rgba(20, 5, 35, 0.62) 68%,
+    rgba(20, 5, 35, 0.96) 100%
+  ) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy p {
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+  margin: 0 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy strong {
+  margin: 1px 0 2px !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  gap: 4px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy strong img {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy small {
+  font-size: 8px !important;
+  line-height: 1.05 !important;
+  margin: 0 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .cup-copy button {
+  display: block !important;
+  width: 100% !important;
+  height: 27px !important;
+  min-height: 27px !important;
+  margin-top: 5px !important;
+  border-radius: 7px !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  flex: 0 0 auto !important;
+}
+
+/* Hide gift and notification buttons on mobile main menu */
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions .square-top-button {
+  display: none !important;
+}
+
+
+/* =========================================================
+   PATCH: Friend requests button + accept/decline modal
+   ========================================================= */
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  margin-bottom: 7px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel-header h2 {
+  margin: 0 !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button {
+  position: relative !important;
+  height: 19px !important;
+  min-width: 58px !important;
+  padding: 0 7px !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  color: #fff !important;
+  background: linear-gradient(180deg, #9f51ff, #5521b6) !important;
+  box-shadow: 0 5px 12px rgba(112, 56, 207, .35) !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: 6px !important;
+  font-weight: 950 !important;
+  letter-spacing: .04em !important;
+  cursor: pointer !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button span {
+  position: absolute !important;
+  top: -6px !important;
+  right: -5px !important;
+  min-width: 13px !important;
+  height: 13px !important;
+  padding: 0 3px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  background: #ff3868 !important;
+  color: #fff !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+  box-shadow: 0 0 0 2px rgba(9, 5, 26, .95) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 80 !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(3, 2, 12, .58) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-modal {
+  width: 286px !important;
+  max-width: calc(100% - 26px) !important;
+  padding: 13px 12px 12px !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, rgba(24, 15, 55, .98), rgba(7, 4, 24, .98)) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .48), inset 0 0 22px rgba(148, 83, 255, .12) !important;
+  font-family: Inter, system-ui, sans-serif !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header strong,
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header span {
+  display: block !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header strong {
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header span {
+  margin-top: 2px !important;
+  color: #54ff8d !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-close {
+  width: 24px !important;
+  height: 24px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  color: #fff !important;
+  background: rgba(255, 255, 255, .1) !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-list {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-row {
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) 96px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 7px !important;
+  border: 1px solid rgba(255, 255, 255, .08) !important;
+  border-radius: 9px !important;
+  background: rgba(255, 255, 255, .045) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-row img {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy strong,
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy span {
+  display: block !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy strong {
+  color: #fff !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy span {
+  margin-top: 3px !important;
+  color: rgba(255, 255, 255, .66) !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 5px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions button {
+  height: 22px !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  color: #fff !important;
+  font-size: 6px !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions .accept-request {
+  background: linear-gradient(180deg, #22d66f, #0d8a43) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions .decline-request {
+  background: linear-gradient(180deg, #ff5b7e, #b11945) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-empty {
+  padding: 18px 10px !important;
+  border-radius: 9px !important;
+  color: rgba(255, 255, 255, .72) !important;
+  background: rgba(255, 255, 255, .045) !important;
+  text-align: center !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+}
+
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-modal {
+  width: 330px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-row {
+  grid-template-columns: 34px minmax(0, 1fr) 104px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button {
+  height: 20px !important;
+  min-width: 62px !important;
+  font-size: 6.5px !important;
+}
+
+
+/* =========================================================
+   PATCH FIX: friends panel sizing + scroll
+   ========================================================= */
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel-header {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 4px !important;
+  margin-bottom: 6px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel-header h2 {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 7px !important;
+  letter-spacing: .035em !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button {
+  flex: 0 0 32px !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 18px !important;
+  padding: 0 !important;
+  border-radius: 5px !important;
+  font-size: 6px !important;
+  letter-spacing: .02em !important;
+  line-height: 18px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button span {
+  top: -5px !important;
+  right: -4px !important;
+  min-width: 11px !important;
+  height: 11px !important;
+  padding: 0 2px !important;
+  font-size: 6px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 3px !important;
+  scrollbar-width: thin !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-list::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-list::-webkit-scrollbar-thumb {
+  border-radius: 99px !important;
+  background: rgba(147, 80, 255, .58) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, .05) !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row > div {
+  min-width: 0 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row strong,
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row span {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-modal {
+  max-height: 86% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-list {
+  min-height: 0 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 3px !important;
+}
+
+/* =========================================================
+   PATCH: Mobile friend panels keep original size, text only bigger
+   ========================================================= */
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel-header h2,
+.app-shell[data-device='mobile'] .main-menu-reference .friends-panel h2 {
+  font-size: 8.8px !important;
+  line-height: 1.05 !important;
+  letter-spacing: .03em !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row strong {
+  font-size: 9.2px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row span {
+  font-size: 7.8px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-row button {
+  font-size: 6.8px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button {
+  font-size: 6.8px !important;
+  line-height: 18px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-requests-button span {
+  font-size: 6.8px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header strong {
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header span {
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy strong {
+  font-size: 11.2px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy span {
+  font-size: 8.8px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions button {
+  font-size: 6.8px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-empty {
+  font-size: 11px !important;
+}
+
+/* =========================================================
+   PATCH: Mobile friend requests modal scale x2
+   ========================================================= */
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-modal {
+  width: 560px !important;
+  max-width: calc(100% - 44px) !important;
+  max-height: calc(100% - 44px) !important;
+  padding: 24px 22px 22px !important;
+  border-radius: 22px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header {
+  gap: 18px !important;
+  margin-bottom: 18px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header strong {
+  font-size: 28px !important;
+  line-height: 1 !important;
+  letter-spacing: .05em !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-header span {
+  margin-top: 6px !important;
+  font-size: 16px !important;
+  line-height: 1.1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-close {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  font-size: 34px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-list {
+  gap: 14px !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 4px !important;
+  scrollbar-width: thin !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-row {
+  grid-template-columns: 64px minmax(0, 1fr) 204px !important;
+  gap: 14px !important;
+  padding: 14px !important;
+  border-radius: 16px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-row img {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 14px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy strong {
+  font-size: 20px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-copy span {
+  margin-top: 6px !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions {
+  gap: 10px !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-actions button {
+  height: 44px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friend-request-empty {
+  padding: 28px 14px !important;
+  border-radius: 14px !important;
+  font-size: 16px !important;
+}
+
+
+/* PATCH: move Join Room panel into the top-right bottom action slot */
+.app-shell[data-device='mobile'] .join-room-entry-panel {
+  background-position: center right;
+}
+
+.app-shell[data-device='mobile'] .join-room-entry-panel > div {
+  width: 62%;
+}
+
+.app-shell[data-device='mobile'] .join-room-entry-panel button {
+  min-width: 142px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .shop-menu-button img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+
+/* PATCH: visible shop button with supplied icon */
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions .shop-menu-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+  overflow: visible !important;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .shop-menu-button img {
+  display: block !important;
+  width: 34px !important;
+  height: 34px !important;
+  object-fit: contain !important;
+}
+
+/* PATCH: raise Join Room button inside the Main Menu panel */
+.app-shell[data-device='mobile'] .main-menu-reference .join-room-entry-panel button {
+  transform: translateY(-8px) !important;
+}
+
+/* Friends add popup + topbar icon patch */
+.app-shell[data-device='mobile'] .main-menu-reference .topbar-actions .friends-menu-button {
+  display: grid !important;
+  place-items: center;
+  width: 46px;
+  min-width: 46px;
+  height: 42px;
+  padding: 0;
+  overflow: visible;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .friends-menu-button img {
+  display: block;
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 2, 15, 0.56);
+  backdrop-filter: blur(3px);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-modal {
+  width: 380px;
+  min-height: 170px;
+  padding: 20px 24px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 187, 86, 0.42);
+  background: linear-gradient(180deg, rgba(32, 13, 56, 0.98), rgba(13, 6, 32, 0.98));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55), inset 0 0 34px rgba(255, 105, 220, 0.08);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-modal h2 {
+  margin: 0 0 14px;
+  color: #ffeec9;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 0 2px 12px rgba(255, 183, 57, 0.36);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-input {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 211, 132, 0.34);
+  padding: 0 13px;
+  color: #fff;
+  background: rgba(7, 4, 22, 0.86);
+  outline: none;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 17px;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-actions button {
+  width: 112px;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-accept {
+  background: linear-gradient(180deg, #c94cc0, #6a238f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 10px 24px rgba(198, 64, 187, 0.24);
+}
+
+.app-shell[data-device='mobile'] .main-menu-reference .add-friend-cancel {
+  background: linear-gradient(180deg, #77617b, #332644);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}

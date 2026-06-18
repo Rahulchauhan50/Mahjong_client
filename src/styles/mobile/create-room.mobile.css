@@ -1,0 +1,418 @@
+/* Mobile-only styles for create-room. Edit this file without touching desktop. */
+/* Create room screen styles. */
+
+/* Phase 2.7 — Create Room Screen */
+
+.app-shell[data-device='mobile'] .create-room-screen {
+position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 28px 48px 42px;
+  color: #f8f4ff;
+  background:
+    radial-gradient(circle at 55% 0%, rgba(88, 57, 139, 0.36), transparent 34%),
+    radial-gradient(circle at 0% 100%, rgba(77, 35, 111, 0.26), transparent 38%),
+    #111026;
+  overflow: hidden;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.app-shell[data-device='mobile'] .create-room-screen::before {
+content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,.02), transparent 35%, rgba(255,255,255,.015));
+}
+
+.app-shell[data-device='mobile'] .create-room-header {
+position: relative;
+  z-index: 1;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 26px;
+}
+
+.app-shell[data-device='mobile'] .create-back-button {
+width: 25px;
+  height: 25px;
+  border: 0;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  color: #f5efff;
+  background: rgba(92, 72, 139, 0.45);
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .create-room-header h1 {
+margin: 0;
+  color: rgba(255,255,255,.88);
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: .07em;
+  font-weight: 800;
+}
+
+.app-shell[data-device='mobile'] .create-room-layout {
+position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 560px) 322px;
+  justify-content: space-between;
+  align-items: start;
+  gap: 64px;
+}
+
+.app-shell[data-device='mobile'] .create-settings-card,
+.app-shell[data-device='mobile'] .room-preview-card {
+position: relative;
+  border-radius: 8px;
+  background: rgba(8, 7, 26, .78);
+  border: 1px solid rgba(214, 67, 237, .75);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    inset 0 0 56px rgba(104, 30, 126, .24),
+    0 0 18px rgba(210, 59, 255, .18);
+  overflow: hidden;
+}
+
+.app-shell[data-device='mobile'] .create-settings-card::before,
+.app-shell[data-device='mobile'] .room-preview-card::before {
+content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: url("/assets/create-room/CARD!.png") center / 100% 100% no-repeat;
+  opacity: .74;
+}
+
+.app-shell[data-device='mobile'] .create-settings-card {
+width: 560px;
+  min-height: 458px;
+  padding: 14px 37px 13px 10px;
+}
+
+.app-shell[data-device='mobile'] .create-settings-card h2,
+.app-shell[data-device='mobile'] .room-preview-card h2 {
+position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255,255,255,.9);
+  font-size: 15px;
+  letter-spacing: .08em;
+  font-weight: 800;
+}
+
+.app-shell[data-device='mobile'] .create-settings-card h2 {
+margin: 0 0 19px;
+}
+
+.app-shell[data-device='mobile'] .create-form-row {
+position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 166px minmax(0, 1fr);
+  align-items: center;
+  min-height: 52px;
+}
+
+.app-shell[data-device='mobile'] .create-form-row label {
+color: rgba(255,255,255,.82);
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: .015em;
+}
+
+.app-shell[data-device='mobile'] .create-form-row input,
+.app-shell[data-device='mobile'] .create-select-wrap select {
+width: 100%;
+  height: 49px;
+  border: 1px solid rgba(126, 95, 181, .56);
+  border-radius: 6px;
+  padding: 0 14px;
+  color: rgba(255,255,255,.86);
+  background: linear-gradient(180deg, rgba(38,37,68,.88), rgba(20,20,45,.88));
+  box-shadow: inset 0 0 16px rgba(0,0,0,.28);
+  outline: none;
+  font: inherit;
+}
+
+.app-shell[data-device='mobile'] .create-form-row input::placeholder {
+color: rgba(255,255,255,.36);
+}
+
+.app-shell[data-device='mobile'] .create-select-wrap {
+position: relative;
+}
+
+.app-shell[data-device='mobile'] .create-select-wrap select {
+appearance: none;
+  padding-right: 42px;
+}
+
+.app-shell[data-device='mobile'] .create-select-wrap span {
+position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-52%);
+  color: #fff;
+  pointer-events: none;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.app-shell[data-device='mobile'] .players-row {
+min-height: 55px;
+}
+
+.app-shell[data-device='mobile'] .segmented-options {
+display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-shell[data-device='mobile'] .segmented-options button {
+height: 33px;
+  min-width: 102px;
+  border: 1px solid rgba(126, 95, 181, .56);
+  border-radius: 4px;
+  color: rgba(255,255,255,.85);
+  background: linear-gradient(180deg, rgba(35,34,64,.86), rgba(22,21,48,.9));
+  cursor: pointer;
+  box-shadow: inset 0 0 14px rgba(0,0,0,.22);
+}
+
+.app-shell[data-device='mobile'] .segmented-options button.active {
+color: #fff;
+  border-color: rgba(255, 206, 91, .7);
+  background: linear-gradient(180deg, #dca23b, #9a5d12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 0 11px rgba(227, 152, 38, .25);
+}
+
+.app-shell[data-device='mobile'] .bet-row {
+min-height: 50px;
+}
+
+.app-shell[data-device='mobile'] .bet-controls {
+display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-shell[data-device='mobile'] .square-control {
+width: 34px;
+  height: 34px;
+  border: 1px solid rgba(126, 95, 181, .55);
+  border-radius: 5px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(45,44,77,.9), rgba(22,21,48,.96));
+  box-shadow: inset 0 0 11px rgba(0,0,0,.24);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .square-control.large {
+margin-left: 8px;
+}
+
+.app-shell[data-device='mobile'] .bet-value {
+height: 37px;
+  min-width: 158px;
+  border: 1px solid rgba(126, 95, 181, .62);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffc01f;
+  background: linear-gradient(180deg, rgba(33,31,65,.94), rgba(18,18,42,.94));
+  box-shadow: inset 0 0 18px rgba(0,0,0,.28);
+  font-size: 22px;
+  letter-spacing: .06em;
+  font-weight: 500;
+}
+
+.app-shell[data-device='mobile'] .bet-value span,
+.app-shell[data-device='mobile'] .preview-bet span,
+.app-shell[data-device='mobile'] .room-type-options span {
+width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  color: #fff6ba;
+  background: linear-gradient(180deg, #ffcf45, #ba7410);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
+  font-size: 0;
+}
+
+.app-shell[data-device='mobile'] .bet-value span::after,
+.app-shell[data-device='mobile'] .preview-bet span::after,
+.app-shell[data-device='mobile'] .room-type-options span::after {
+content: "♧";
+  font-size: 11px;
+}
+
+.app-shell[data-device='mobile'] .room-type-row {
+min-height: 52px;
+}
+
+.app-shell[data-device='mobile'] .room-type-options button {
+min-width: 124px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.app-shell[data-device='mobile'] .room-type-options button:not(.active) span {
+opacity: .22;
+}
+
+.app-shell[data-device='mobile'] .create-room-submit {
+position: relative;
+  z-index: 1;
+  display: block;
+  width: 365px;
+  height: 62px;
+  margin: 12px 0 0 118px;
+  border: 1px solid rgba(255, 221, 113, .75);
+  border-radius: 7px;
+  color: #fff;
+  background: linear-gradient(180deg, #f4bd35 0%, #b66e14 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 0 12px rgba(234, 150, 27, .28);
+  font-size: 24px;
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .room-preview-card {
+width: 322px;
+  min-height: 458px;
+  padding: 14px 18px 24px;
+}
+
+.app-shell[data-device='mobile'] .room-preview-card h2 {
+text-align: center;
+  margin-bottom: 18px;
+  font-size: 19px;
+  letter-spacing: .06em;
+}
+
+.app-shell[data-device='mobile'] .preview-image {
+position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 172px;
+  border-radius: 3px;
+  border: 1px solid rgba(77, 74, 126, .55);
+  background: url("/assets/create-room/CARD2.png") center 21% / 114% auto no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+}
+
+.app-shell[data-device='mobile'] .preview-list {
+position: relative;
+  z-index: 1;
+  margin: 15px 0 0;
+  display: grid;
+  gap: 20px;
+}
+
+.app-shell[data-device='mobile'] .preview-list div {
+display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.app-shell[data-device='mobile'] .preview-list dt,
+.app-shell[data-device='mobile'] .preview-list dd {
+margin: 0;
+  color: rgba(255,255,255,.85);
+  font-size: 17px;
+  line-height: 1.05;
+}
+
+.app-shell[data-device='mobile'] .preview-list dd {
+text-align: right;
+  color: rgba(255,255,255,.88);
+}
+
+.app-shell[data-device='mobile'] .preview-bet {
+display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+  color: #ffc01f !important;
+  font-size: 24px !important;
+}
+
+/* Removed legacy viewport media block: @media (max-width: 900px) */
+
+
+/* PATCH: room code field support */
+.app-shell[data-device='mobile'] .create-settings-card {
+  min-height: 505px;
+}
+
+.app-shell[data-device='mobile'] .room-preview-card {
+  min-height: 505px;
+}
+
+.app-shell[data-device='mobile'] .preview-list {
+  gap: 16px;
+}
+
+.is-mobile .create-error-message {
+  font-size: 13px;
+}
+
+/* PATCH: keep private room creation on the Create Room page */
+.app-shell[data-device='mobile'] .create-room-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 0 118px;
+}
+
+.app-shell[data-device='mobile'] .create-room-actions .create-room-submit {
+  width: 244px;
+  margin: 0;
+}
+
+.app-shell[data-device='mobile'] .create-room-submit:disabled {
+  opacity: .64;
+  cursor: not-allowed;
+}
+
+.app-shell[data-device='mobile'] .copy-room-code-button {
+  width: 109px;
+  height: 62px;
+  border: 1px solid rgba(185, 113, 255, .72);
+  border-radius: 7px;
+  color: #fff;
+  background: linear-gradient(180deg, #7c31c6 0%, #4c1d87 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 12px rgba(193, 68, 255, .25);
+  font-size: 14px;
+  line-height: 1.1;
+  letter-spacing: .06em;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.app-shell[data-device='mobile'] .create-success-message {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 0;
+  color: #69df7c;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: .02em;
+}
