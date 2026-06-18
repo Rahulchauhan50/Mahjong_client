@@ -189,7 +189,7 @@ function RoomCard({ room, onPlay, t, tx }) {
         <img className='room-character' src={asset(room.character)} alt="" />
       </div>
       <div className='room-stat-list'>
-        <div><span className='lui-c65c7da8 lui-1e673fb0'>{t('playersOnline')}</span><strong className='lui-f014cab0 lui-16b816a0'>{room.players}</strong></div>
+        <div className="players-online-stat"><span className='lui-c65c7da8 lui-1e673fb0'>{t('playersOnline')}</span><strong className='lui-f014cab0 lui-16b816a0'><img className="players-online-icon" src="/assets/friends/icon-friends.png" alt="" />{room.players}</strong></div>
         <div><span className='lui-6646a870 lui-a7479fb4'>{t('bet')}</span><strong className='lui-80d469b8 lui-bdcac1ee lui-d210bc28'><img src={asset('coin.png')} alt="" />{room.fee}</strong></div>
         <div><span className='lui-589aefc0 lui-5c5e0744'>{t('prizePool')}</span><strong className='lui-249bee60 lui-8ff2b4fc'><img src={asset('prize.png')} alt="" />{room.prize}</strong></div>
       </div>

@@ -3827,3 +3827,20 @@ filter:
   background: linear-gradient(180deg, #77617b, #332644);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
+
+
+/* Friends icon inside Players Online stat */
+.app-shell[data-device='desktop'] .main-menu-reference .players-online-stat strong {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.app-shell[data-device='desktop'] .main-menu-reference .players-online-stat .players-online-icon {
+  width: 14px !important;
+  height: 14px !important;
+  object-fit: contain !important;
+  margin-right: 1px !important;
+  transform: translateY(-1px) !important;
+  filter: drop-shadow(0 0 5px rgba(255, 224, 120, 0.75)) !important;
+}
