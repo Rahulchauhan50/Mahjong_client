@@ -473,3 +473,30 @@ display: inline-flex;
   text-align: center;
   letter-spacing: .02em;
 }
+
+
+/* PATCH: keep create room tier dropdown inside layout instead of covering the next fields */
+.app-shell[data-device='desktop'] .create-select-wrap.open {
+  z-index: 8;
+}
+
+.app-shell[data-device='desktop'] .create-select-wrap.open .create-tier-arrow {
+  transform: translateY(-52%) rotate(180deg);
+}
+
+.app-shell[data-device='desktop'] .create-tier-menu {
+  position: static;
+  left: auto;
+  right: auto;
+  top: auto;
+  z-index: auto;
+  width: 100%;
+  margin-top: 8px;
+  max-height: 148px;
+  overflow-y: auto;
+}
+
+.app-shell[data-device='desktop'] .create-tier-option {
+  min-height: 36px;
+  line-height: 36px;
+}
