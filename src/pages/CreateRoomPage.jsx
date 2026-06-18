@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
 import { createPrivateRoom, getRoomTiers } from '../services/roomService.js';
@@ -21,6 +21,8 @@ export default function CreateRoomPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [createdRoom, setCreatedRoom] = useState(null);
+  const [isTierDropdownOpen, setIsTierDropdownOpen] = useState(false);
+  const tierDropdownRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -44,10 +46,28 @@ export default function CreateRoomPage() {
     };
   }, []);
 
-  const selectedTier = useMemo(
-    () => tiers.find((tier) => tier.tierId === selectedTierId) || tiers[0] || null,
-    [selectedTierId, tiers]
+  const roomTierOptions = useMemo(
+    () => (tiers.length ? tiers : [{ tierId: 'sakura_garden_3p', name: 'Sakura Garden', maxPlayers: 3 }]),
+    [tiers]
   );
+
+  const selectedTier = useMemo(
+    () => roomTierOptions.find((tier) => tier.tierId === selectedTierId) || roomTierOptions[0] || null,
+    [roomTierOptions, selectedTierId]
+  );
+
+  const selectTier = (tierId) => {
+    const tier = roomTierOptions.find((item) => item.tierId === tierId);
+    setSelectedTierId(tierId);
+    setMaxPlayers(tier?.maxPlayers || 3);
+    setIsTierDropdownOpen(false);
+  };
+
+  const handleTierDropdownBlur = (event) => {
+    if (!tierDropdownRef.current?.contains(event.relatedTarget)) {
+      setIsTierDropdownOpen(false);
+    }
+  };
 
   const bet = selectedTier?.entryFee?.amount ?? 100;
   const formattedBet = useMemo(() => Number(bet || 0).toLocaleString('en-US'), [bet]);
@@ -134,24 +154,45 @@ export default function CreateRoomPage() {
 
 
           <div className="create-form-row">
-            <label htmlFor="room-tier">{t('gameMode')}</label>
-            <div className="create-select-wrap">
-              <select
-                id="room-tier"
-                value={selectedTierId}
-                onChange={(event) => {
-                  const tierId = event.target.value;
-                  const tier = tiers.find((item) => item.tierId === tierId);
-                  setSelectedTierId(tierId);
-                  setMaxPlayers(tier?.maxPlayers || 3);
-                }}
-                aria-label={t('gameMode')}
+            <label id="room-tier-label">{t('gameMode')}</label>
+            <div
+              className={`create-select-wrap${isTierDropdownOpen ? ' open' : ''}`}
+              ref={tierDropdownRef}
+              onBlur={handleTierDropdownBlur}
+            >
+              <button
+                type="button"
+                className="create-tier-trigger"
+                aria-labelledby="room-tier-label"
+                aria-haspopup="listbox"
+                aria-expanded={isTierDropdownOpen}
+                onClick={() => setIsTierDropdownOpen((value) => !value)}
               >
-                {(tiers.length ? tiers : [{ tierId: 'sakura_garden_3p', name: 'Sakura Garden', maxPlayers: 3 }]).map((tier) => (
-                  <option key={tier.tierId} value={tier.tierId}>{tx(tier.name || tier.tierId)}</option>
-                ))}
-              </select>
-              <span>⌄</span>
+                <span className="create-tier-selected">{tx(selectedTier?.name || selectedTierId)}</span>
+                <span className="create-tier-arrow" aria-hidden="true">⌄</span>
+              </button>
+
+              {isTierDropdownOpen && (
+                <div className="create-tier-menu" role="listbox" aria-labelledby="room-tier-label">
+                  {roomTierOptions.map((tier) => {
+                    const isActive = tier.tierId === selectedTierId;
+
+                    return (
+                      <button
+                        type="button"
+                        key={tier.tierId}
+                        role="option"
+                        aria-selected={isActive}
+                        className={`create-tier-option${isActive ? ' active' : ''}`}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => selectTier(tier.tierId)}
+                      >
+                        {tx(tier.name || tier.tierId)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
