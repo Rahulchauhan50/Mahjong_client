@@ -95,20 +95,11 @@ const fallbackRoomCards = [
   },
 ];
 
-const friends = [
-  { name: 'Momo', state: 'Online', action: 'INVITE', avatar: 'friend-panda.png' },
-  { name: 'Panda', state: 'In Lobby', action: 'INVITE', avatar: 'friend-panda.png' },
-  { name: 'Bunbun', state: 'Playing', action: 'WATCH', avatar: 'friend-bunny.png' },
-  { name: 'Ryu', state: 'Online', action: 'INVITE', avatar: 'friend-dragon.png' },
-  { name: 'Kiki', state: 'Online', action: 'INVITE', avatar: 'friend-bird.png' },
-  { name: 'Stevie', state: 'In Game', action: 'WATCH', avatar: 'friend-girl.png' },
-];
+const friends = [];
 
-const initialFriendRequests = [
-  { id: 'req-luna', name: 'Luna', level: 'Level 12', avatar: 'friend-girl.png' },
-  { id: 'req-milo', name: 'Milo', level: 'Level 9', avatar: 'friend-bunny.png' },
-  { id: 'req-hana', name: 'Hana', level: 'Level 18', avatar: 'friend-panda.png' },
-];
+
+const initialFriendRequests = [];
+
 
 function formatCurrencyValue(value, fallback = '—') {
   if (value === null || value === undefined || value === '') {
@@ -344,8 +335,8 @@ export default function MainMenuPage() {
   const { t, tx } = useLanguage();
   const [roomCards, setRoomCards] = useState(fallbackRoomCards);
   const [profile, setProfile] = useState(() => getStoredAuthUser() || mockPlayerProfile);
-  const [friendList, setFriendList] = useState(() => (isMockApiEnabled() ? friends : []));
-  const [friendRequests, setFriendRequests] = useState(() => (isMockApiEnabled() ? initialFriendRequests : []));
+  const [friendList, setFriendList] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]);
   const [friendsError, setFriendsError] = useState('');
   const [isFriendRequestsOpen, setIsFriendRequestsOpen] = useState(false);
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
