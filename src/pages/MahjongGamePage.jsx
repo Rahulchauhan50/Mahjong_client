@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
-import { getGameState, leaveGame, sendGameAction } from '../services/gameService.js';
+import { getGameState, isGameApiAvailable, leaveGame, sendGameAction } from '../services/gameService.js';
 import { connectGameSocket } from '../services/socket.js';
 import { clearActiveMatch, getActiveMatch, saveActiveMatch } from '../store/gameStore.js';
 import { mockGameState } from '../mocks/mockGameState.js';
@@ -145,14 +145,15 @@ export default function MahjongGamePage() {
   const location = useLocation();
   const { matchId: routeMatchId } = useParams();
   const [storedMatch] = useState(() => getActiveMatch());
-  const resolvedMatchId = routeMatchId || location.state?.matchId || storedMatch?.matchId || mockGameState.matchId;
+  const gameApiAvailable = isGameApiAvailable();
+  const resolvedMatchId = routeMatchId || location.state?.matchId || storedMatch?.matchId || (gameApiAvailable ? mockGameState.matchId : '');
 
   const [selectedAction, setSelectedAction] = useState(null);
   const [gameState, setGameState] = useState({
     ...mockGameState,
     matchId: resolvedMatchId,
   });
-  const [gameError, setGameError] = useState('');
+  const [gameError, setGameError] = useState(() => (gameApiAvailable ? '' : t('gameplayUnavailable')));
 
   useEffect(() => {
     if (!routeMatchId && resolvedMatchId) {
@@ -162,10 +163,14 @@ export default function MahjongGamePage() {
 
     let isMounted = true;
 
+    if (!gameApiAvailable) {
+      return undefined;
+    }
+
     getGameState(resolvedMatchId)
       .then((state) => {
         if (isMounted && state) {
-          setGameState((current) => ({ ...current, ...state, matchId: state.matchId || resolvedMatchId }));
+          setGameState((current) => ({ ...(current || {}), ...state, matchId: state.matchId || resolvedMatchId }));
           saveActiveMatch({
             ...storedMatch,
             matchId: state.matchId || resolvedMatchId,
@@ -188,7 +193,7 @@ export default function MahjongGamePage() {
         }
 
         if (message.type === 'game_state' || message.type === 'game_state_updated' || message.type === 'turn_changed' || message.type === 'tile_discarded' || message.type === 'game_finished') {
-          setGameState((current) => ({ ...current, ...message.payload, matchId: message.payload.matchId || resolvedMatchId }));
+          setGameState((current) => ({ ...(current || {}), ...message.payload, matchId: message.payload.matchId || resolvedMatchId }));
         }
       },
       onError(error) {
@@ -200,7 +205,7 @@ export default function MahjongGamePage() {
       isMounted = false;
       gameSocket.disconnect();
     };
-  }, [location.state, navigate, resolvedMatchId, routeMatchId]);
+  }, [gameApiAvailable, location.state, navigate, resolvedMatchId, routeMatchId, t]);
 
   const players = useMemo(
     () => (Array.isArray(gameState.players) && gameState.players.length ? gameState.players : mockGameState.players),
@@ -255,6 +260,22 @@ export default function MahjongGamePage() {
       });
     }
   }, [gameState.matchId, gameState.result, gameState.status, gameState.winner, gameState.winnerId, navigate, resolvedMatchId]);
+
+  if (!gameApiAvailable) {
+    return (
+      <section className="gameplay-screen" aria-label="Mahjong gameplay screen">
+        <img className="gameplay-bg" src={asset('BG.png')} alt="" draggable="false" />
+        <div className="gameplay-vignette" aria-hidden="true" />
+        <div className="gameplay-error" role="alert">
+          {gameError || t('gameplayUnavailable')}
+          <br />
+          <button type="button" className="match-cancel-button" onClick={() => navigate(ROUTES.mainMenu)}>
+            {t('backToMainMenu')}
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   const handleMahjongAction = async (actionKey) => {
     setSelectedAction(actionKey);

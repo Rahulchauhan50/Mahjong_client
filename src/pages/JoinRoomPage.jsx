@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
 import { saveMatchmakingContext } from '../store/gameStore.js';
+import { isMockApiEnabled } from '../services/api.js';
+import { joinRoomByCode } from '../services/roomService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const MAX_ROOM_PLAYERS = 3;
@@ -19,18 +21,35 @@ const recentRooms = [
 export default function JoinRoomPage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
-  const [roomCode, setRoomCode] = useState('LD-4729');
+  const [roomCode, setRoomCode] = useState(isMockApiEnabled() ? 'LD-4729' : '');
+  const [isJoining, setIsJoining] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const normalizedRoomCode = useMemo(() => roomCode.trim().toUpperCase(), [roomCode]);
+  const visibleRecentRooms = isMockApiEnabled() ? recentRooms : [];
 
-  const joinRoom = (room) => {
-    const roomId = room?.id || normalizedRoomCode || 'joined_room';
+  const joinRoom = async (room) => {
+    const requestedCode = room?.code || normalizedRoomCode;
+    const fallbackRoomId = room?.id || requestedCode || 'joined_room';
     const maxPlayers = room?.maxPlayers || MAX_ROOM_PLAYERS;
 
-    saveMatchmakingContext({ roomId, maxPlayers, source: room ? 'join-room-list' : 'join-room-code' });
-    navigate(ROUTES.matchmaking, {
-      state: { roomId, maxPlayers, source: room ? 'join-room-list' : 'join-room-code' },
-    });
+    setErrorMessage('');
+    setIsJoining(true);
+
+    try {
+      const joinedRoom = await joinRoomByCode(requestedCode);
+      const roomId = joinedRoom?.id || joinedRoom?.roomId || joinedRoom?.roomCode || fallbackRoomId;
+
+      saveMatchmakingContext({ roomId, roomCode: requestedCode, maxPlayers, source: room ? 'join-room-list' : 'join-room-code' });
+      navigate(ROUTES.matchmaking, {
+        state: { roomId, roomCode: requestedCode, maxPlayers, source: room ? 'join-room-list' : 'join-room-code' },
+      });
+    } catch (error) {
+      console.error('Join room failed:', error);
+      setErrorMessage(error.message || t('joinRoomUnavailable'));
+    } finally {
+      setIsJoining(false);
+    }
   };
 
 
@@ -67,23 +86,30 @@ export default function JoinRoomPage() {
 
           <div className="join-room-scroll-shell">
             <div className="join-room-list">
-              {recentRooms.map((room) => (
+              {visibleRecentRooms.length ? visibleRecentRooms.map((room) => (
                 <article className="join-room-row" key={room.id}>
                   <strong>{room.code}</strong>
                   <span>{tx(room.name)}</span>
                   <em>{room.players} / {room.maxPlayers}</em>
                   <button type="button" onClick={() => joinRoom(room)}>{t('join')}</button>
                 </article>
-              ))}
+              )) : (
+                <article className="join-room-row">
+                  <strong>API</strong>
+                  <span>{t('joinRoomUnavailable')}</span>
+                  <em>0 / 3</em>
+                  <button type="button" disabled>{t('join')}</button>
+                </article>
+              )}
             </div>
           </div>
         </section>
 
-        <p className="join-room-helper">✿ {t('validRoomCodeHint')} ✿</p>
+        <p className="join-room-helper">✿ {errorMessage || t('validRoomCodeHint')} ✿</p>
 
         <div className="join-room-actions">
-          <button type="button" className="join-room-primary-action" onClick={() => joinRoom(null)} disabled={!normalizedRoomCode}>
-            {t('joinRoom')}
+          <button type="button" className="join-room-primary-action" onClick={() => joinRoom(null)} disabled={!normalizedRoomCode || isJoining}>
+            {isJoining ? t('connecting') : t('joinRoom')}
           </button>
           <button type="button" className="join-room-secondary-action" onClick={() => navigate(ROUTES.mainMenu)}>
             <span>←</span> {t('back')}

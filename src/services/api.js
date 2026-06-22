@@ -167,17 +167,12 @@ function extractRefreshToken(payload) {
 }
 
 async function requestFreshAccessToken() {
-  const storedRefreshToken = getRefreshToken();
-  const body = storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined;
-
+  // The current backend API reference says POST /auth/refresh relies on
+  // the secure HTTP-only refresh cookie. Do not send a refresh token in
+  // the body or Authorization header in real API mode.
   const response = await fetch(buildUrl('/auth/refresh'), {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-      ...(storedRefreshToken ? { Authorization: `Bearer ${storedRefreshToken}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
   });
 
   const payload = await parseResponse(response);
@@ -191,6 +186,8 @@ async function requestFreshAccessToken() {
 
   setAuthToken(nextAccessToken);
 
+  // Keep backward compatibility for older/mock builds that may still return
+  // a refresh token, but the real backend should continue using cookies.
   if (nextRefreshToken) {
     setRefreshToken(nextRefreshToken);
   }

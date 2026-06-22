@@ -34,7 +34,7 @@ export default function CreateRoomPage() {
 
         if (roomTiers?.[0]?.tierId) {
           setSelectedTierId(roomTiers[0].tierId);
-          setMaxPlayers(roomTiers[0].maxPlayers || 3);
+          setMaxPlayers(3);
         }
       })
       .catch((error) => {
@@ -59,7 +59,7 @@ export default function CreateRoomPage() {
   const selectTier = (tierId) => {
     const tier = roomTierOptions.find((item) => item.tierId === tierId);
     setSelectedTierId(tierId);
-    setMaxPlayers(tier?.maxPlayers || 3);
+    setMaxPlayers(3);
     setIsTierDropdownOpen(false);
   };
 
@@ -80,7 +80,7 @@ export default function CreateRoomPage() {
     try {
       const room = await createPrivateRoom({
         tierId: selectedTierId || selectedTier?.tierId || 'sakura_garden_3p',
-        maxPlayers,
+        maxPlayers: 3,
       });
 
       const nextRoomCode = room.roomCode || '';
@@ -91,7 +91,7 @@ export default function CreateRoomPage() {
         roomId,
         roomCode: nextRoomCode,
         tierId: room.tierId || selectedTierId,
-        maxPlayers: room.maxPlayers || maxPlayers,
+        maxPlayers: 3,
         source: 'private-room',
       };
 
@@ -199,12 +199,12 @@ export default function CreateRoomPage() {
           <div className="create-form-row players-row">
             <label>{t('maxPlayers')}</label>
             <div className="segmented-options">
-              {[2, 3].map((value) => (
+              {[3].map((value) => (
                 <button
                   type="button"
                   key={value}
-                  className={maxPlayers === value ? 'active' : ''}
-                  onClick={() => setMaxPlayers(value)}
+                  className="active"
+                  onClick={() => setMaxPlayers(3)}
                 >
                   {value} {t('players')}
                 </button>

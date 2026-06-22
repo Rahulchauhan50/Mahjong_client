@@ -1,5 +1,7 @@
-import { getFromApi, postToApi } from './api.js';
+import { getFromApi, isMockApiEnabled, postToApi } from './api.js';
 import { normalizeRoomList, normalizeRoom, normalizeRoomTierList, normalizePrivateRoom } from './gameNormalizers.js';
+
+const MISSING_JOIN_ROOM_ENDPOINT_MESSAGE = 'Backend API reference does not include a join-room endpoint yet. Required: POST /api/rooms/join with { roomCode } or POST /api/rooms/:roomId/join.';
 
 export async function getRoomTiers() {
   const response = await getFromApi('/rooms/tiers', (mockApi) => mockApi.getRoomTiers());
@@ -7,32 +9,25 @@ export async function getRoomTiers() {
 }
 
 export async function getFeaturedRooms() {
-  try {
-    return await getRoomTiers();
-  } catch (tiersError) {
-    try {
-      const response = await getFromApi('/rooms/featured', (mockApi) => mockApi.getFeaturedRooms());
-      return normalizeRoomList(response);
-    } catch (featuredError) {
-      // Keep old backends/dev mocks working while the new /rooms/tiers endpoint is rolling out.
-      console.warn('Room tiers and featured rooms endpoints failed. Falling back to /rooms:', {
-        tiersError,
-        featuredError,
-      });
-      const response = await getFromApi('/rooms', (mockApi) => mockApi.getRooms());
-      return normalizeRoomList(response);
-    }
+  // The current API reference only exposes GET /rooms/tiers.
+  // Avoid calling old /rooms/featured or /rooms endpoints in real mode.
+  if (isMockApiEnabled()) {
+    const response = await getFromApi('/rooms/featured', (mockApi) => mockApi.getFeaturedRooms());
+    return normalizeRoomList(response);
   }
+
+  return getRoomTiers();
 }
 
 export async function getRooms() {
-  try {
-    return await getRoomTiers();
-  } catch (error) {
-    console.warn('Room tiers endpoint failed. Falling back to /rooms:', error);
+  // The current API reference only exposes GET /rooms/tiers.
+  // Room list UI should use tiers until the backend adds a public rooms endpoint.
+  if (isMockApiEnabled()) {
     const response = await getFromApi('/rooms', (mockApi) => mockApi.getRooms());
     return normalizeRoomList(response);
   }
+
+  return getRoomTiers();
 }
 
 export async function createPrivateRoom(payload = {}) {
@@ -49,7 +44,23 @@ export async function createRoom(payload = {}) {
   return createPrivateRoom(payload);
 }
 
-export async function joinRoom(roomId) {
-  const response = await postToApi(`/rooms/${encodeURIComponent(roomId)}/join`, undefined, (mockApi) => mockApi.joinRoom(roomId));
-  return normalizeRoom(response);
+export async function joinRoom(roomIdOrCode) {
+  if (isMockApiEnabled()) {
+    const response = await postToApi(`/rooms/${encodeURIComponent(roomIdOrCode)}/join`, undefined, (mockApi) => mockApi.joinRoom(roomIdOrCode));
+    return normalizeRoom(response);
+  }
+
+  throw new Error(MISSING_JOIN_ROOM_ENDPOINT_MESSAGE);
+}
+
+export async function joinRoomByCode(roomCode) {
+  if (!roomCode) {
+    throw new Error('Room code is required.');
+  }
+
+  if (isMockApiEnabled()) {
+    return joinRoom(roomCode);
+  }
+
+  throw new Error(MISSING_JOIN_ROOM_ENDPOINT_MESSAGE);
 }

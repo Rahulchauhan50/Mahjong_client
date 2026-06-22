@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
-import { cancelMatchmaking, getMatchmakingStatus, startMatchmaking } from '../services/matchmakingService.js';
+import { cancelMatchmaking, getMatchmakingStatus, isMatchmakingApiAvailable, startMatchmaking } from '../services/matchmakingService.js';
 import { mockMatchmakingSession } from '../mocks/mockMatchmaking.js';
 import { clearMatchmakingContext, getMatchmakingContext, saveActiveMatch } from '../store/gameStore.js';
 import { useLanguage } from '../i18n/useLanguage.js';
@@ -60,11 +60,68 @@ export default function MatchmakingPage() {
     let isMounted = true;
     let activeSessionId = null;
     let matchWasFound = false;
+    let statusTimerId = null;
     const context = getRequestedMatchmakingContext(location.state);
 
     const intervalId = window.setInterval(() => {
       setSeconds((current) => (current >= 59 ? 0 : current + 1));
     }, 1000);
+
+    const openGameWhenReady = (status) => {
+      if (!isMounted || !status) {
+        return;
+      }
+
+      setSession(status);
+
+      if (!status.matchId) {
+        return;
+      }
+
+      matchWasFound = true;
+      clearMatchmakingContext();
+      saveActiveMatch({
+        matchId: status.matchId,
+        sessionId: status.id || status.sessionId || activeSessionId,
+        roomId: status.roomId || context.roomId,
+        players: status.players,
+      });
+
+      window.setTimeout(() => {
+        if (isMounted) {
+          navigate(buildGameRoute(status.matchId), {
+            state: {
+              matchId: status.matchId,
+              roomId: status.roomId || context.roomId,
+            },
+          });
+        }
+      }, 700);
+    };
+
+    const pollStatus = () => {
+      if (!activeSessionId || matchWasFound) {
+        return;
+      }
+
+      getMatchmakingStatus(activeSessionId)
+        .then(openGameWhenReady)
+        .catch((error) => {
+          console.error('Matchmaking status failed:', error);
+          if (isMounted) {
+            setErrorMessage(error.message || t('matchmakingFailed'));
+          }
+        });
+    };
+
+    if (!isMatchmakingApiAvailable()) {
+      setErrorMessage(t('matchmakingUnavailable'));
+      setSession({ ...mockMatchmakingSession, players: mockMatchmakingSession.players });
+      return () => {
+        isMounted = false;
+        window.clearInterval(intervalId);
+      };
+    }
 
     startMatchmaking({
       roomId: context.roomId,
@@ -75,48 +132,16 @@ export default function MatchmakingPage() {
     })
       .then((createdSession) => {
         if (!isMounted) {
-          return null;
+          return;
         }
 
         activeSessionId = createdSession.id || createdSession.sessionId;
-        setSession(createdSession);
+        openGameWhenReady(createdSession);
 
-        if (createdSession.matchId) {
-          return createdSession;
+        if (!createdSession.matchId && activeSessionId) {
+          pollStatus();
+          statusTimerId = window.setInterval(pollStatus, 2000);
         }
-
-        return getMatchmakingStatus(activeSessionId);
-      })
-      .then((status) => {
-        if (!isMounted || !status) {
-          return;
-        }
-
-        setSession(status);
-
-        if (!status.matchId) {
-          return;
-        }
-
-        matchWasFound = true;
-        clearMatchmakingContext();
-        saveActiveMatch({
-          matchId: status.matchId,
-          sessionId: status.id || status.sessionId || activeSessionId,
-          roomId: status.roomId || context.roomId,
-          players: status.players,
-        });
-
-        window.setTimeout(() => {
-          if (isMounted) {
-            navigate(buildGameRoute(status.matchId), {
-              state: {
-                matchId: status.matchId,
-                roomId: status.roomId || context.roomId,
-              },
-            });
-          }
-        }, 700);
       })
       .catch((error) => {
         console.error('Matchmaking failed:', error);
@@ -128,12 +153,15 @@ export default function MatchmakingPage() {
     return () => {
       isMounted = false;
       window.clearInterval(intervalId);
+      if (statusTimerId) {
+        window.clearInterval(statusTimerId);
+      }
 
       if (activeSessionId && !matchWasFound) {
         cancelMatchmaking(activeSessionId).catch(() => {});
       }
     };
-  }, [location.state, navigate]);
+  }, [location.state, navigate, t]);
 
   const waitTime = useMemo(() => `00:${String(seconds).padStart(2, '0')}`, [seconds]);
 

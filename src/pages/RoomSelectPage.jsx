@@ -4,7 +4,8 @@ import { ROUTES } from '../router/routes.js';
 import ScreenHeader from '../components/ScreenHeader.jsx';
 import PrimaryButton from '../components/PrimaryButton.jsx';
 import FlowNav from '../components/FlowNav.jsx';
-import { getRooms, joinRoom } from '../services/roomService.js';
+import { getRooms } from '../services/roomService.js';
+import { saveMatchmakingContext } from '../store/gameStore.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const fallbackRooms = [
@@ -39,8 +40,21 @@ export default function RoomSelectPage() {
       return;
     }
 
-    await joinRoom(room.roomId || room.tierId || room.id || room.name);
-    navigate(ROUTES.matchmaking);
+    const roomId = room.roomId || room.tierId || room.id || room.name;
+    saveMatchmakingContext({
+      roomId,
+      tierId: room.tierId || room.id || null,
+      maxPlayers: room.maxPlayers || 3,
+      source: 'room-select',
+    });
+    navigate(ROUTES.matchmaking, {
+      state: {
+        roomId,
+        tierId: room.tierId || room.id || null,
+        maxPlayers: room.maxPlayers || 3,
+        source: 'room-select',
+      },
+    });
   };
 
   return (

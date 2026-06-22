@@ -7,6 +7,7 @@ import { mockFeaturedRooms } from '../mocks/mockRooms.js';
 import { mockPlayerProfile } from '../mocks/mockProfile.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
+import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getFriends, getIncomingFriendRequests, sendFriendRequest } from '../services/friendsService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/main-menu/${name}`;
@@ -357,8 +358,8 @@ export default function MainMenuPage() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.allSettled([getBalances(), getDailyRewardStatus(), getRoomTiers()])
-      .then(([balancesResult, rewardResult, roomTiersResult]) => {
+    Promise.allSettled([getBalances(), getDailyRewardStatus(), getRoomTiers(), getFriends(), getIncomingFriendRequests()])
+      .then(([balancesResult, rewardResult, roomTiersResult, friendsResult, requestsResult]) => {
         if (!isMounted) {
           return;
         }
@@ -388,6 +389,36 @@ export default function MainMenuPage() {
             coins: economyBalances.coins ?? null,
             diamonds: economyBalances.diamonds ?? economyBalances.gems ?? null,
           });
+        }
+
+        const backendFriends = friendsResult.status === 'fulfilled' ? friendsResult.value : null;
+        const backendRequests = requestsResult.status === 'fulfilled' ? requestsResult.value : null;
+
+        if (friendsResult.status === 'rejected') {
+          console.error('Failed to load friends:', friendsResult.reason);
+        }
+
+        if (requestsResult.status === 'rejected') {
+          console.error('Failed to load friend requests:', requestsResult.reason);
+        }
+
+        if (backendFriends?.length) {
+          setFriendList(backendFriends.map((friend) => ({
+            id: friend.id || friend.userId || friend.friendId || friend.username || friend.name,
+            name: friend.username || friend.name || 'Friend',
+            state: friend.status || friend.state || 'Online',
+            action: friend.action || 'INVITE',
+            avatar: friend.avatar || friend.avatarId || 'friend-girl.png',
+          })));
+        }
+
+        if (backendRequests?.length) {
+          setFriendRequests(backendRequests.map((request) => ({
+            id: request.id || request.requestId || request.fromUserId || request.username || request.name,
+            name: request.username || request.name || request.fromUsername || 'Player',
+            level: request.level ? `Level ${request.level}` : (request.levelLabel || 'Level 1'),
+            avatar: request.avatar || request.avatarId || 'friend-girl.png',
+          })));
         }
 
         setDailyRewardStatus(rewardStatus || null);
@@ -441,22 +472,34 @@ export default function MainMenuPage() {
     }
   };
 
-  const handleAcceptAddFriend = () => {
+  const handleAcceptAddFriend = async () => {
     const nextFriendName = friendName.trim();
 
     if (!nextFriendName) {
       return;
     }
 
+    try {
+      await sendFriendRequest(nextFriendName);
+    } catch (error) {
+      console.error('Failed to send friend request:', error);
+    }
+
     setFriendList((current) => [
       ...current,
-      { name: nextFriendName, state: 'Online', action: 'INVITE', avatar: 'friend-girl.png' },
+      { name: nextFriendName, state: 'Pending', action: 'INVITE', avatar: 'friend-girl.png' },
     ]);
     setFriendName('');
     setIsAddFriendOpen(false);
   };
 
-  const acceptFriendRequest = (request) => {
+  const acceptFriendRequest = async (request) => {
+    try {
+      await acceptFriendRequestApi(request.id);
+    } catch (error) {
+      console.error('Failed to accept friend request:', error);
+    }
+
     setFriendList((current) => [
       ...current,
       { name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
@@ -464,7 +507,13 @@ export default function MainMenuPage() {
     setFriendRequests((current) => current.filter((item) => item.id !== request.id));
   };
 
-  const declineFriendRequest = (requestId) => {
+  const declineFriendRequest = async (requestId) => {
+    try {
+      await declineFriendRequestApi(requestId);
+    } catch (error) {
+      console.error('Failed to decline friend request:', error);
+    }
+
     setFriendRequests((current) => current.filter((item) => item.id !== requestId));
   };
 
