@@ -246,14 +246,8 @@ export default function MissionsPage() {
           <img src={missionIcon} alt="" />
           <div>
             <h1>Missions</h1>
-            <p>Daily and weekly tasks from backend</p>
+            <p>Daily and weekly tasks</p>
           </div>
-        </div>
-
-        <div className="missions-api-card">
-          <span>Backend</span>
-          <strong>{isLoading ? 'Loading' : missions.length ? 'Connected' : 'Fallback'}</strong>
-          <small>GET /api/missions/</small>
         </div>
       </header>
 

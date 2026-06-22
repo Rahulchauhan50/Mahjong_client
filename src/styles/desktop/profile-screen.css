@@ -993,3 +993,17 @@ align-self: flex-start;
 .app-shell[data-device='desktop'] .profile-logout-button:hover {
   filter: brightness(1.08);
 }
+
+
+/* Profile recent achievements scroll safety */
+.app-shell[data-device='desktop'] .profile-content--compact .achievements-section {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell[data-device='desktop'] .profile-content--compact .achievements-section .profile-achievement-grid {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+  scrollbar-width: thin;
+}

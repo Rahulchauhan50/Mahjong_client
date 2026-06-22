@@ -7,6 +7,7 @@ import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/profile/${name}`;
 const DEFAULT_PROFILE_AVATAR = 'ICO.png';
+const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
 const ACHIEVEMENT_CARD_ASSETS = ['C1.png', 'C2.png', 'C3.png', 'C4.png'];
 const XP_TRACK_ASSET = 'profile-xp-track.png';
 const XP_FILL_ASSET = 'profile-xp-fill.png';
@@ -84,8 +85,18 @@ function normalizeAchievements(items) {
   });
 }
 
+
+function getStoredProfileAvatar() {
+  try {
+    return window.localStorage.getItem(PROFILE_AVATAR_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
 function getAvatarSrc(user) {
-  const avatarValue = user?.avatarUrl || user?.imageUrl || user?.avatar || user?.avatarId;
+  const storedProfileAvatar = getStoredProfileAvatar();
+  const avatarValue = storedProfileAvatar || user?.avatarUrl || user?.imageUrl || user?.avatar || user?.avatarId;
   if (typeof avatarValue !== 'string') return asset(DEFAULT_PROFILE_AVATAR);
   const avatar = avatarValue.trim();
   if (!avatar) return asset(DEFAULT_PROFILE_AVATAR);
