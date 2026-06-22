@@ -186,24 +186,6 @@ function getDisplayName(profile) {
   return profile?.username || profile?.name || 'Player';
 }
 
-function getProfileId(profile) {
-  const directId = profile?.userId ?? profile?._id ?? profile?.id ?? profile?.uid;
-  const nestedId = profile?.user?.userId ?? profile?.user?._id ?? profile?.user?.id ?? profile?.user?.uid;
-  const candidate = directId ?? nestedId;
-
-  if (candidate === null || candidate === undefined) {
-    return '';
-  }
-
-  const value = String(candidate).trim();
-
-  if (!value || value === 'player_stevie') {
-    return '';
-  }
-
-  return value;
-}
-
 function getProfileWithDefaults(profile) {
   const storedAvatar = getStoredProfileAvatar();
 
@@ -650,7 +632,6 @@ export default function ProfilePage() {
   }
 
   const profileXp = getProfileXpData(profile);
-  const profileId = getProfileId(profile) || getProfileId(getStoredAuthUser());
 
   return (
     <section className="profile-screen-ui" aria-label={t('profileTitle')}>
@@ -697,7 +678,6 @@ export default function ProfilePage() {
                   </button>
                 </form>
               )}
-              <p className="profile-user-id">ID: {profileId || 'ID not returned from backend'}</p>
               {saveError ? <p className="profile-save-error" role="alert">{saveError}</p> : null}
               {saveStatus === 'saved' ? <p className="profile-save-success">{t('profileNameUpdated')}</p> : null}
               <p className="profile-api-meta">{t('level')} {profile.level || 1} · {profile.trophies ?? 0} {t('trophies')}</p>
