@@ -4,7 +4,7 @@ import { ROUTES } from '../router/routes.js';
 import { getProfile, getProfileStats, updateProfile } from '../services/profileService.js';
 import { claimAchievement, getAchievements } from '../services/achievementsService.js';
 import { getStoredAuthUser, logout } from '../services/authService.js';
-import { mockAchievements, mockPlayerProfile, mockProfileStats } from '../mocks/mockProfile.js';
+import { mockPlayerProfile, mockProfileStats } from '../mocks/mockProfile.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/profile/${name}`;
@@ -20,6 +20,7 @@ const PROFILE_AVATAR_OPTIONS = [
 const PROFILE_TITLE_OPTIONS = ['Novice', 'Apprentice', 'Master', 'Grand Master', 'Legendary'];
 const XP_TRACK_ASSET = 'profile-xp-track.png';
 const XP_FILL_ASSET = 'profile-xp-fill.png';
+const ACHIEVEMENT_CARD_ASSETS = ['C1.png', 'C2.png', 'C3.png', 'C4.png'];
 
 
 
@@ -221,30 +222,31 @@ function isAchievementClaimable(item) {
   return Boolean(item?.claimable ?? item?.canClaim ?? isAchievementComplete(item));
 }
 
-function getAchievementsWithDefaults(items) {
-  const hasApiItems = Array.isArray(items) && items.length > 0;
-  const sourceItems = hasApiItems ? items : mockAchievements;
-  const maxLength = hasApiItems ? sourceItems.length : mockAchievements.length;
+function normalizeAchievements(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
 
-  return Array.from({ length: maxLength }, (_, index) => {
-    const fallback = mockAchievements[index % mockAchievements.length];
-    const item = sourceItems[index] || {};
-    const title = item?.title || item?.name || fallback.title;
+  return items
+    .filter((item) => item && typeof item === 'object')
+    .map((item, index) => {
+      const title = item?.title || item?.name || item?.achievementName || `Achievement ${index + 1}`;
+      const description = item?.description || item?.details || '';
+      const id = getAchievementId(item, title);
 
-    return {
-      ...fallback,
-      ...(item && typeof item === 'object' ? item : {}),
-      id: getAchievementId(item, fallback.id || fallback.title || title),
-      achievementId: getAchievementId(item, fallback.achievementId || fallback.id || fallback.title || title),
-      title,
-      description: item?.description || fallback.description,
-      progress: item?.progress || fallback.progress,
-      card: item?.card || fallback.card,
-      complete: isAchievementComplete(item) || Boolean(fallback.complete),
-      claimed: Boolean(item?.claimed ?? item?.isClaimed ?? false),
-      claimable: isAchievementClaimable(item),
-    };
-  });
+      return {
+        ...item,
+        id,
+        achievementId: id,
+        title,
+        description,
+        progress: item?.progress,
+        card: item?.card || item?.cardAsset || item?.background || ACHIEVEMENT_CARD_ASSETS[index % ACHIEVEMENT_CARD_ASSETS.length],
+        complete: isAchievementComplete(item),
+        claimed: Boolean(item?.claimed ?? item?.isClaimed ?? false),
+        claimable: isAchievementClaimable(item),
+      };
+    });
 }
 
 function getAvatarSrc(profile) {
@@ -424,7 +426,7 @@ export default function ProfilePage() {
   const { t, tx } = useLanguage();
   const [profile, setProfile] = useState(() => getProfileWithDefaults(getStoredAuthUser()));
   const [stats, setStats] = useState(mockProfileStats);
-  const [achievements, setAchievements] = useState(mockAchievements);
+  const [achievements, setAchievements] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
@@ -454,7 +456,7 @@ export default function ProfilePage() {
         setDraftName(getDisplayName(nextProfile));
         setSelectedTitle(getProfileTitle(nextProfile));
         setStats(playerStats?.length ? playerStats : nextProfile.stats?.length ? nextProfile.stats : mockProfileStats);
-        setAchievements(getAchievementsWithDefaults(playerAchievements));
+        setAchievements(normalizeAchievements(playerAchievements));
       })
       .catch((error) => {
         console.error('Failed to load profile:', error);
@@ -606,7 +608,7 @@ export default function ProfilePage() {
 
   async function reloadAchievements() {
     const freshAchievements = await getAchievements();
-    setAchievements(getAchievementsWithDefaults(freshAchievements));
+    setAchievements(normalizeAchievements(freshAchievements));
   }
 
   async function handleClaimAchievement(item) {
@@ -717,47 +719,51 @@ export default function ProfilePage() {
           <h2>{t('recentAchievements')}</h2>
           {achievementClaimError ? <p className="profile-achievement-claim-state profile-achievement-claim-state--error" role="alert">{achievementClaimError}</p> : null}
           {achievementClaimMessage ? <p className="profile-achievement-claim-state">{achievementClaimMessage}</p> : null}
-          <div className="profile-achievement-grid">
-            {achievements.map((item) => {
-              const achievementProgress = getAchievementProgressData(item);
-              const achievementId = getAchievementId(item);
-              const isClaiming = claimingAchievementId === achievementId;
+          {achievements.length === 0 ? (
+            <p className="profile-achievements-empty">{t('noAchievementsYet')}</p>
+          ) : (
+            <div className="profile-achievement-grid">
+              {achievements.map((item) => {
+                const achievementProgress = getAchievementProgressData(item);
+                const achievementId = getAchievementId(item);
+                const isClaiming = claimingAchievementId === achievementId;
 
-              return (
-                <article
-                  className='profile-achievement-card lui-4e595040'
-                  key={achievementId || item.title}
-                  style={{ backgroundImage: `url(${asset(item.card)})` }}
-                >
-                  <div className="profile-achievement-copy">
-                    <h3 className='lui-9ac37510'>{tx(item.title)}</h3>
-                    <p className='lui-7bc2a8ec'>{tx(item.description)}</p>
-                  </div>
+                return (
+                  <article
+                    className='profile-achievement-card lui-4e595040'
+                    key={achievementId || item.title}
+                    style={{ backgroundImage: `url(${asset(item.card)})` }}
+                  >
+                    <div className="profile-achievement-copy">
+                      <h3 className='lui-9ac37510'>{tx(item.title)}</h3>
+                      <p className='lui-7bc2a8ec'>{tx(item.description)}</p>
+                    </div>
 
-                  <div className="profile-achievement-footer">
-                    <XpProgressBar
-                      className="profile-achievement-xp-bar"
-                      percent={achievementProgress.percent}
-                      label={`${tx(item.title)} ${t('xpProgress')}`}
-                    />
-                    <span className="profile-achievement-progress-text">{tx(achievementProgress.text)}</span>
-                    {item.claimed ? (
-                      <span className="profile-achievement-claimed-label">{t('claimed')}</span>
-                    ) : item.claimable ? (
-                      <button
-                        className="profile-achievement-complete-button"
-                        disabled={isClaiming}
-                        type="button"
-                        onClick={() => handleClaimAchievement(item)}
-                      >
-                        {isClaiming ? t('claiming') : t('complete')}
-                      </button>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                    <div className="profile-achievement-footer">
+                      <XpProgressBar
+                        className="profile-achievement-xp-bar"
+                        percent={achievementProgress.percent}
+                        label={`${tx(item.title)} ${t('xpProgress')}`}
+                      />
+                      <span className="profile-achievement-progress-text">{tx(achievementProgress.text)}</span>
+                      {item.claimed ? (
+                        <span className="profile-achievement-claimed-label">{t('claimed')}</span>
+                      ) : item.claimable ? (
+                        <button
+                          className="profile-achievement-complete-button"
+                          disabled={isClaiming}
+                          type="button"
+                          onClick={() => handleClaimAchievement(item)}
+                        >
+                          {isClaiming ? t('claiming') : t('complete')}
+                        </button>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className='profile-section tile-section lui-1f1553ac'>

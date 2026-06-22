@@ -1,4 +1,4 @@
-import { getFromApi, postToApi } from './api.js';
+import { apiRequest, isMockApiEnabled } from './api.js';
 
 function unwrapPayload(response) {
   return response?.data && typeof response.data === 'object' ? response.data : (response || {});
@@ -24,8 +24,15 @@ function extractAchievements(payload) {
   return [];
 }
 
+function assertRealAchievementsApi() {
+  if (isMockApiEnabled()) {
+    throw new Error('Achievements require the real backend API. Disable VITE_USE_MOCK_API to avoid mock achievement data.');
+  }
+}
+
 export async function getAchievements() {
-  const response = await getFromApi('/achievements/', (mockApi) => mockApi.getAchievements?.() ?? { success: true, achievements: [] });
+  assertRealAchievementsApi();
+  const response = await apiRequest('/achievements/');
   return extractAchievements(unwrapPayload(response));
 }
 
@@ -34,5 +41,8 @@ export async function claimAchievement(achievementId) {
     throw new Error('achievementId is required to claim an achievement.');
   }
 
-  return postToApi(`/achievements/claim/${encodeURIComponent(achievementId)}`, undefined, (mockApi) => mockApi.claimAchievement?.(achievementId) ?? { success: true });
+  assertRealAchievementsApi();
+  return apiRequest(`/achievements/claim/${encodeURIComponent(achievementId)}`, {
+    method: 'POST',
+  });
 }

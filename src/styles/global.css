@@ -81,3 +81,18 @@
   padding: 0.2rem 0.8rem;
   text-transform: uppercase;
 }
+
+
+.profile-achievements-empty {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 120px;
+  padding: 1rem;
+  text-align: center;
+}
