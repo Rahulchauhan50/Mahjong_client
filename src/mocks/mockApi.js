@@ -1,4 +1,4 @@
-import { mockAchievements, mockPlayerProfile, mockProfileStats } from './mockProfile.js';
+import { mockPlayerProfile, mockProfileStats } from './mockProfile.js';
 import { mockFeaturedRooms, mockRoomList, mockRoomTiers } from './mockRooms.js';
 import { mockMatchFound, mockMatchmakingSession } from './mockMatchmaking.js';
 import { mockGameResult, mockGameState } from './mockGameState.js';
@@ -95,20 +95,6 @@ export const mockApi = {
   async getProfileStats() {
     await delay();
     return mockProfileStats;
-  },
-
-  async getAchievements() {
-    await delay();
-    return { success: true, achievements: mockAchievements };
-  },
-
-  async claimAchievement(achievementId) {
-    await delay();
-    return {
-      success: true,
-      achievementId,
-      message: 'Achievement claimed',
-    };
   },
 
 
