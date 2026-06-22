@@ -1,21 +1,33 @@
-import { getFromApi, patchToApi } from './api.js';
+import { apiRequest, isMockApiEnabled } from './api.js';
 
 function normalizeProfileResponse(response) {
   return response?.profile || response?.user || response?.data?.profile || response?.data?.user || response;
 }
 
+function assertRealProfileApi() {
+  if (isMockApiEnabled()) {
+    throw new Error('Profile requires the real backend API. Disable VITE_USE_MOCK_API to avoid mock profile data.');
+  }
+}
+
 export async function getProfile() {
-  const response = await getFromApi('/auth/profile', (mockApi) => mockApi.getProfile());
+  assertRealProfileApi();
+  const response = await apiRequest('/auth/profile');
   return normalizeProfileResponse(response);
 }
 
 export async function updateProfile(payload) {
-  const response = await patchToApi('/auth/profile', payload, (mockApi) => mockApi.updateProfile(payload));
+  assertRealProfileApi();
+  const response = await apiRequest('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(payload ?? {}),
+  });
   return normalizeProfileResponse(response);
 }
 
 export async function getPublicProfile(userId) {
-  const response = await getFromApi(`/auth/profile/${encodeURIComponent(userId)}`, (mockApi) => mockApi.getPublicProfile(userId));
+  assertRealProfileApi();
+  const response = await apiRequest(`/auth/profile/${encodeURIComponent(userId)}`);
   return normalizeProfileResponse(response);
 }
 
@@ -62,21 +74,6 @@ export function normalizeProfileStats(profile) {
     }
 
     return stats;
-  }
-
-  return [];
-}
-
-export async function getProfileStats() {
-  const profile = await getProfile();
-  return normalizeProfileStats(profile);
-}
-
-export async function getAchievements() {
-  const profile = await getProfile();
-
-  if (Array.isArray(profile?.achievements)) {
-    return profile.achievements;
   }
 
   return [];

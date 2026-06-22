@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
-import { getProfile, getProfileStats, normalizeProfileStats, updateProfile } from '../services/profileService.js';
+import { getProfile, normalizeProfileStats, updateProfile } from '../services/profileService.js';
 import { claimAchievement, getAchievements } from '../services/achievementsService.js';
 import { getStoredAuthUser, logout } from '../services/authService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
@@ -162,24 +162,32 @@ function getProfileXpData(profile) {
 }
 
 function getAchievementProgressData(item) {
-  if (item?.complete) {
-    return {
-      current: 1,
-      target: 1,
-      percent: 100,
-      text: item.progress || 'Completed',
-    };
-  }
-
   const parsedProgress = parseProgressText(item?.progress);
-  const current = parseNumber(item?.currentXP ?? item?.currentXp ?? item?.xp ?? item?.current ?? parsedProgress?.current ?? 0);
-  const target = parseNumber(item?.requiredXP ?? item?.requiredXp ?? item?.targetXP ?? item?.targetXp ?? item?.target ?? parsedProgress?.target ?? 1);
+  const progressNumber = typeof item?.progress === 'number' ? item.progress : null;
+  const current = parseNumber(
+    item?.currentXP
+      ?? item?.currentXp
+      ?? item?.xp
+      ?? item?.current
+      ?? progressNumber
+      ?? parsedProgress?.current
+      ?? 0,
+  );
+  const target = parseNumber(
+    item?.requiredXP
+      ?? item?.requiredXp
+      ?? item?.targetXP
+      ?? item?.targetXp
+      ?? item?.target
+      ?? parsedProgress?.target
+      ?? (item?.complete ? current || 1 : 1),
+  );
 
   return {
     current,
     target,
-    percent: getProgressPercent(current, target),
-    text: item?.progress || `${current}/${target}`,
+    percent: item?.complete ? 100 : getProgressPercent(current, target),
+    text: item?.complete && !target ? 'Completed' : `${current}/${target}`,
   };
 }
 
@@ -204,6 +212,20 @@ function XpProgressBar({ className = '', percent, label }) {
 
 function getDisplayName(profile) {
   return profile?.username || profile?.name || 'Player';
+}
+
+
+function getInitialStoredProfile() {
+  const storedUser = getStoredAuthUser();
+
+  if (!storedUser || typeof storedUser !== 'object') {
+    return null;
+  }
+
+  // Only keep identity fields for the first paint. XP, rank, trophies and
+  // stats must come from GET /api/auth/profile, not from old mock/localStorage.
+  const { id, username, name, email, avatar, avatarId, avatarUrl, imageUrl } = storedUser;
+  return { id, username, name, email, avatar, avatarId, avatarUrl, imageUrl };
 }
 
 function getProfileWithDefaults(profile) {
@@ -231,7 +253,12 @@ function getAchievementId(item, fallbackId = '') {
 }
 
 function isAchievementComplete(item) {
-  return Boolean(item?.complete ?? item?.completed ?? item?.isComplete ?? item?.unlocked ?? false);
+  if (item?.complete ?? item?.completed ?? item?.isComplete ?? item?.unlocked) {
+    return true;
+  }
+
+  const progressData = getAchievementProgressData(item);
+  return progressData.target > 0 && progressData.current >= progressData.target;
 }
 
 function isAchievementClaimable(item) {
@@ -444,17 +471,17 @@ function TitlePickerPanel({ activeTitle, isSaving, onClose, onSelect, t, tx }) {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
-  const [profile, setProfile] = useState(() => getProfileWithDefaults(getStoredAuthUser()));
+  const [profile, setProfile] = useState(() => getProfileWithDefaults(getInitialStoredProfile()));
   const [stats, setStats] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const [isTitlePickerOpen, setIsTitlePickerOpen] = useState(false);
-  const [draftName, setDraftName] = useState(() => getDisplayName(getProfileWithDefaults(getStoredAuthUser())));
+  const [draftName, setDraftName] = useState(() => getDisplayName(getProfileWithDefaults(getInitialStoredProfile())));
   const [saveStatus, setSaveStatus] = useState('idle');
   const [saveError, setSaveError] = useState('');
-  const [selectedTitle, setSelectedTitle] = useState(() => getProfileTitle(getProfileWithDefaults(getStoredAuthUser())));
+  const [selectedTitle, setSelectedTitle] = useState(() => getProfileTitle(getProfileWithDefaults(getInitialStoredProfile())));
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [titleSaveStatus, setTitleSaveStatus] = useState('idle');
   const [titleSaveError, setTitleSaveError] = useState('');
@@ -465,8 +492,8 @@ export default function ProfilePage() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([getProfile(), getProfileStats(), getAchievements()])
-      .then(([playerProfile, playerStats, playerAchievements]) => {
+    Promise.all([getProfile(), getAchievements()])
+      .then(([playerProfile, playerAchievements]) => {
         if (!isMounted) {
           return;
         }
@@ -475,8 +502,7 @@ export default function ProfilePage() {
         setProfile(nextProfile);
         setDraftName(getDisplayName(nextProfile));
         setSelectedTitle(getProfileTitle(nextProfile));
-        const backendStats = playerStats?.length ? playerStats : normalizeProfileStats(nextProfile);
-        setStats(backendStats);
+        setStats(normalizeProfileStats(nextProfile));
         setAchievements(normalizeAchievements(playerAchievements));
       })
       .catch((error) => {

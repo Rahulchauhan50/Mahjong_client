@@ -4,7 +4,6 @@ import { ROUTES } from '../router/routes.js';
 import { claimDailyReward, getBalances, getDailyRewardStatus } from '../services/economyService.js';
 import { saveMatchmakingContext } from '../store/gameStore.js';
 import { mockFeaturedRooms } from '../mocks/mockRooms.js';
-import { mockPlayerProfile } from '../mocks/mockProfile.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
 import { isMockApiEnabled } from '../services/api.js';
@@ -15,6 +14,12 @@ const asset = (name) => `/assets/main-menu/${name}`;
 const profileAsset = (name) => `/assets/profile/${name}`;
 const dailyAsset = (name) => `/assets/daily-login/${name}`;
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
+
+const EMPTY_MENU_PROFILE = {
+  id: '',
+  username: 'Player',
+  name: 'Player',
+};
 
 function getStoredProfileAvatar() {
   try {
@@ -334,7 +339,7 @@ export default function MainMenuPage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
   const [roomCards, setRoomCards] = useState(fallbackRoomCards);
-  const [profile, setProfile] = useState(() => getStoredAuthUser() || mockPlayerProfile);
+  const [profile, setProfile] = useState(() => getStoredAuthUser() || EMPTY_MENU_PROFILE);
   const [friendList, setFriendList] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [friendsError, setFriendsError] = useState('');
@@ -375,7 +380,7 @@ export default function MainMenuPage() {
         }
 
         setRoomCards(roomTiers?.length ? roomTiers : mockFeaturedRooms);
-        setProfile((current) => current || mockPlayerProfile);
+        setProfile((current) => current || EMPTY_MENU_PROFILE);
 
         if (economyBalances) {
           setBalances({

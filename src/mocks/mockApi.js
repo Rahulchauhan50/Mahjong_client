@@ -1,4 +1,3 @@
-import { mockPlayerProfile, mockProfileStats } from './mockProfile.js';
 import { mockFeaturedRooms, mockRoomList, mockRoomTiers } from './mockRooms.js';
 import { mockMatchFound, mockMatchmakingSession } from './mockMatchmaking.js';
 import { mockGameResult, mockGameState } from './mockGameState.js';
@@ -16,9 +15,9 @@ export const mockApi = {
       message: 'User registered successfully',
       userId: createId('user'),
       user: {
-        ...mockPlayerProfile,
         id: createId('user'),
-        username: payload.username || mockPlayerProfile.username,
+        username: payload.username || payload.email || 'Player',
+        name: payload.username || payload.email || 'Player',
         email: payload.email || 'player1@example.com',
       },
     };
@@ -31,10 +30,10 @@ export const mockApi = {
       accessToken: 'mock_access_token',
       refreshToken: 'mock_refresh_token',
       user: {
-        ...mockPlayerProfile,
-        username: credentials.username || mockPlayerProfile.username,
-        name: credentials.username || mockPlayerProfile.name,
-        email: credentials.email || 'Stevie22@gmail.com',
+        id: 'mock_user',
+        username: credentials.username || credentials.email || 'Player',
+        name: credentials.username || credentials.email || 'Player',
+        email: credentials.email || 'player1@example.com',
       },
     };
   },
@@ -53,8 +52,8 @@ export const mockApi = {
       accessToken: 'mock_guest_access_token',
       refreshToken: 'mock_guest_refresh_token',
       user: {
-        ...mockPlayerProfile,
         id: 'guest_player',
+        username: 'Guest',
         name: 'Guest',
       },
     };
@@ -62,41 +61,18 @@ export const mockApi = {
 
   async getProfile() {
     await delay();
-    return {
-      success: true,
-      profile: mockPlayerProfile,
-    };
+    throw new Error('Mock profile data is disabled. Use the real backend profile API.');
   },
 
-  async updateProfile(payload = {}) {
+  async updateProfile() {
     await delay();
-    return {
-      success: true,
-      message: 'Profile updated',
-      profile: {
-        ...mockPlayerProfile,
-        ...payload,
-      },
-    };
+    throw new Error('Mock profile updates are disabled. Use the real backend profile API.');
   },
 
-  async getPublicProfile(userId) {
+  async getPublicProfile() {
     await delay();
-    return {
-      success: true,
-      profile: {
-        ...mockPlayerProfile,
-        id: userId,
-        trophies: 500,
-      },
-    };
+    throw new Error('Mock public profile data is disabled. Use the real backend profile API.');
   },
-
-  async getProfileStats() {
-    await delay();
-    return mockProfileStats;
-  },
-
 
   async getBalances() {
     await delay();
