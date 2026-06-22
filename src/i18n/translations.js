@@ -186,6 +186,7 @@ export const translations = {
     achievementClaimed: 'Achievement claimed',
     achievementClaimFailed: 'Failed to claim achievement',
     noAchievementsYet: 'No achievements returned from the backend yet',
+    statsUnavailable: 'Stats unavailable',
   },
   zh: {
     languageButton: '中文',
@@ -367,6 +368,7 @@ export const translations = {
     achievementClaimed: '成就已领取',
     achievementClaimFailed: '成就领取失败',
     noAchievementsYet: '后端尚未返回任何成就',
+    statsUnavailable: '暂无统计',
   },
 };
 

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
-import { getProfile, getProfileStats, updateProfile } from '../services/profileService.js';
+import { getProfile, getProfileStats, normalizeProfileStats, updateProfile } from '../services/profileService.js';
 import { claimAchievement, getAchievements } from '../services/achievementsService.js';
 import { getStoredAuthUser, logout } from '../services/authService.js';
-import { mockPlayerProfile, mockProfileStats } from '../mocks/mockProfile.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/profile/${name}`;
@@ -22,6 +21,26 @@ const XP_TRACK_ASSET = 'profile-xp-track.png';
 const XP_FILL_ASSET = 'profile-xp-fill.png';
 const ACHIEVEMENT_CARD_ASSETS = ['C1.png', 'C2.png', 'C3.png', 'C4.png'];
 
+const EMPTY_PROFILE = {
+  id: '',
+  username: 'Player',
+  name: 'Player',
+  level: 0,
+  trophies: 0,
+  title: 'Novice',
+  avatar: DEFAULT_PROFILE_AVATAR,
+  avatarId: 'dragon_avatar',
+  rank: {
+    title: 'Novice',
+    progressText: '',
+    currentXP: 0,
+    requiredXP: 0,
+  },
+  wallet: {
+    coins: 0,
+    gems: 0,
+  },
+};
 
 
 function getStoredProfileAvatar() {
@@ -189,18 +208,19 @@ function getDisplayName(profile) {
 
 function getProfileWithDefaults(profile) {
   const storedAvatar = getStoredProfileAvatar();
+  const safeProfile = profile && typeof profile === 'object' ? profile : {};
 
   return {
-    ...mockPlayerProfile,
-    ...(profile && typeof profile === 'object' ? profile : {}),
+    ...EMPTY_PROFILE,
+    ...safeProfile,
     ...(storedAvatar ? { avatar: storedAvatar } : {}),
     rank: {
-      ...mockPlayerProfile.rank,
-      ...(profile?.rank && typeof profile.rank === 'object' ? profile.rank : {}),
+      ...EMPTY_PROFILE.rank,
+      ...(safeProfile.rank && typeof safeProfile.rank === 'object' ? safeProfile.rank : {}),
     },
     wallet: {
-      ...mockPlayerProfile.wallet,
-      ...(profile?.wallet && typeof profile.wallet === 'object' ? profile.wallet : {}),
+      ...EMPTY_PROFILE.wallet,
+      ...(safeProfile.wallet && typeof safeProfile.wallet === 'object' ? safeProfile.wallet : {}),
     },
   };
 }
@@ -425,7 +445,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
   const [profile, setProfile] = useState(() => getProfileWithDefaults(getStoredAuthUser()));
-  const [stats, setStats] = useState(mockProfileStats);
+  const [stats, setStats] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -455,7 +475,8 @@ export default function ProfilePage() {
         setProfile(nextProfile);
         setDraftName(getDisplayName(nextProfile));
         setSelectedTitle(getProfileTitle(nextProfile));
-        setStats(playerStats?.length ? playerStats : nextProfile.stats?.length ? nextProfile.stats : mockProfileStats);
+        const backendStats = playerStats?.length ? playerStats : normalizeProfileStats(nextProfile);
+        setStats(backendStats);
         setAchievements(normalizeAchievements(playerAchievements));
       })
       .catch((error) => {
@@ -706,7 +727,12 @@ export default function ProfilePage() {
           {loadError ? <p className="profile-load-error" role="alert">{loadError}</p> : null}
 
           <div className="profile-stat-panel">
-            {stats.map((stat) => (
+            {stats.length === 0 ? (
+              <div className="profile-stat-empty">
+                <span className='lui-68cf83ec'>{t('statsUnavailable')}</span>
+                <strong>—</strong>
+              </div>
+            ) : stats.map((stat) => (
               <div key={stat.label}>
                 <span className='lui-68cf83ec'>{tx(stat.label)}</span>
                 <strong>{stat.value}</strong>
