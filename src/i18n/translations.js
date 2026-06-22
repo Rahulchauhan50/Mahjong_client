@@ -180,6 +180,11 @@ export const translations = {
     equippedTitle: 'EQUIPPED TITLE',
     profileTitleUpdated: 'Profile title updated',
     profileTitleUpdateFailed: 'Failed to update title',
+    complete: 'COMPLETE',
+    claiming: 'CLAIMING...',
+    claimed: 'CLAIMED',
+    achievementClaimed: 'Achievement claimed',
+    achievementClaimFailed: 'Failed to claim achievement',
   },
   zh: {
     languageButton: '中文',
@@ -355,6 +360,11 @@ export const translations = {
     equippedTitle: '当前称号',
     profileTitleUpdated: '资料称号已更新',
     profileTitleUpdateFailed: '称号更新失败',
+    complete: '领取',
+    claiming: '领取中...',
+    claimed: '已领取',
+    achievementClaimed: '成就已领取',
+    achievementClaimFailed: '成就领取失败',
   },
 };
 

@@ -4,10 +4,29 @@ function unwrapPayload(response) {
   return response?.data && typeof response.data === 'object' ? response.data : (response || {});
 }
 
+function extractAchievements(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.achievements)) {
+    return payload.achievements;
+  }
+
+  if (Array.isArray(payload?.data?.achievements)) {
+    return payload.data.achievements;
+  }
+
+  if (Array.isArray(payload?.items)) {
+    return payload.items;
+  }
+
+  return [];
+}
+
 export async function getAchievements() {
   const response = await getFromApi('/achievements/', (mockApi) => mockApi.getAchievements?.() ?? { success: true, achievements: [] });
-  const payload = unwrapPayload(response);
-  return Array.isArray(payload.achievements) ? payload.achievements : [];
+  return extractAchievements(unwrapPayload(response));
 }
 
 export async function claimAchievement(achievementId) {

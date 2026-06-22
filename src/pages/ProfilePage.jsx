@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
-import { getAchievements, getProfile, getProfileStats, updateProfile } from '../services/profileService.js';
+import { getProfile, getProfileStats, updateProfile } from '../services/profileService.js';
+import { claimAchievement, getAchievements } from '../services/achievementsService.js';
 import { getStoredAuthUser, logout } from '../services/authService.js';
 import { mockAchievements, mockPlayerProfile, mockProfileStats } from '../mocks/mockProfile.js';
 import { useLanguage } from '../i18n/useLanguage.js';
@@ -185,6 +186,24 @@ function getDisplayName(profile) {
   return profile?.username || profile?.name || 'Player';
 }
 
+function getProfileId(profile) {
+  const directId = profile?.userId ?? profile?._id ?? profile?.id ?? profile?.uid;
+  const nestedId = profile?.user?.userId ?? profile?.user?._id ?? profile?.user?.id ?? profile?.user?.uid;
+  const candidate = directId ?? nestedId;
+
+  if (candidate === null || candidate === undefined) {
+    return '';
+  }
+
+  const value = String(candidate).trim();
+
+  if (!value || value === 'player_stevie') {
+    return '';
+  }
+
+  return value;
+}
+
 function getProfileWithDefaults(profile) {
   const storedAvatar = getStoredProfileAvatar();
 
@@ -204,22 +223,44 @@ function getProfileWithDefaults(profile) {
 }
 
 
+function getAchievementId(item, fallbackId = '') {
+  return item?.achievementId || item?.id || item?._id || item?.slug || fallbackId || '';
+}
+
+function isAchievementComplete(item) {
+  return Boolean(item?.complete ?? item?.completed ?? item?.isComplete ?? item?.unlocked ?? false);
+}
+
+function isAchievementClaimable(item) {
+  if (item?.claimed || item?.isClaimed) {
+    return false;
+  }
+
+  return Boolean(item?.claimable ?? item?.canClaim ?? isAchievementComplete(item));
+}
+
 function getAchievementsWithDefaults(items) {
-  const sourceItems = Array.isArray(items) && items.length ? items : mockAchievements;
-  const maxLength = Math.max(mockAchievements.length, sourceItems.length);
+  const hasApiItems = Array.isArray(items) && items.length > 0;
+  const sourceItems = hasApiItems ? items : mockAchievements;
+  const maxLength = hasApiItems ? sourceItems.length : mockAchievements.length;
 
   return Array.from({ length: maxLength }, (_, index) => {
     const fallback = mockAchievements[index % mockAchievements.length];
     const item = sourceItems[index] || {};
+    const title = item?.title || item?.name || fallback.title;
 
     return {
       ...fallback,
       ...(item && typeof item === 'object' ? item : {}),
-      title: item?.title || fallback.title,
+      id: getAchievementId(item, fallback.id || fallback.title || title),
+      achievementId: getAchievementId(item, fallback.achievementId || fallback.id || fallback.title || title),
+      title,
       description: item?.description || fallback.description,
       progress: item?.progress || fallback.progress,
       card: item?.card || fallback.card,
-      complete: Boolean(item?.complete ?? item?.completed ?? fallback.complete),
+      complete: isAchievementComplete(item) || Boolean(fallback.complete),
+      claimed: Boolean(item?.claimed ?? item?.isClaimed ?? false),
+      claimable: isAchievementClaimable(item),
     };
   });
 }
@@ -413,6 +454,9 @@ export default function ProfilePage() {
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [titleSaveStatus, setTitleSaveStatus] = useState('idle');
   const [titleSaveError, setTitleSaveError] = useState('');
+  const [claimingAchievementId, setClaimingAchievementId] = useState('');
+  const [achievementClaimError, setAchievementClaimError] = useState('');
+  const [achievementClaimMessage, setAchievementClaimMessage] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -577,7 +621,36 @@ export default function ProfilePage() {
     }
   }
 
+
+  async function reloadAchievements() {
+    const freshAchievements = await getAchievements();
+    setAchievements(getAchievementsWithDefaults(freshAchievements));
+  }
+
+  async function handleClaimAchievement(item) {
+    const achievementId = getAchievementId(item);
+
+    if (!achievementId || claimingAchievementId) {
+      return;
+    }
+
+    try {
+      setClaimingAchievementId(achievementId);
+      setAchievementClaimError('');
+      setAchievementClaimMessage('');
+      await claimAchievement(achievementId);
+      setAchievementClaimMessage(t('achievementClaimed'));
+      await reloadAchievements();
+    } catch (error) {
+      console.error('Failed to claim achievement:', error);
+      setAchievementClaimError(error.message || t('achievementClaimFailed'));
+    } finally {
+      setClaimingAchievementId('');
+    }
+  }
+
   const profileXp = getProfileXpData(profile);
+  const profileId = getProfileId(profile) || getProfileId(getStoredAuthUser());
 
   return (
     <section className="profile-screen-ui" aria-label={t('profileTitle')}>
@@ -624,6 +697,7 @@ export default function ProfilePage() {
                   </button>
                 </form>
               )}
+              <p className="profile-user-id">ID: {profileId || 'ID not returned from backend'}</p>
               {saveError ? <p className="profile-save-error" role="alert">{saveError}</p> : null}
               {saveStatus === 'saved' ? <p className="profile-save-success">{t('profileNameUpdated')}</p> : null}
               <p className="profile-api-meta">{t('level')} {profile.level || 1} · {profile.trophies ?? 0} {t('trophies')}</p>
@@ -661,14 +735,18 @@ export default function ProfilePage() {
 
         <section className='profile-section achievements-section lui-44c3f0d0'>
           <h2>{t('recentAchievements')}</h2>
+          {achievementClaimError ? <p className="profile-achievement-claim-state profile-achievement-claim-state--error" role="alert">{achievementClaimError}</p> : null}
+          {achievementClaimMessage ? <p className="profile-achievement-claim-state">{achievementClaimMessage}</p> : null}
           <div className="profile-achievement-grid">
             {achievements.map((item) => {
               const achievementProgress = getAchievementProgressData(item);
+              const achievementId = getAchievementId(item);
+              const isClaiming = claimingAchievementId === achievementId;
 
               return (
                 <article
                   className='profile-achievement-card lui-4e595040'
-                  key={item.title}
+                  key={achievementId || item.title}
                   style={{ backgroundImage: `url(${asset(item.card)})` }}
                 >
                   <div className="profile-achievement-copy">
@@ -683,9 +761,16 @@ export default function ProfilePage() {
                       label={`${tx(item.title)} ${t('xpProgress')}`}
                     />
                     <span className="profile-achievement-progress-text">{tx(achievementProgress.text)}</span>
-                    {item.complete ? (
-                      <button className="profile-achievement-complete-button" type="button">
-                        COMPLETE
+                    {item.claimed ? (
+                      <span className="profile-achievement-claimed-label">{t('claimed')}</span>
+                    ) : item.claimable ? (
+                      <button
+                        className="profile-achievement-complete-button"
+                        disabled={isClaiming}
+                        type="button"
+                        onClick={() => handleClaimAchievement(item)}
+                      >
+                        {isClaiming ? t('claiming') : t('complete')}
                       </button>
                     ) : null}
                   </div>

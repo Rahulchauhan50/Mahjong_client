@@ -50,3 +50,34 @@
   color: #ffffff;
   background: rgba(255, 255, 255, 0.08);
 }
+
+
+.profile-achievement-claim-state {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.82rem;
+  margin: 0.25rem 0 0.75rem;
+  text-align: center;
+}
+
+.profile-achievement-claim-state--error {
+  color: #ffd6d6;
+}
+
+.profile-achievement-complete-button:disabled {
+  cursor: wait;
+  filter: grayscale(0.25);
+  opacity: 0.68;
+}
+
+.profile-achievement-claimed-label {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 800;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  min-height: 1.65rem;
+  padding: 0.2rem 0.8rem;
+  text-transform: uppercase;
+}

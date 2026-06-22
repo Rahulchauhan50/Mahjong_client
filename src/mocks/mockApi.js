@@ -99,7 +99,16 @@ export const mockApi = {
 
   async getAchievements() {
     await delay();
-    return mockAchievements;
+    return { success: true, achievements: mockAchievements };
+  },
+
+  async claimAchievement(achievementId) {
+    await delay();
+    return {
+      success: true,
+      achievementId,
+      message: 'Achievement claimed',
+    };
   },
 
 
