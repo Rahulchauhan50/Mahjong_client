@@ -13,6 +13,7 @@
 @import './desktop/loading-screen.css';
 @import './desktop/main-menu.css';
 @import './desktop/shop.css';
+@import './desktop/leaderboard.css';
 @import './desktop/daily-login.css';
 @import './desktop/profile-screen.css';
 @import './desktop/create-room.css';
@@ -29,6 +30,7 @@
 @import './mobile/loading-screen.mobile.css';
 @import './mobile/main-menu.mobile.css';
 @import './mobile/shop.mobile.css';
+@import './mobile/leaderboard.mobile.css';
 @import './mobile/daily-login.mobile.css';
 @import './mobile/profile-screen.mobile.css';
 @import './mobile/create-room.mobile.css';

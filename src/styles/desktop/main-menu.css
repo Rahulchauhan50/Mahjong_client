@@ -3844,3 +3844,28 @@ filter:
   transform: translateY(-1px) !important;
   filter: drop-shadow(0 0 5px rgba(255, 224, 120, 0.75)) !important;
 }
+
+/* =========================================================
+   PATCH FIX: show Leaderboard button in topbar
+   The main menu has a later rule that hides all .square-top-button,
+   so the leaderboard button must be explicitly re-enabled like shop/friends/gift.
+   ========================================================= */
+.app-shell[data-device='desktop'] .main-menu-reference .topbar-actions .leaderboard-menu-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  overflow: visible !important;
+}
+
+.app-shell[data-device='desktop'] .main-menu-reference .leaderboard-menu-button img {
+  display: block !important;
+  width: 34px !important;
+  height: 34px !important;
+  object-fit: contain !important;
+  pointer-events: none !important;
+}

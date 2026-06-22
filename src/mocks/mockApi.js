@@ -189,6 +189,33 @@ export const mockApi = {
     };
   },
 
+
+  async getGlobalLeaderboard() {
+    await delay();
+    return {
+      success: true,
+      leaderboard: [
+        { rank: 1, username: 'SakuraKing', trophies: 5000, avatar: 'avatar-panda.png' },
+        { rank: 2, username: 'BambooFox', trophies: 4620, avatar: 'avatar-kiki.png' },
+        { rank: 3, username: 'DragonBun', trophies: 4310, avatar: 'avatar-bunbun.png' },
+        { rank: 4, username: 'TileMaster', trophies: 3890, avatar: 'avatar-stevie.png' },
+        { rank: 5, username: 'LuckyPanda', trophies: 3580, avatar: 'avatar-panda.png' },
+        { rank: 6, username: 'GoldenWind', trophies: 3260, avatar: 'avatar-kiki.png' },
+        { rank: 7, username: 'MoonTable', trophies: 2980, avatar: 'avatar-bunbun.png' },
+        { rank: 8, username: 'RedFlower', trophies: 2640, avatar: 'avatar-stevie.png' },
+      ],
+    };
+  },
+
+  async getMyRank() {
+    await delay();
+    return {
+      success: true,
+      rank: 521,
+      trophies: 1200,
+    };
+  },
+
   async getRoomTiers() {
     await delay();
     return { success: true, tiers: mockRoomTiers };

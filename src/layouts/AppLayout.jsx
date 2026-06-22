@@ -9,6 +9,7 @@ const routeBackgrounds = {
   [ROUTES.loading]: '/assets/loading-screen/BG.png',
   [ROUTES.mainMenu]: '/assets/main-menu/bg.png',
   [ROUTES.shop]: '/assets/shop/552134.png',
+  [ROUTES.leaderboard]: '/assets/main-menu/bg.png',
   [ROUTES.profile]: '/assets/profile/BG.png',
   [ROUTES.matchmaking]: '/assets/matchmaking/BG.png',
   [ROUTES.game]: '/assets/gameplay/BG.png',

@@ -544,6 +544,15 @@ export default function MainMenuPage() {
               <img src="/assets/shop/icon-shop.png" alt="" />
             </button>
             <button
+              className="square-top-button leaderboard-menu-button"
+              type="button"
+              aria-label="Open leaderboard"
+              onClick={() => navigate(ROUTES.leaderboard)}
+              title="Open leaderboard"
+            >
+              <img src="/assets/leaderboard/icon-leaderboard.png" alt="" />
+            </button>
+            <button
               className="square-top-button friends-menu-button"
               type="button"
               aria-label={t('addFriendTitle')}

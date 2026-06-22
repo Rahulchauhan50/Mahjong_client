@@ -11,5 +11,6 @@ export async function getGlobalLeaderboard() {
 }
 
 export async function getMyRank() {
-  return getFromApi('/leaderboards/me', (mockApi) => mockApi.getMyRank?.() ?? { success: true, rank: null, trophies: 0 });
+  const response = await getFromApi('/leaderboards/me', (mockApi) => mockApi.getMyRank?.() ?? { success: true, rank: null, trophies: 0 });
+  return unwrapPayload(response);
 }

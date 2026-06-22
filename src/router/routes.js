@@ -4,6 +4,7 @@ export const ROUTES = {
   loading: '/loading',
   mainMenu: '/main-menu',
   shop: '/shop',
+  leaderboard: '/leaderboard',
   profile: '/profile',
   rooms: '/rooms',
   createRoom: '/create-room',
