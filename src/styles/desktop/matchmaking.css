@@ -163,7 +163,8 @@ width: 210px;
   filter: drop-shadow(0 0 18px rgba(232, 77, 255, 0.34));
 }
 
-.app-shell[data-device='desktop'] .match-slot-ready .match-avatar-wrap {
+.app-shell[data-device='desktop'] .match-slot-ready .match-avatar-wrap,
+.app-shell[data-device='desktop'] .match-slot-current .match-avatar-wrap {
 width: 250px;
   height: 250px;
   margin-top: -18px;
