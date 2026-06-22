@@ -553,6 +553,15 @@ export default function MainMenuPage() {
               <img src="/assets/leaderboard/icon-leaderboard.png" alt="" />
             </button>
             <button
+              className="square-top-button missions-menu-button"
+              type="button"
+              aria-label="Open missions"
+              onClick={() => navigate(ROUTES.missions)}
+              title="Open missions"
+            >
+              <img src="/assets/missions/icon-missions.png" alt="" />
+            </button>
+            <button
               className="square-top-button friends-menu-button"
               type="button"
               aria-label={t('addFriendTitle')}
@@ -641,7 +650,7 @@ export default function MainMenuPage() {
               <div className="friend-list">
                 {friendList.length > 0 ? friendList.map((friend) => (
                   <FriendRow key={`${friend.id || friend.name}-${friend.state}`} friend={friend} tx={tx} />
-                )) : <div className="friends-empty-state">No backend friends</div>}
+                )) : <div className="friends-empty-state">No friends</div>}
               </div>
               <button className="view-all" type="button">{t('viewAllFriends')} <span>›</span></button>
             </section>

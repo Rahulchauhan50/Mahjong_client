@@ -11,6 +11,7 @@ const routeBackgrounds = {
   [ROUTES.shop]: '/assets/shop/552134.png',
   [ROUTES.leaderboard]: '/assets/main-menu/bg.png',
   [ROUTES.profile]: '/assets/profile/BG.png',
+  [ROUTES.achievements]: '/assets/profile/BG.png',
   [ROUTES.matchmaking]: '/assets/matchmaking/BG.png',
   [ROUTES.game]: '/assets/gameplay/BG.png',
   [ROUTES.result]: '/assets/win-screen/BG.png',

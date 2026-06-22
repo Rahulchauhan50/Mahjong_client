@@ -147,6 +147,7 @@ export const translations = {
     level: 'Level',
     trophies: 'trophies',
     recentAchievements: 'RECENT ACHIEVEMENTS',
+    achievementsTitle: 'ACHIEVEMENTS',
     favoriteTileSet: 'FAVORITE TILE SET',
     xpProgress: 'XP progress',
     youWin: 'YOU WIN!',
@@ -185,7 +186,7 @@ export const translations = {
     claimed: 'CLAIMED',
     achievementClaimed: 'Achievement claimed',
     achievementClaimFailed: 'Failed to claim achievement',
-    noAchievementsYet: 'No achievements returned from the backend yet',
+    noAchievementsYet: 'Loading...',
     statsUnavailable: 'Stats unavailable',
   },
   zh: {
@@ -329,6 +330,7 @@ export const translations = {
     level: '等级',
     trophies: '奖杯',
     recentAchievements: '近期成就',
+    achievementsTitle: '成就',
     favoriteTileSet: '最喜欢的牌组',
     xpProgress: '经验进度',
     youWin: '你赢了！',
@@ -367,7 +369,7 @@ export const translations = {
     claimed: '已领取',
     achievementClaimed: '成就已领取',
     achievementClaimFailed: '成就领取失败',
-    noAchievementsYet: '后端尚未返回任何成就',
+    noAchievementsYet: '加载中...',
     statsUnavailable: '暂无统计',
   },
 };

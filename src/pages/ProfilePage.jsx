@@ -681,6 +681,7 @@ export default function ProfilePage() {
   }
 
   const profileXp = getProfileXpData(profile);
+  const recentAchievements = achievements.slice(0, 4);
 
   return (
     <section className="profile-screen-ui" aria-label={t('profileTitle')}>
@@ -689,12 +690,20 @@ export default function ProfilePage() {
           <img src={asset('Back.png')} alt="" />
           <span>{t('profileTitle')}</span>
         </button>
+        <div className="profile-tabs profile-tabs--nav">
+          <button className="active" type="button" onClick={() => navigate(ROUTES.profile)}>
+            {t('profileTitle')}
+          </button>
+          <button type="button" onClick={() => navigate(ROUTES.achievements)}>
+            {t('achievementsTitle')}
+          </button>
+        </div>
         <button className="profile-logout-button" type="button" onClick={handleLogout}>
           {t('logout')}
         </button>
       </aside>
 
-      <main className='profile-content lui-55e35a30'>
+      <main className='profile-content profile-content--compact lui-55e35a30'>
         <header className="profile-header">
           <div className="profile-identity">
             <button className="profile-avatar-button" type="button" onClick={() => setIsAvatarPickerOpen(true)} aria-label={t('chooseAvatar')}>
@@ -771,11 +780,11 @@ export default function ProfilePage() {
           <h2>{t('recentAchievements')}</h2>
           {achievementClaimError ? <p className="profile-achievement-claim-state profile-achievement-claim-state--error" role="alert">{achievementClaimError}</p> : null}
           {achievementClaimMessage ? <p className="profile-achievement-claim-state">{achievementClaimMessage}</p> : null}
-          {achievements.length === 0 ? (
+          {recentAchievements.length === 0 ? (
             <p className="profile-achievements-empty">{t('noAchievementsYet')}</p>
           ) : (
             <div className="profile-achievement-grid">
-              {achievements.map((item) => {
+              {recentAchievements.map((item) => {
                 const achievementProgress = getAchievementProgressData(item);
                 const achievementId = getAchievementId(item);
                 const isClaiming = claimingAchievementId === achievementId;
@@ -818,12 +827,6 @@ export default function ProfilePage() {
           )}
         </section>
 
-        <section className='profile-section tile-section lui-1f1553ac'>
-          <h2>{t('favoriteTileSet')}</h2>
-          <div className="favorite-tile-row">
-            <img className='favorite-tiles lui-ddf2612c' src={asset('Card.png')} alt={t('favoriteTileSet')} />
-          </div>
-        </section>
 
         {isTitlePickerOpen ? (
           <TitlePickerPanel

@@ -5,6 +5,8 @@ export const ROUTES = {
   mainMenu: '/main-menu',
   shop: '/shop',
   leaderboard: '/leaderboard',
+  missions: '/missions',
+  achievements: '/achievements',
   profile: '/profile',
   rooms: '/rooms',
   createRoom: '/create-room',

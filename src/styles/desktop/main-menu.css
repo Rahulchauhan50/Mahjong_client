@@ -3869,3 +3869,24 @@ filter:
   object-fit: contain !important;
   pointer-events: none !important;
 }
+
+/* PATCH: show Missions button in topbar */
+.app-shell[data-device='desktop'] .main-menu-reference .topbar-actions .missions-menu-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 46px !important;
+  min-width: 46px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+  overflow: visible !important;
+}
+
+.app-shell[data-device='desktop'] .main-menu-reference .missions-menu-button img {
+  display: block !important;
+  width: 34px !important;
+  height: 34px !important;
+  object-fit: contain !important;
+  pointer-events: none !important;
+}

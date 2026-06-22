@@ -15,5 +15,6 @@ export async function claimMission(missionId) {
     throw new Error('missionId is required to claim a mission.');
   }
 
-  return postToApi(`/missions/claim/${encodeURIComponent(missionId)}`, undefined, (mockApi) => mockApi.claimMission?.(missionId) ?? { success: true });
+  const response = await postToApi(`/missions/claim/${encodeURIComponent(missionId)}`, undefined, (mockApi) => mockApi.claimMission?.(missionId) ?? { success: true });
+  return unwrapPayload(response);
 }

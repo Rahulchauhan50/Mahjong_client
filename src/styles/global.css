@@ -14,8 +14,10 @@
 @import './desktop/main-menu.css';
 @import './desktop/shop.css';
 @import './desktop/leaderboard.css';
+@import './desktop/missions.css';
 @import './desktop/daily-login.css';
 @import './desktop/profile-screen.css';
+@import './desktop/achievements.css';
 @import './desktop/create-room.css';
 @import './desktop/join-room.css';
 @import './desktop/room-select.css';
@@ -31,8 +33,10 @@
 @import './mobile/main-menu.mobile.css';
 @import './mobile/shop.mobile.css';
 @import './mobile/leaderboard.mobile.css';
+@import './mobile/missions.mobile.css';
 @import './mobile/daily-login.mobile.css';
 @import './mobile/profile-screen.mobile.css';
+@import './mobile/achievements.mobile.css';
 @import './mobile/create-room.mobile.css';
 @import './mobile/join-room.mobile.css';
 @import './mobile/room-select.mobile.css';

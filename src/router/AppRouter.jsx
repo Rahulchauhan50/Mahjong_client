@@ -14,6 +14,8 @@ import MahjongGamePage from '../pages/MahjongGamePage.jsx';
 import ResultPage from '../pages/ResultPage.jsx';
 import ShopPage from '../pages/ShopPage.jsx';
 import LeaderboardPage from '../pages/LeaderboardPage.jsx';
+import MissionsPage from '../pages/MissionsPage.jsx';
+import AchievementsPage from '../pages/AchievementsPage.jsx';
 
 export default function AppRouter() {
   return (
@@ -26,6 +28,8 @@ export default function AppRouter() {
         <Route path={ROUTES.profile} element={<ProfilePage />} />
         <Route path={ROUTES.shop} element={<ShopPage />} />
         <Route path={ROUTES.leaderboard} element={<LeaderboardPage />} />
+        <Route path={ROUTES.missions} element={<MissionsPage />} />
+        <Route path={ROUTES.achievements} element={<AchievementsPage />} />
         <Route path={ROUTES.rooms} element={<RoomSelectPage />} />
         <Route path={ROUTES.createRoom} element={<CreateRoomPage />} />
         <Route path={ROUTES.joinRoom} element={<JoinRoomPage />} />

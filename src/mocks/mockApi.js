@@ -190,6 +190,35 @@ export const mockApi = {
   },
 
 
+
+  async getMissions() {
+    await delay();
+    return {
+      success: true,
+      missions: [
+        { id: 'daily_play_7_games', title: 'Play 7 Games', progress: 3, target: 7, type: 'daily', reward: { type: 'season_xp', amount: 120 } },
+        { id: 'daily_win_3_games', title: 'Win 3 Games', progress: 1, target: 3, type: 'daily', reward: { type: 'season_xp', amount: 160 } },
+        { id: 'daily_spend_200_coins', title: 'Spend 200 Coins', progress: 200, target: 200, type: 'daily', reward: { type: 'season_xp', amount: 100 } },
+        { id: 'daily_earn_500_prize', title: 'Earn 500 Prize', progress: 260, target: 500, type: 'daily', reward: { type: 'season_xp', amount: 140 } },
+        { id: 'daily_claim_daily_reward', title: 'Claim Daily Reward', progress: 1, target: 1, type: 'daily', reward: { type: 'season_xp', amount: 80 } },
+        { id: 'weekly_play_35_games', title: 'Play 35 Games', progress: 12, target: 35, type: 'weekly', reward: { type: 'season_xp', amount: 600 } },
+        { id: 'weekly_win_15_games', title: 'Win 15 Games', progress: 4, target: 15, type: 'weekly', reward: { type: 'season_xp', amount: 750 } },
+        { id: 'weekly_spend_1500_coins', title: 'Spend 1,500 Coins', progress: 600, target: 1500, type: 'weekly', reward: { type: 'season_xp', amount: 500 } },
+        { id: 'weekly_earn_5000_prize', title: 'Earn 5,000 Prize', progress: 1900, target: 5000, type: 'weekly', reward: { type: 'season_xp', amount: 650 } },
+        { id: 'weekly_claim_5_daily_rewards', title: 'Claim 5 Daily Rewards', progress: 2, target: 5, type: 'weekly', reward: { type: 'season_xp', amount: 450 } },
+      ],
+    };
+  },
+
+  async claimMission(missionId) {
+    await delay();
+    return {
+      success: true,
+      missionId,
+      reward: { type: 'season_xp', amount: 100 },
+    };
+  },
+
   async getGlobalLeaderboard() {
     await delay();
     return {
