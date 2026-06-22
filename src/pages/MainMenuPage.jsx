@@ -7,6 +7,7 @@ import { mockFeaturedRooms } from '../mocks/mockRooms.js';
 import { mockPlayerProfile } from '../mocks/mockProfile.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
+import { isMockApiEnabled } from '../services/api.js';
 import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getFriends, getIncomingFriendRequests, sendFriendRequest } from '../services/friendsService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
@@ -343,8 +344,9 @@ export default function MainMenuPage() {
   const { t, tx } = useLanguage();
   const [roomCards, setRoomCards] = useState(fallbackRoomCards);
   const [profile, setProfile] = useState(() => getStoredAuthUser() || mockPlayerProfile);
-  const [friendList, setFriendList] = useState(friends);
-  const [friendRequests, setFriendRequests] = useState(initialFriendRequests);
+  const [friendList, setFriendList] = useState(() => (isMockApiEnabled() ? friends : []));
+  const [friendRequests, setFriendRequests] = useState(() => (isMockApiEnabled() ? initialFriendRequests : []));
+  const [friendsError, setFriendsError] = useState('');
   const [isFriendRequestsOpen, setIsFriendRequestsOpen] = useState(false);
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
   const [friendName, setFriendName] = useState('');
@@ -396,13 +398,21 @@ export default function MainMenuPage() {
 
         if (friendsResult.status === 'rejected') {
           console.error('Failed to load friends:', friendsResult.reason);
+          setFriendsError('Failed to load friends from backend');
+          if (!isMockApiEnabled()) {
+            setFriendList([]);
+          }
         }
 
         if (requestsResult.status === 'rejected') {
           console.error('Failed to load friend requests:', requestsResult.reason);
+          setFriendsError('Failed to load friend requests from backend');
+          if (!isMockApiEnabled()) {
+            setFriendRequests([]);
+          }
         }
 
-        if (backendFriends?.length) {
+        if (friendsResult.status === 'fulfilled') {
           setFriendList(backendFriends.map((friend) => ({
             id: friend.id || friend.userId || friend.friendId || friend.username || friend.name,
             name: friend.username || friend.name || 'Friend',
@@ -412,7 +422,7 @@ export default function MainMenuPage() {
           })));
         }
 
-        if (backendRequests?.length) {
+        if (requestsResult.status === 'fulfilled') {
           setFriendRequests(backendRequests.map((request) => ({
             id: request.id || request.requestId || request.fromUserId || request.username || request.name,
             name: request.username || request.name || request.fromUsername || 'Player',
@@ -481,30 +491,28 @@ export default function MainMenuPage() {
 
     try {
       await sendFriendRequest(nextFriendName);
+      setFriendName('');
+      setIsAddFriendOpen(false);
+      setFriendsError('Friend request sent');
     } catch (error) {
       console.error('Failed to send friend request:', error);
+      setFriendsError(error?.message || 'Failed to send friend request');
     }
-
-    setFriendList((current) => [
-      ...current,
-      { name: nextFriendName, state: 'Pending', action: 'INVITE', avatar: 'friend-girl.png' },
-    ]);
-    setFriendName('');
-    setIsAddFriendOpen(false);
   };
 
   const acceptFriendRequest = async (request) => {
     try {
       await acceptFriendRequestApi(request.id);
+      setFriendList((current) => [
+        ...current,
+        { name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
+      ]);
+      setFriendRequests((current) => current.filter((item) => item.id !== request.id));
+      setFriendsError('Friend request accepted');
     } catch (error) {
       console.error('Failed to accept friend request:', error);
+      setFriendsError(error?.message || 'Failed to accept friend request');
     }
-
-    setFriendList((current) => [
-      ...current,
-      { name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
-    ]);
-    setFriendRequests((current) => current.filter((item) => item.id !== request.id));
   };
 
   const declineFriendRequest = async (requestId) => {
@@ -624,10 +632,11 @@ export default function MainMenuPage() {
                   {friendRequests.length > 0 && <span>{friendRequests.length}</span>}
                 </button>
               </div>
+              {friendsError && <div className="friends-api-status">{friendsError}</div>}
               <div className="friend-list">
-                {friendList.map((friend) => (
-                  <FriendRow key={`${friend.name}-${friend.state}`} friend={friend} tx={tx} />
-                ))}
+                {friendList.length > 0 ? friendList.map((friend) => (
+                  <FriendRow key={`${friend.id || friend.name}-${friend.state}`} friend={friend} tx={tx} />
+                )) : <div className="friends-empty-state">No backend friends</div>}
               </div>
               <button className="view-all" type="button">{t('viewAllFriends')} <span>›</span></button>
             </section>
