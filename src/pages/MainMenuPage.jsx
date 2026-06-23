@@ -40,6 +40,110 @@ function getFriendRequestId(request) {
     || '';
 }
 
+function pickFriendRequestUser(request = {}) {
+  return request.sender
+    || request.from
+    || request.fromUser
+    || request.requester
+    || request.requestedBy
+    || request.user
+    || request.createdBy
+    || request.owner
+    || request.request?.sender
+    || request.request?.from
+    || request.request?.fromUser
+    || {};
+}
+
+function getFriendRequestUserId(request = {}) {
+  const user = pickFriendRequestUser(request);
+
+  return request.fromUserId
+    || request.senderId
+    || request.requesterId
+    || request.createdById
+    || user.userId
+    || user.id
+    || user._id
+    || request.userId
+    || '';
+}
+
+function getFriendRequestName(request = {}) {
+  const user = pickFriendRequestUser(request);
+
+  return user.username
+    || user.name
+    || user.displayName
+    || request.username
+    || request.name
+    || request.fromUsername
+    || request.senderUsername
+    || request.requesterUsername
+    || request.request?.username
+    || request.request?.fromUsername
+    || 'Player';
+}
+
+function getFriendRequestLevel(request = {}) {
+  const user = pickFriendRequestUser(request);
+  const level = user.level
+    ?? request.level
+    ?? request.fromLevel
+    ?? request.senderLevel
+    ?? request.requesterLevel
+    ?? request.request?.level;
+
+  if (level !== undefined && level !== null && String(level).trim() !== '') {
+    return `Level ${level}`;
+  }
+
+  return user.levelLabel
+    || request.levelLabel
+    || request.sender?.levelLabel
+    || request.from?.levelLabel
+    || request.request?.levelLabel
+    || 'Level 1';
+}
+
+function getFriendRequestAvatar(request = {}) {
+  const user = pickFriendRequestUser(request);
+
+  return user.avatarUrl
+    || user.imageUrl
+    || user.avatar
+    || user.avatarId
+    || request.avatarUrl
+    || request.imageUrl
+    || request.avatar
+    || request.avatarId
+    || request.request?.avatar
+    || request.request?.avatarId
+    || 'friend-girl.png';
+}
+
+function getFriendAvatarSrc(avatarValue) {
+  if (typeof avatarValue !== 'string') {
+    return asset('friend-girl.png');
+  }
+
+  const avatar = avatarValue.trim();
+
+  if (!avatar) {
+    return asset('friend-girl.png');
+  }
+
+  if (/^(https?:)?\/\//i.test(avatar) || avatar.startsWith('/')) {
+    return avatar;
+  }
+
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(avatar)) {
+    return avatar.includes('/') ? avatar : profileAsset(avatar);
+  }
+
+  return asset('friend-girl.png');
+}
+
 function pickBestFriendSearchResult(results, query) {
   const normalizedQuery = String(query || '').trim().toLowerCase();
 
@@ -334,7 +438,7 @@ function FriendRequestModal({ requests, onClose, onAccept, onDecline }) {
           {requests.length ? (
             requests.map((request) => (
               <div className="friend-request-row" key={request.id}>
-                <img src={asset(request.avatar)} alt="" />
+                <img src={getFriendAvatarSrc(request.avatar)} alt="" />
                 <div className="friend-request-copy">
                   <strong>{request.name}</strong>
                   <span>{request.level}</span>
@@ -357,7 +461,7 @@ function FriendRequestModal({ requests, onClose, onAccept, onDecline }) {
 function FriendRow({ friend, tx }) {
   return (
     <div className="friend-row">
-      <img src={asset(friend.avatar)} alt="" />
+      <img src={getFriendAvatarSrc(friend.avatar)} alt="" />
       <div>
         <strong>{friend.name}</strong>
         <span>{tx(friend.state)}</span>
@@ -453,10 +557,10 @@ export default function MainMenuPage() {
         if (requestsResult.status === 'fulfilled') {
           setFriendRequests(backendRequests.map((request) => ({
             id: getFriendRequestId(request),
-            userId: request.fromUserId || request.senderId || request.userId || request.sender?.userId || request.from?.userId || '',
-            name: request.username || request.name || request.fromUsername || request.sender?.username || request.from?.username || 'Player',
-            level: request.level ? `Level ${request.level}` : (request.levelLabel || request.sender?.levelLabel || request.from?.levelLabel || 'Level 1'),
-            avatar: request.avatar || request.avatarId || request.sender?.avatar || request.from?.avatar || 'friend-girl.png',
+            userId: getFriendRequestUserId(request),
+            name: getFriendRequestName(request),
+            level: getFriendRequestLevel(request),
+            avatar: getFriendRequestAvatar(request),
             raw: request,
           })).filter((request) => request.id));
         }
