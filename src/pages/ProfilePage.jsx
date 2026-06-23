@@ -23,6 +23,8 @@ const ACHIEVEMENT_CARD_ASSETS = ['C1.png', 'C2.png', 'C3.png', 'C4.png'];
 
 const EMPTY_PROFILE = {
   id: '',
+  userId: '',
+  playerId: '',
   username: 'Player',
   name: 'Player',
   level: 0,
@@ -215,6 +217,16 @@ function getDisplayName(profile) {
 }
 
 
+function getProfilePlayerId(profile) {
+  const rawPlayerId = profile?.playerId ?? profile?.playerID ?? profile?.publicId ?? '';
+
+  if (rawPlayerId === null || rawPlayerId === undefined) {
+    return '';
+  }
+
+  return String(rawPlayerId).trim();
+}
+
 function getInitialStoredProfile() {
   const storedUser = getStoredAuthUser();
 
@@ -224,8 +236,8 @@ function getInitialStoredProfile() {
 
   // Only keep identity fields for the first paint. XP, rank, trophies and
   // stats must come from GET /api/auth/profile, not from old mock/localStorage.
-  const { id, username, name, email, avatar, avatarId, avatarUrl, imageUrl } = storedUser;
-  return { id, username, name, email, avatar, avatarId, avatarUrl, imageUrl };
+  const { id, userId, playerId, username, name, email, avatar, avatarId, avatarUrl, imageUrl } = storedUser;
+  return { id, userId, playerId, username, name, email, avatar, avatarId, avatarUrl, imageUrl };
 }
 
 function getProfileWithDefaults(profile) {
@@ -681,6 +693,7 @@ export default function ProfilePage() {
   }
 
   const profileXp = getProfileXpData(profile);
+  const playerId = getProfilePlayerId(profile);
   const recentAchievements = achievements.slice(0, 4);
 
   return (
@@ -738,6 +751,7 @@ export default function ProfilePage() {
               )}
               {saveError ? <p className="profile-save-error" role="alert">{saveError}</p> : null}
               {saveStatus === 'saved' ? <p className="profile-save-success">{t('profileNameUpdated')}</p> : null}
+              {playerId ? <p className="profile-user-id">Player ID: {playerId}</p> : null}
               <p className="profile-api-meta">{t('level')} {profile.level || 1} · {profile.trophies ?? 0} {t('trophies')}</p>
               <div className="profile-rank-row">
                 <div className="profile-rank-copy">
