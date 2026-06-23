@@ -1,32 +1,23 @@
-import { getFromApi, isMockApiEnabled, postToApi } from './api.js';
+import { apiRequest, isMockApiEnabled, postToApi } from './api.js';
 import { normalizeRoomList, normalizeRoom, normalizeRoomTierList, normalizePrivateRoom } from './gameNormalizers.js';
 
 const MISSING_JOIN_ROOM_ENDPOINT_MESSAGE = 'Backend API reference does not include a join-room endpoint yet. Required: POST /api/rooms/join with { roomCode } or POST /api/rooms/:roomId/join.';
 
 export async function getRoomTiers() {
-  const response = await getFromApi('/rooms/tiers', (mockApi) => mockApi.getRoomTiers());
+  // Room tiers must always come from the real backend. Do not fall back to mock room cards.
+  const response = await apiRequest('/rooms/tiers');
   return normalizeRoomTierList(response);
 }
 
 export async function getFeaturedRooms() {
   // The current API reference only exposes GET /rooms/tiers.
-  // Avoid calling old /rooms/featured or /rooms endpoints in real mode.
-  if (isMockApiEnabled()) {
-    const response = await getFromApi('/rooms/featured', (mockApi) => mockApi.getFeaturedRooms());
-    return normalizeRoomList(response);
-  }
-
+  // Main menu cards are tier cards, so this must use the real backend endpoint.
   return getRoomTiers();
 }
 
 export async function getRooms() {
   // The current API reference only exposes GET /rooms/tiers.
-  // Room list UI should use tiers until the backend adds a public rooms endpoint.
-  if (isMockApiEnabled()) {
-    const response = await getFromApi('/rooms', (mockApi) => mockApi.getRooms());
-    return normalizeRoomList(response);
-  }
-
+  // Room list UI should use real backend tiers until a public rooms endpoint exists.
   return getRoomTiers();
 }
 

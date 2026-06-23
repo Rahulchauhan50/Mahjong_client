@@ -10,6 +10,88 @@ function formatNumber(value, fallback = '0') {
   return Number.isFinite(number) ? number.toLocaleString() : fallback;
 }
 
+function pickMissionReward(mission = {}) {
+  const explicitReward = mission.reward
+    || mission.rewards
+    || mission.rewardData
+    || mission.rewardInfo
+    || mission.prize
+    || mission.payout;
+
+  if (explicitReward) {
+    return explicitReward;
+  }
+
+  const amount = mission.rewardAmount
+    ?? mission.rewardValue
+    ?? mission.xpReward
+    ?? mission.seasonXpReward
+    ?? mission.seasonXPReward
+    ?? mission.xp
+    ?? mission.seasonXp
+    ?? mission.seasonXP;
+
+  if (amount !== undefined && amount !== null && amount !== '') {
+    return {
+      amount,
+      type: mission.rewardType || mission.rewardCurrency || mission.currency || 'season_xp',
+    };
+  }
+
+  return null;
+}
+
+function normalizeRewardEntries(reward) {
+  if (!reward) return [];
+
+  if (Array.isArray(reward)) {
+    return reward.flatMap(normalizeRewardEntries);
+  }
+
+  if (typeof reward === 'number' || (typeof reward === 'string' && reward.trim())) {
+    return [{ amount: reward, type: 'Season XP' }];
+  }
+
+  if (typeof reward !== 'object') return [];
+
+  const entries = [];
+  const directAmount = reward.amount ?? reward.value ?? reward.quantity ?? reward.qty;
+  const directType = reward.type || reward.currency || reward.itemName || reward.name || reward.label;
+
+  if (directAmount !== undefined || directType) {
+    entries.push({ amount: directAmount, type: directType || 'Reward' });
+  }
+
+  const keyedRewards = [
+    ['coins', 'Coins'],
+    ['coin', 'Coins'],
+    ['coinsAdded', 'Coins'],
+    ['diamonds', 'Gems'],
+    ['gems', 'Gems'],
+    ['diamondsAdded', 'Gems'],
+    ['xp', 'XP'],
+    ['seasonXp', 'Season XP'],
+    ['seasonXP', 'Season XP'],
+    ['passXp', 'Season XP'],
+    ['passXP', 'Season XP'],
+    ['trophies', 'Trophies'],
+  ];
+
+  keyedRewards.forEach(([key, label]) => {
+    const value = reward[key];
+    if (value !== undefined && value !== null && value !== '' && Number(value) !== 0) {
+      entries.push({ amount: value, type: label });
+    }
+  });
+
+  const chest = reward.chest || reward.chestGiven || reward.box || reward.item;
+  if (chest) {
+    entries.push({ amount: '', type: typeof chest === 'string' ? chest : chest.name || chest.itemName || 'Chest' });
+  }
+
+  return entries;
+}
+
 function getMissionType(mission = {}) {
   const rawType = String(mission.type || mission.period || mission.frequency || mission.resetType || mission.category || '').toLowerCase();
 
@@ -43,23 +125,31 @@ function normalizeMission(mission, index, fallbackType = 'daily') {
     target: safeTarget,
     type,
     claimed: Boolean(mission.claimed || mission.isClaimed || mission.rewardClaimed),
-    reward: mission.reward || mission.rewards || null,
+    reward: pickMissionReward(mission),
   };
 }
 
 function formatReward(reward) {
-  if (!reward) {
-    return 'Season XP';
+  const entries = normalizeRewardEntries(reward);
+
+  if (!entries.length) {
+    return 'Reward from backend';
   }
 
-  if (Array.isArray(reward)) {
-    return reward.map(formatReward).join(' + ');
-  }
+  return entries.map((entry) => {
+    const type = String(entry.type || 'Reward')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    const amount = entry.amount;
 
-  const amount = reward.amount ?? reward.value ?? reward.quantity;
-  const type = String(reward.type || reward.currency || reward.itemName || 'reward').replace(/_/g, ' ');
-  return amount ? `${formatNumber(amount)} ${type}` : type;
+    if (amount === undefined || amount === null || amount === '') {
+      return type;
+    }
+
+    return `${formatNumber(amount)} ${type}`;
+  }).join(' + ');
 }
+
 
 function getNextDailyResetText() {
   const now = new Date();
@@ -199,7 +289,7 @@ export default function MissionsPage() {
 
     try {
       const response = await claimMission(missionId);
-      const reward = response?.reward || response?.data?.reward;
+      const reward = response?.reward || response?.rewards || response?.data?.reward || response?.data?.rewards;
       setStatusMessage(`Reward claimed: ${formatReward(reward)}`);
       await loadMissions({ keepStatusMessage: true });
     } catch (error) {

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
 import { claimDailyReward, getBalances, getDailyRewardStatus } from '../services/economyService.js';
 import { saveMatchmakingContext } from '../store/gameStore.js';
-import { mockFeaturedRooms } from '../mocks/mockRooms.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
 import { isMockApiEnabled } from '../services/api.js';
@@ -300,53 +299,6 @@ function getMainMenuAvatarSrc(profile) {
   return asset('friend-girl.png');
 }
 
-const fallbackRoomCards = [
-  {
-    title: 'SAKURA GARDEN',
-    level: 'Beginner',
-    bg: 'room-card-green.png',
-    character: 'panda.png',
-    players: '4,326',
-    fee: '500',
-    prize: '2,000',
-    button: 'button-green.png',
-    route: ROUTES.matchmaking,
-  },
-  {
-    title: 'BLOSSOM TABLE',
-    level: 'Intermediate',
-    bg: 'room-card-blue.png',
-    character: 'fox.png',
-    players: '1,842',
-    fee: '1,000',
-    prize: '5,000',
-    button: 'button-blue.png',
-    route: ROUTES.matchmaking,
-  },
-  {
-    title: 'LUCKY BAMBOO',
-    level: 'Advanced',
-    bg: 'room-card-purple.png',
-    character: 'bunny.png',
-    players: '812',
-    fee: '5,000',
-    prize: '20,000',
-    button: 'button-violet.png',
-    route: ROUTES.matchmaking,
-  },
-  {
-    title: 'DRAGON PAVILION',
-    level: 'Master',
-    bg: 'room-card-gold.png',
-    character: 'bird.png',
-    players: '320',
-    fee: '50,000',
-    prize: '200,000',
-    button: 'button-gold.png',
-    route: ROUTES.matchmaking,
-  },
-];
-
 function formatCurrencyValue(value, fallback = '—') {
   if (value === null || value === undefined || value === '') {
     return fallback;
@@ -586,7 +538,7 @@ function FriendRow({ friend, tx, onRemove }) {
 export default function MainMenuPage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
-  const [roomCards, setRoomCards] = useState(fallbackRoomCards);
+  const [roomCards, setRoomCards] = useState([]);
   const [profile, setProfile] = useState(() => getStoredAuthUser() || EMPTY_MENU_PROFILE);
   const [friendList, setFriendList] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
@@ -627,7 +579,7 @@ export default function MainMenuPage() {
           console.error('Failed to load room tiers:', roomTiersResult.reason);
         }
 
-        setRoomCards(roomTiers?.length ? roomTiers : mockFeaturedRooms);
+        setRoomCards(Array.isArray(roomTiers) ? roomTiers : []);
         setProfile((current) => current || EMPTY_MENU_PROFILE);
 
         if (economyBalances) {
@@ -925,9 +877,9 @@ export default function MainMenuPage() {
             <div className="hero-banner" style={{ backgroundImage: `url(${asset('bg.png')})` }} aria-hidden="true" />
 
             <div className="sakura-room-grid">
-              {roomCards.map((room) => (
+              {roomCards.length ? roomCards.map((room) => (
                 <RoomCard
-                  key={room.title}
+                  key={room.id || room.roomId || room.tierId || room.title}
                   room={room}
                   t={t}
                   tx={tx}
@@ -946,7 +898,9 @@ export default function MainMenuPage() {
                     });
                   }}
                 />
-              ))}
+              )) : (
+                <div className="rooms-empty-state">No room tiers returned from backend.</div>
+              )}
             </div>
 
             <div className="bottom-room-actions">

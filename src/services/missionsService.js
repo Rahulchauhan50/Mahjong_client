@@ -37,18 +37,26 @@ function extractMissions(payload) {
     payload.daily,
     payload.dailyMissions,
     payload.daily_missions,
+    payload.missions?.daily,
+    payload.missions?.dailyMissions,
     data.daily,
     data.dailyMissions,
     data.daily_missions,
+    data.missions?.daily,
+    data.missions?.dailyMissions,
   );
 
   const weekly = firstArray(
     payload.weekly,
     payload.weeklyMissions,
     payload.weekly_missions,
+    payload.missions?.weekly,
+    payload.missions?.weeklyMissions,
     data.weekly,
     data.weeklyMissions,
     data.weekly_missions,
+    data.missions?.weekly,
+    data.missions?.weeklyMissions,
   );
 
   return [

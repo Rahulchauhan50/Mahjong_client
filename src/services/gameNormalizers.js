@@ -69,9 +69,26 @@ const ROOM_TIER_SKINS = [
   { bg: 'room-card-gold.png', character: 'bird.png', button: 'button-gold.png', level: 'Master' },
 ];
 
+function getNestedValue(source, path) {
+  return path.split('.').reduce((current, key) => (current && current[key] !== undefined ? current[key] : undefined), source);
+}
+
+function firstDefined(source, paths) {
+  for (const path of paths) {
+    const value = getNestedValue(source, path);
+    if (value !== undefined && value !== null && value !== '') {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
 function formatCoins(value, fallback = '0') {
   if (value === null || value === undefined || value === '') return fallback;
-  const numberValue = Number(value);
+
+  const cleanValue = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+  const numberValue = Number(cleanValue);
   return Number.isFinite(numberValue) ? numberValue.toLocaleString('en-US') : String(value);
 }
 
@@ -87,35 +104,79 @@ function titleFromTierId(tierId = '') {
 }
 
 export function normalizeRoomTier(tier = {}, index = 0) {
-  const tierId = tier.tierId || tier.id || tier.roomId || `room_tier_${index + 1}`;
-  const entryFee = tier.entryFee?.amount ?? tier.entryFee ?? tier.fee ?? tier.bet ?? 0;
+  const tierId = firstDefined(tier, ['tierId', 'id', '_id', 'roomId', 'slug', 'key']) || `room_tier_${index + 1}`;
+  const entryFee = firstDefined(tier, [
+    'entryFee.amount',
+    'entryFee.value',
+    'entryFee',
+    'fee.amount',
+    'fee.value',
+    'fee',
+    'bet.amount',
+    'bet.value',
+    'bet',
+    'cost.amount',
+    'cost.value',
+    'cost',
+  ]) ?? 0;
+  const prizePool = firstDefined(tier, [
+    'prizePool.amount',
+    'prizePool.value',
+    'prizePool',
+    'prize.amount',
+    'prize.value',
+    'prize',
+    'reward.amount',
+    'reward.value',
+    'reward',
+  ]);
   const skin = ROOM_TIER_SKINS[index % ROOM_TIER_SKINS.length];
-  const name = tier.name || tier.title || tier.roomName || titleFromTierId(tierId);
-  const maxPlayers = Number(tier.maxPlayers || tier.playersCount || String(tierId).match(/(\d+)p/i)?.[1] || 3);
+  const name = firstDefined(tier, ['name', 'title', 'roomName', 'displayName', 'label']) || titleFromTierId(tierId);
+  const maxPlayers = Number(firstDefined(tier, ['maxPlayers', 'playersCount', 'playerLimit', 'capacity']) || String(tierId).match(/(\d+)p/i)?.[1] || 3);
+  const onlinePlayers = firstDefined(tier, [
+    'playersOnline',
+    'onlinePlayers',
+    'onlineCount',
+    'playerCount',
+    'players',
+    'activePlayers',
+    'stats.playersOnline',
+    'stats.onlinePlayers',
+  ]);
+  const entryFeeAmount = Number(String(entryFee).replace(/,/g, '')) || 0;
 
   return {
     ...tier,
     id: tierId,
     roomId: tierId,
     tierId,
-    title: String(tier.title || name).toUpperCase(),
+    title: String(firstDefined(tier, ['title', 'name', 'roomName', 'displayName']) || name).toUpperCase(),
     name,
-    level: tier.level || tier.difficulty || skin.level,
+    level: firstDefined(tier, ['level', 'difficulty', 'rank', 'tierName']) || skin.level,
     maxPlayers,
-    players: tier.players ?? tier.onlinePlayers ?? tier.playerCount ?? '—',
+    players: formatCoins(onlinePlayers, '—'),
     fee: formatCoins(entryFee, '0'),
     bet: `${formatCoins(entryFee, '0')} coins`,
-    entryFee: { amount: Number(entryFee) || 0 },
-    prize: tier.prize ?? tier.prizePool ?? formatCoins((Number(entryFee) || 0) * maxPlayers, '0'),
-    bg: tier.bg || tier.background || skin.bg,
-    character: tier.character || tier.avatar || skin.character,
-    button: tier.button || skin.button,
-    status: tier.status || 'Available',
+    entryFee: { amount: entryFeeAmount },
+    prize: formatCoins(prizePool ?? entryFeeAmount * maxPlayers, '0'),
+    bg: firstDefined(tier, ['bg', 'background', 'backgroundImage', 'cardBg']) || skin.bg,
+    character: firstDefined(tier, ['character', 'avatar', 'icon', 'mascot']) || skin.character,
+    button: firstDefined(tier, ['button', 'buttonImage']) || skin.button,
+    status: firstDefined(tier, ['status', 'state']) || 'Available',
   };
 }
 
 export function normalizeRoomTierList(response = {}) {
-  const list = response.tiers || response.roomTiers || response.data?.tiers || response.data || response;
+  const list = response.tiers
+    || response.roomTiers
+    || response.rooms
+    || response.data?.tiers
+    || response.data?.roomTiers
+    || response.data?.rooms
+    || response.data?.results
+    || response.results
+    || response.data
+    || response;
   return Array.isArray(list) ? list.map(normalizeRoomTier) : [];
 }
 
