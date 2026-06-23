@@ -53,7 +53,8 @@ export async function searchFriendUsers(query) {
     return mockResults;
   });
   const payload = unwrapPayload(response);
-  return asArray(payload.results || payload.users || payload.friends || payload.items);
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
+  return asArray(payload.results || payload.users || payload.friends || payload.items || data.results || data.users || data.friends || data.items);
 }
 
 export async function sendFriendRequest(targetUserId) {
@@ -89,7 +90,21 @@ export async function getFriends() {
 export async function getIncomingFriendRequests() {
   const response = await getFromApi('/friends/requests', (mockApi) => mockApi.getIncomingFriendRequests?.() ?? { success: true, requests: [] });
   const payload = unwrapPayload(response);
-  return asArray(payload.requests || payload.items);
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
+  return asArray(
+    payload.requests
+      || payload.items
+      || payload.friendRequests
+      || payload.incomingRequests
+      || payload.receivedRequests
+      || payload.pendingRequests
+      || data.requests
+      || data.items
+      || data.friendRequests
+      || data.incomingRequests
+      || data.receivedRequests
+      || data.pendingRequests
+  );
 }
 
 export async function getSentFriendRequests() {

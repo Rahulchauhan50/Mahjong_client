@@ -25,6 +25,21 @@ function getFriendUserId(user) {
   return user?.userId || user?.id || user?._id || user?.targetUserId || '';
 }
 
+
+function getFriendRequestId(request) {
+  return request?.requestId
+    || request?.id
+    || request?._id
+    || request?.friendRequestId
+    || request?.friendshipId
+    || request?.pendingRequestId
+    || request?.incomingRequestId
+    || request?.request?.id
+    || request?.request?._id
+    || request?.request?.requestId
+    || '';
+}
+
 function pickBestFriendSearchResult(results, query) {
   const normalizedQuery = String(query || '').trim().toLowerCase();
 
@@ -326,7 +341,7 @@ function FriendRequestModal({ requests, onClose, onAccept, onDecline }) {
                 </div>
                 <div className="friend-request-actions">
                   <button className="accept-request" type="button" onClick={() => onAccept(request)}>ACCEPT</button>
-                  <button className="decline-request" type="button" onClick={() => onDecline(request.id)}>DECLINE</button>
+                  <button className="decline-request" type="button" onClick={() => onDecline(request)}>DECLINE</button>
                 </div>
               </div>
             ))
@@ -437,11 +452,13 @@ export default function MainMenuPage() {
 
         if (requestsResult.status === 'fulfilled') {
           setFriendRequests(backendRequests.map((request) => ({
-            id: request.id || request.requestId || request.fromUserId || request.username || request.name,
-            name: request.username || request.name || request.fromUsername || 'Player',
-            level: request.level ? `Level ${request.level}` : (request.levelLabel || 'Level 1'),
-            avatar: request.avatar || request.avatarId || 'friend-girl.png',
-          })));
+            id: getFriendRequestId(request),
+            userId: request.fromUserId || request.senderId || request.userId || request.sender?.userId || request.from?.userId || '',
+            name: request.username || request.name || request.fromUsername || request.sender?.username || request.from?.username || 'Player',
+            level: request.level ? `Level ${request.level}` : (request.levelLabel || request.sender?.levelLabel || request.from?.levelLabel || 'Level 1'),
+            avatar: request.avatar || request.avatarId || request.sender?.avatar || request.from?.avatar || 'friend-girl.png',
+            raw: request,
+          })).filter((request) => request.id));
         }
 
         setDailyRewardStatus(rewardStatus || null);
@@ -523,13 +540,21 @@ export default function MainMenuPage() {
   };
 
   const acceptFriendRequest = async (request) => {
+    const requestId = getFriendRequestId(request);
+
+    if (!requestId) {
+      setFriendsError('Friend request id is missing from backend response');
+      console.error('Failed to accept friend request: missing requestId', request);
+      return;
+    }
+
     try {
-      await acceptFriendRequestApi(request.id);
+      await acceptFriendRequestApi(requestId);
       setFriendList((current) => [
         ...current,
-        { name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
+        { id: request.userId || requestId, name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
       ]);
-      setFriendRequests((current) => current.filter((item) => item.id !== request.id));
+      setFriendRequests((current) => current.filter((item) => getFriendRequestId(item) !== requestId));
       setFriendsError('Friend request accepted');
     } catch (error) {
       const message = getApiErrorMessage(error, 'Failed to accept friend request');
@@ -538,14 +563,25 @@ export default function MainMenuPage() {
     }
   };
 
-  const declineFriendRequest = async (requestId) => {
+  const declineFriendRequest = async (request) => {
+    const requestId = getFriendRequestId(request);
+
+    if (!requestId) {
+      setFriendsError('Friend request id is missing from backend response');
+      console.error('Failed to decline friend request: missing requestId', request);
+      return;
+    }
+
     try {
       await declineFriendRequestApi(requestId);
     } catch (error) {
-      console.error('Failed to decline friend request:', error);
+      const message = getApiErrorMessage(error, 'Failed to decline friend request');
+      console.error('Failed to decline friend request:', message, error);
+      setFriendsError(message);
+      return;
     }
 
-    setFriendRequests((current) => current.filter((item) => item.id !== requestId));
+    setFriendRequests((current) => current.filter((item) => getFriendRequestId(item) !== requestId));
   };
 
   return (
