@@ -7,7 +7,7 @@ import { mockFeaturedRooms } from '../mocks/mockRooms.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
 import { isMockApiEnabled } from '../services/api.js';
-import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getApiErrorMessage, getBulkFriendStatus, getFriends, getIncomingFriendRequests, searchFriendUsers, sendFriendRequest } from '../services/friendsService.js';
+import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getApiErrorMessage, getBulkFriendStatus, getFriends, getIncomingFriendRequests, removeFriend as removeFriendApi, searchFriendUsers, sendFriendRequest } from '../services/friendsService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/main-menu/${name}`;
@@ -563,7 +563,7 @@ function FriendRequestModal({ requests, onClose, onAccept, onDecline }) {
   );
 }
 
-function FriendRow({ friend, tx }) {
+function FriendRow({ friend, tx, onRemove }) {
   return (
     <div className="friend-row">
       <img src={getFriendAvatarSrc(friend.avatar)} alt="" />
@@ -571,7 +571,14 @@ function FriendRow({ friend, tx }) {
         <strong>{friend.name}</strong>
         {friend.state && <span>{tx(friend.state)}</span>}
       </div>
-      <button type="button">{tx(friend.action)}</button>
+      <button
+        className="remove-friend-button"
+        type="button"
+        onClick={() => onRemove(friend)}
+        disabled={friend.isRemoving}
+      >
+        {friend.isRemoving ? '...' : 'REMOVE'}
+      </button>
     </div>
   );
 }
@@ -658,7 +665,7 @@ export default function MainMenuPage() {
               userId,
               name: getFriendDisplayName(friend),
               state: formatFriendStatus(getFriendBackendStatus(friend)),
-              action: friend.action || 'INVITE',
+              action: 'REMOVE',
               avatar: getFriendAvatarValue(friend, profile),
               raw: friend,
             };
@@ -787,7 +794,7 @@ export default function MainMenuPage() {
       await acceptFriendRequestApi(requestId);
       setFriendList((current) => [
         ...current,
-        { id: request.userId || requestId, name: request.name, state: '', action: 'INVITE', avatar: request.avatar },
+        { id: request.userId || requestId, userId: request.userId, name: request.name, state: '', action: 'REMOVE', avatar: request.avatar },
       ]);
       setFriendRequests((current) => current.filter((item) => getFriendRequestId(item) !== requestId));
       setFriendsError('Friend request accepted');
@@ -817,6 +824,34 @@ export default function MainMenuPage() {
     }
 
     setFriendRequests((current) => current.filter((item) => getFriendRequestId(item) !== requestId));
+  };
+
+
+  const handleRemoveFriend = async (friend) => {
+    const friendId = friend?.userId || friend?.id || getFriendUserId(friend?.raw || friend);
+
+    if (!friendId) {
+      setFriendsError('friendId is missing from backend response');
+      console.error('Failed to remove friend: missing friendId', friend);
+      return;
+    }
+
+    setFriendList((current) => current.map((item) => (
+      item.id === friend.id ? { ...item, isRemoving: true } : item
+    )));
+
+    try {
+      await removeFriendApi(friendId);
+      setFriendList((current) => current.filter((item) => item.id !== friend.id));
+      setFriendsError('Friend removed');
+    } catch (error) {
+      const message = getApiErrorMessage(error, 'Failed to remove friend');
+      console.error('Failed to remove friend:', message, error);
+      setFriendsError(message);
+      setFriendList((current) => current.map((item) => (
+        item.id === friend.id ? { ...item, isRemoving: false } : item
+      )));
+    }
   };
 
   return (
@@ -947,7 +982,7 @@ export default function MainMenuPage() {
               {friendsError && <div className="friends-api-status">{friendsError}</div>}
               <div className="friend-list">
                 {friendList.length > 0 ? friendList.map((friend) => (
-                  <FriendRow key={`${friend.id || friend.name}-${friend.state}`} friend={friend} tx={tx} />
+                  <FriendRow key={`${friend.id || friend.name}-${friend.state}`} friend={friend} tx={tx} onRemove={handleRemoveFriend} />
                 )) : <div className="friends-empty-state">No friends</div>}
               </div>
               <button className="view-all" type="button">{t('viewAllFriends')} <span>›</span></button>

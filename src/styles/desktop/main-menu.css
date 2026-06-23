@@ -3890,3 +3890,21 @@ filter:
   object-fit: contain !important;
   pointer-events: none !important;
 }
+
+/* Real friends API: remove accepted friend instead of invite. */
+.app-shell[data-device='desktop'] .main-menu-reference .friend-row {
+  grid-template-columns: 24px minmax(0, 1fr) 54px !important;
+}
+
+.app-shell[data-device='desktop'] .main-menu-reference .friend-row .remove-friend-button {
+  width: 54px !important;
+  min-width: 54px !important;
+  padding: 0 5px !important;
+  background: linear-gradient(180deg, #ff5b83 0%, #d9245d 100%) !important;
+  box-shadow: 0 4px 10px rgba(217, 36, 93, 0.25) !important;
+}
+
+.app-shell[data-device='desktop'] .main-menu-reference .friend-row .remove-friend-button:disabled {
+  cursor: wait !important;
+  opacity: 0.65 !important;
+}
