@@ -7,7 +7,7 @@ import { mockFeaturedRooms } from '../mocks/mockRooms.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
 import { isMockApiEnabled } from '../services/api.js';
-import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getFriends, getIncomingFriendRequests, sendFriendRequest } from '../services/friendsService.js';
+import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getApiErrorMessage, getFriends, getIncomingFriendRequests, searchFriendUsers, sendFriendRequest } from '../services/friendsService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/main-menu/${name}`;
@@ -20,6 +20,23 @@ const EMPTY_MENU_PROFILE = {
   username: 'Player',
   name: 'Player',
 };
+
+function getFriendUserId(user) {
+  return user?.userId || user?.id || user?._id || user?.targetUserId || '';
+}
+
+function pickBestFriendSearchResult(results, query) {
+  const normalizedQuery = String(query || '').trim().toLowerCase();
+
+  if (!Array.isArray(results) || !results.length) {
+    return null;
+  }
+
+  return results.find((user) => String(user?.playerId || '').toLowerCase() === normalizedQuery)
+    || results.find((user) => String(user?.username || user?.name || '').toLowerCase() === normalizedQuery)
+    || results.find((user) => getFriendUserId(user))
+    || results[0];
+}
 
 function getStoredProfileAvatar() {
   try {
@@ -479,20 +496,29 @@ export default function MainMenuPage() {
   };
 
   const handleAcceptAddFriend = async () => {
-    const nextFriendName = friendName.trim();
+    const nextFriendQuery = friendName.trim();
 
-    if (!nextFriendName) {
+    if (!nextFriendQuery) {
       return;
     }
 
     try {
-      await sendFriendRequest(nextFriendName);
+      const searchResults = await searchFriendUsers(nextFriendQuery);
+      const selectedUser = pickBestFriendSearchResult(searchResults, nextFriendQuery);
+      const targetUserId = getFriendUserId(selectedUser);
+
+      if (!targetUserId) {
+        throw new Error('Friend not found. Search by username or Player ID.');
+      }
+
+      await sendFriendRequest(targetUserId);
       setFriendName('');
       setIsAddFriendOpen(false);
       setFriendsError('Friend request sent');
     } catch (error) {
-      console.error('Failed to send friend request:', error);
-      setFriendsError(error?.message || 'Failed to send friend request');
+      const message = getApiErrorMessage(error, 'Failed to send friend request');
+      console.error('Failed to send friend request:', message, error);
+      setFriendsError(message);
     }
   };
 
@@ -506,8 +532,9 @@ export default function MainMenuPage() {
       setFriendRequests((current) => current.filter((item) => item.id !== request.id));
       setFriendsError('Friend request accepted');
     } catch (error) {
-      console.error('Failed to accept friend request:', error);
-      setFriendsError(error?.message || 'Failed to accept friend request');
+      const message = getApiErrorMessage(error, 'Failed to accept friend request');
+      console.error('Failed to accept friend request:', message, error);
+      setFriendsError(message);
     }
   };
 

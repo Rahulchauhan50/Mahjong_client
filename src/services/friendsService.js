@@ -11,6 +11,51 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function buildQueryPath(basePath, params = {}) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      query.set(key, String(value).trim());
+    }
+  });
+
+  const queryString = query.toString();
+  return queryString ? `${basePath}?${queryString}` : basePath;
+}
+
+export function getApiErrorMessage(error, fallback = 'API request failed') {
+  if (!error) return fallback;
+  if (typeof error === 'string') return error;
+
+  const data = error.response?.data || error.data;
+
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data && typeof data === 'object') {
+    return data.message || data.error || data.detail || JSON.stringify(data);
+  }
+
+  return error.message || fallback;
+}
+
+export async function searchFriendUsers(query) {
+  const searchQuery = String(query || '').trim();
+
+  if (!searchQuery) {
+    return [];
+  }
+
+  const path = buildQueryPath('/friends/search', { q: searchQuery });
+  const response = await getFromApi(path, (mockApi) => {
+    const mockResults = mockApi.searchFriendUsers?.({ q: searchQuery })
+      || mockApi.searchFriends?.({ q: searchQuery })
+      || { success: true, results: [] };
+    return mockResults;
+  });
+  const payload = unwrapPayload(response);
+  return asArray(payload.results || payload.users || payload.friends || payload.items);
+}
+
 export async function sendFriendRequest(targetUserId) {
   if (!targetUserId) {
     throw new Error('targetUserId is required to send a friend request.');
