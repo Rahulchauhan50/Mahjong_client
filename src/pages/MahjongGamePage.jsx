@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
-import { getGameState, isGameApiAvailable, leaveGame, sendGameAction } from '../services/gameService.js';
-import { connectGameSocket } from '../services/socket.js';
+import { getGameState, isGameApiAvailable, leaveGame } from '../services/gameService.js';
+import { normalizeGameState } from '../services/gameNormalizers.js';
+import {
+  claimDiscard,
+  connectGameSocket,
+  declareRiichi,
+  declareWin,
+  discardTile,
+  getActiveGameSocket,
+  passClaimWindow,
+} from '../services/socket.js';
 import { clearActiveMatch, getActiveMatch, saveActiveMatch } from '../store/gameStore.js';
 import { mockGameState } from '../mocks/mockGameState.js';
 import { useLanguage } from '../i18n/useLanguage.js';
@@ -11,16 +20,60 @@ const asset = (name) => `/assets/gameplay/${name}`;
 
 
 const DEFAULT_ACTIONS = ['chow', 'pong', 'kong', 'pass'];
+const EMPTY_SOCKET_GAME_STATE = {
+  status: 'waiting',
+  players: [],
+  handTiles: [],
+  myHand: [],
+  discards: {},
+  centerTiles: [],
+  availableActions: [],
+  claimWindow: null,
+  timer: 0,
+  room: { name: 'Live Match' },
+};
+const CLAIM_ACTION_ALIASES = { pong: 'pung', pung: 'pung', chow: 'chow', kong: 'kong', ron: 'ron' };
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
-const normalizeTileName = (tile) => {
-  if (!tile) return '';
-  if (typeof tile === 'string') return tile;
-  return tile.image || tile.asset || tile.file || tile.filename || tile.name || tile.tileName || tile.id || '';
+
+const tileIdToAssetName = (tileId) => {
+  const value = String(tileId || '').trim();
+  if (!value) return '';
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(value)) return value;
+
+  const parts = value.split('_');
+  const suit = parts[0];
+  const rank = parts[1];
+
+  if (suit === 'm' && /^\d+$/.test(rank)) return `Characters_${rank}.png`;
+  if (suit === 'p' && /^\d+$/.test(rank)) return `Circles-Dots_${rank}.png`;
+  if (suit === 's' && /^\d+$/.test(rank)) return `Bamboo_${rank}.png`;
+
+  // Honour tiles depend on the final art asset names. Keep the backend id as a fallback
+  // instead of dropping the tile, so integration bugs are visible during testing.
+  return value;
 };
 
+const getTileId = (tile) => {
+  if (!tile) return '';
+  if (typeof tile === 'string') return tile;
+  return tile.id || tile.tileId || tile.value || tile.name || tile.tileName || tile.image || tile.asset || '';
+};
+
+const normalizeTileName = (tile) => tileIdToAssetName(getTileId(tile));
+
 const normalizeTileList = (value) => toArray(value).map(normalizeTileName).filter(Boolean);
+const getRawTileList = (value) => toArray(value).map(getTileId).filter(Boolean);
+
+const getFirstRawTileList = (...values) => {
+  for (const value of values) {
+    const tiles = getRawTileList(value);
+    if (tiles.length) return tiles;
+  }
+
+  return [];
+};
 
 const getFirstTileList = (...values) => {
   for (const value of values) {
@@ -54,15 +107,22 @@ const getDiscardTilesByPosition = (state, player, position) => getFirstTileList(
   state[`${position}Discards`]
 );
 
-const getAvailableActions = (state) => {
-  const rawActions = [state.availableActions, state.actions, state.allowedActions]
-    .find((actions) => Array.isArray(actions) && actions.length) || DEFAULT_ACTIONS;
+const getAvailableActions = (state, useMockDefaults = true) => {
+  const rawActions = [
+    state.claimWindow?.yourValidActions,
+    state.validActions,
+    state.availableActions,
+    state.actions,
+    state.allowedActions,
+  ].find((actions) => Array.isArray(actions) && actions.length) || (useMockDefaults ? DEFAULT_ACTIONS : []);
 
   return toArray(rawActions)
-    .map((action) => (typeof action === 'string' ? action : action?.type || action?.key || action?.name))
+    .map((action) => (typeof action === 'string' ? action : action?.type || action?.key || action?.name || action?.action))
     .filter(Boolean)
     .map((action) => String(action).toLowerCase())
-    .filter((action) => action !== 'win');
+    .map((action) => (action === 'pung' ? 'pong' : action))
+    .filter((action) => action !== 'win')
+    .filter((action, index, list) => list.indexOf(action) === index);
 };
 
 const actionDefinitions = {
@@ -70,6 +130,9 @@ const actionDefinitions = {
   pong: { labelKey: 'pong', className: 'green' },
   kong: { labelKey: 'kong', className: 'purple' },
   pass: { labelKey: 'pass', className: 'black' },
+  ron: { labelKey: 'win', className: 'purple' },
+  tsumo: { labelKey: 'win', className: 'purple' },
+  riichi: { labelKey: 'riichi', className: 'blue' },
 };
 
 function GameplayTile({ name, className = '', label = '' }) {
@@ -139,6 +202,125 @@ function Compass({ round = 'East 1', timer = 18, turnLabel = 'YOUR TURN' }) {
   );
 }
 
+
+function getSeatPosition(seat, state = {}) {
+  if (!seat) return '';
+  const normalizedSeat = String(seat).toLowerCase();
+  const ownSeat = String(state.mySeat || state.seat || '').toLowerCase();
+
+  if (ownSeat && normalizedSeat === ownSeat) return 'left';
+
+  const playerWithSeat = toArray(state.players).find((player) => String(player.seat || '').toLowerCase() === normalizedSeat);
+  if (playerWithSeat?.position) return playerWithSeat.position;
+
+  const fallbackSeatPositions = { e: 'left', east: 'left', s: 'right', south: 'right', w: 'top', west: 'top', n: 'top', north: 'top' };
+  return fallbackSeatPositions[normalizedSeat] || '';
+}
+
+function mergeTurnStart(current, payload = {}) {
+  const activeTurnPosition = getSeatPosition(payload.activeSeat, current)
+    || current.activeTurnPosition
+    || current.currentTurnPosition
+    || current.turnPosition;
+
+  return {
+    ...current,
+    status: current.status || 'playing',
+    activeSeat: payload.activeSeat || current.activeSeat,
+    activeUserId: payload.activeUserId || current.activeUserId,
+    activeTurnPosition,
+    currentTurnPlayerId: payload.activeUserId || current.currentTurnPlayerId,
+    timer: payload.timeLimit ?? payload.timer ?? current.timer,
+    timeLimit: payload.timeLimit ?? current.timeLimit,
+    wallRemaining: payload.wallRemaining ?? current.wallRemaining,
+    availableActions: [],
+    claimWindow: null,
+  };
+}
+
+function mergeDrawnTile(current, payload = {}) {
+  const tile = payload.tileId || payload.tile || payload.drawnTile;
+  if (!tile) return current;
+
+  const handTiles = getFirstRawTileList(current.handTiles, current.myHand, current.playerHand);
+
+  return {
+    ...current,
+    drawnTile: tile,
+    handTiles: [...handTiles, tile],
+    myHand: [...handTiles, tile],
+  };
+}
+
+function mergeClaimWindow(current, payload = {}) {
+  const validActions = toArray(payload.yourValidActions || payload.validActions || payload.actions)
+    .map((action) => (typeof action === 'string' ? action : action?.type || action?.action || action?.key))
+    .filter(Boolean)
+    .map((action) => String(action).toLowerCase())
+    .map((action) => (action === 'pung' ? 'pong' : action));
+
+  return {
+    ...current,
+    status: 'resolving',
+    claimWindow: payload,
+    availableActions: validActions,
+    timer: payload.timeLimit ?? current.timer,
+  };
+}
+
+function mergeActionBroadcast(current, payload = {}) {
+  const action = String(payload.action || '').toLowerCase();
+  const tileId = payload.tileId || payload.tile || payload.discardedTile;
+  const seatPosition = getSeatPosition(payload.seat || payload.discardedBySeat, current) || payload.position;
+
+  if (!action) return current;
+
+  const next = {
+    ...current,
+    lastAction: payload,
+    status: action === 'disconnected' || action === 'reconnected' ? current.status : 'playing',
+    claimWindow: null,
+    availableActions: [],
+  };
+
+  if (action === 'discard' && tileId) {
+    const renderedTile = tileIdToAssetName(tileId);
+    const discards = { ...(current.discards || {}) };
+    const key = seatPosition || 'center';
+    discards[key] = [...normalizeTileList(discards[key]), renderedTile];
+    next.discards = discards;
+
+    if (seatPosition === 'left' || !seatPosition) {
+      const discardedRawId = String(tileId);
+      next.handTiles = getFirstRawTileList(current.handTiles, current.myHand, current.playerHand)
+        .filter((tile) => String(tile) !== discardedRawId && normalizeTileName(tile) !== renderedTile);
+      next.myHand = next.handTiles;
+    }
+  }
+
+  if ((action === 'pung' || action === 'pong' || action === 'kong' || action === 'chow') && payload.meldTiles) {
+    const currentMelds = Array.isArray(current.centerTiles) ? current.centerTiles : [];
+    next.centerTiles = [...currentMelds, ...normalizeTileList(payload.meldTiles)];
+  }
+
+  return next;
+}
+
+function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
+  const normalized = normalizeGameState(payload);
+  return {
+    ...normalized,
+    matchId: normalized.matchId || payload.matchId || payload.gameId || payload.roomId || fallbackMatchId,
+    status: normalized.status || 'playing',
+    mySeat: payload.mySeat || payload.seat || normalized.mySeat || normalized.seat,
+    seat: payload.seat || normalized.seat,
+    handTiles: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.handTiles),
+    myHand: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.myHand, normalized.handTiles),
+    wallRemaining: payload.wallRemaining ?? normalized.wallRemaining,
+    playerCount: payload.playerCount ?? normalized.playerCount,
+  };
+}
+
 export default function MahjongGamePage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -146,14 +328,23 @@ export default function MahjongGamePage() {
   const { matchId: routeMatchId } = useParams();
   const [storedMatch] = useState(() => getActiveMatch());
   const gameApiAvailable = isGameApiAvailable();
-  const resolvedMatchId = routeMatchId || location.state?.matchId || storedMatch?.matchId || (gameApiAvailable ? mockGameState.matchId : '');
+  const initialSocketPayload = location.state?.initialGameState || storedMatch?.initialGameState || null;
+  const socketGameplayEnabled = Boolean(location.state?.socketMode || storedMatch?.socketMode || initialSocketPayload || !gameApiAvailable);
+  const resolvedMatchId = routeMatchId
+    || location.state?.matchId
+    || storedMatch?.matchId
+    || initialSocketPayload?.matchId
+    || initialSocketPayload?.gameId
+    || initialSocketPayload?.roomId
+    || (gameApiAvailable ? mockGameState.matchId : 'live_match');
 
   const [selectedAction, setSelectedAction] = useState(null);
-  const [gameState, setGameState] = useState({
-    ...mockGameState,
+  const [gameState, setGameState] = useState(() => ({
+    ...(gameApiAvailable ? mockGameState : EMPTY_SOCKET_GAME_STATE),
+    ...(initialSocketPayload ? normalizeInitialSocketState(initialSocketPayload, resolvedMatchId) : {}),
     matchId: resolvedMatchId,
-  });
-  const [gameError, setGameError] = useState(() => (gameApiAvailable ? '' : t('gameplayUnavailable')));
+  }));
+  const [gameError, setGameError] = useState('');
 
   useEffect(() => {
     if (!routeMatchId && resolvedMatchId) {
@@ -162,50 +353,136 @@ export default function MahjongGamePage() {
     }
 
     let isMounted = true;
+    const activeMatchBase = {
+      ...storedMatch,
+      matchId: resolvedMatchId,
+      roomId: location.state?.roomId || storedMatch?.roomId,
+      roomCode: location.state?.roomCode || storedMatch?.roomCode,
+      socketMode: socketGameplayEnabled,
+    };
 
-    if (!gameApiAvailable) {
-      return undefined;
+    if (!gameApiAvailable && !socketGameplayEnabled && !getActiveGameSocket()) {
+      setGameError('No active gameplay session found. Start from matchmaking or join a room first.');
+      setGameState((current) => ({ ...(current || EMPTY_SOCKET_GAME_STATE), status: 'waiting', handTiles: [], myHand: [], availableActions: [] }));
+      return () => {
+        isMounted = false;
+      };
     }
 
-    getGameState(resolvedMatchId)
-      .then((state) => {
-        if (isMounted && state) {
-          setGameState((current) => ({ ...(current || {}), ...state, matchId: state.matchId || resolvedMatchId }));
-          saveActiveMatch({
-            ...storedMatch,
-            matchId: state.matchId || resolvedMatchId,
-            roomId: state.room?.id || storedMatch?.roomId,
-          });
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to load game state:', error);
-        if (isMounted) {
-          setGameError(error.message || t('gameLoadFailed'));
-        }
-      });
+    if (initialSocketPayload) {
+      const normalizedInitial = normalizeInitialSocketState(initialSocketPayload, resolvedMatchId);
+      setGameState((current) => ({ ...(current || {}), ...normalizedInitial, matchId: normalizedInitial.matchId || resolvedMatchId }));
+      saveActiveMatch({ ...activeMatchBase, initialGameState: normalizedInitial });
+    }
 
-    const gameSocket = connectGameSocket({
+    if (gameApiAvailable) {
+      getGameState(resolvedMatchId)
+        .then((state) => {
+          if (isMounted && state) {
+            setGameState((current) => ({ ...(current || {}), ...state, matchId: state.matchId || resolvedMatchId }));
+            saveActiveMatch({
+              ...activeMatchBase,
+              matchId: state.matchId || resolvedMatchId,
+              roomId: state.room?.id || activeMatchBase.roomId,
+            });
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to load game state:', error);
+          if (isMounted && !socketGameplayEnabled) {
+            setGameError(error.message || t('gameLoadFailed'));
+          }
+        });
+    }
+
+    const handleSocketMessage = (message = {}) => {
+      if (!isMounted) return;
+      const payload = message.payload || {};
+
+      switch (message.type) {
+        case 'game_start':
+        case 'game_state':
+          setGameState((current) => ({
+            ...(current || {}),
+            ...normalizeInitialSocketState(payload, resolvedMatchId),
+            matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
+          }));
+          setGameError('');
+          break;
+        case 'turn_changed':
+          setGameState((current) => mergeTurnStart(current || {}, payload));
+          setGameError('');
+          break;
+        case 'drawn_tile':
+          setGameState((current) => mergeDrawnTile(current || {}, payload));
+          break;
+        case 'claim_window':
+          setGameState((current) => mergeClaimWindow(current || {}, payload));
+          break;
+        case 'action_broadcast':
+        case 'tile_discarded':
+          setGameState((current) => mergeActionBroadcast(current || {}, payload));
+          break;
+        case 'game_finished':
+          setGameState((current) => ({
+            ...(current || {}),
+            ...payload,
+            status: 'finished',
+            result: payload,
+            winner: payload.winner || payload.winnerId || current?.winner,
+            winnerId: payload.winnerId || payload.winner?.id || current?.winnerId,
+            matchId: payload.matchId || current?.matchId || resolvedMatchId,
+          }));
+          break;
+        case 'error':
+          setGameError(payload.message || payload.error || 'Gameplay socket error.');
+          break;
+        default:
+          break;
+      }
+    };
+
+    const existingSocket = getActiveGameSocket();
+    const gameSocket = existingSocket || connectGameSocket({
       matchId: resolvedMatchId,
-      onMessage(message) {
-        if (!isMounted) {
-          return;
-        }
-
-        if (message.type === 'game_state' || message.type === 'game_state_updated' || message.type === 'turn_changed' || message.type === 'tile_discarded' || message.type === 'game_finished') {
-          setGameState((current) => ({ ...(current || {}), ...message.payload, matchId: message.payload.matchId || resolvedMatchId }));
-        }
-      },
+      onMessage: handleSocketMessage,
       onError(error) {
         console.error('Game socket error:', error);
+        if (isMounted) setGameError(error?.message || 'Unable to connect to gameplay server.');
+      },
+      onClose() {
+        if (isMounted) setGameError('Gameplay socket disconnected. Reconnect will sync state if the backend supports it.');
       },
     });
 
+    const socketHandlers = [
+      ['game:start', (payload) => handleSocketMessage({ type: 'game_start', payload })],
+      ['game:sync_state', (payload) => handleSocketMessage({ type: 'game_state', payload })],
+      ['game:turn_start', (payload) => handleSocketMessage({ type: 'turn_changed', payload })],
+      ['player:drawn_tile', (payload) => handleSocketMessage({ type: 'drawn_tile', payload })],
+      ['game:claim_window', (payload) => handleSocketMessage({ type: 'claim_window', payload })],
+      ['game:action_broadcast', (payload) => handleSocketMessage({ type: 'action_broadcast', payload })],
+      ['game:over', (payload) => handleSocketMessage({ type: 'game_finished', payload })],
+      ['error', (payload) => handleSocketMessage({ type: 'error', payload })],
+      ['connect', () => { if (isMounted) setGameError(''); }],
+      ['disconnect', () => { if (isMounted) setGameError('Gameplay socket disconnected. Reconnect will sync state if the backend supports it.'); }],
+    ];
+
+    if (gameSocket?.on) {
+      socketHandlers.forEach(([eventName, handler]) => gameSocket.on(eventName, handler));
+    }
+
     return () => {
       isMounted = false;
-      gameSocket.disconnect();
+      if (gameSocket?.off) {
+        socketHandlers.forEach(([eventName, handler]) => gameSocket.off(eventName, handler));
+      }
+      // Keep the live socket alive while navigating from the game to the result screen.
+      if (!socketGameplayEnabled) {
+        gameSocket?.disconnect?.();
+      }
     };
-  }, [gameApiAvailable, location.state, navigate, resolvedMatchId, routeMatchId, t]);
+  }, [gameApiAvailable, initialSocketPayload, location.state, navigate, resolvedMatchId, routeMatchId, socketGameplayEnabled, storedMatch, t]);
 
   const players = useMemo(
     () => (Array.isArray(gameState.players) && gameState.players.length ? gameState.players : mockGameState.players),
@@ -215,23 +492,25 @@ export default function MahjongGamePage() {
   const leftPlayer = players.find((player) => player.position === 'left') || mockGameState.players[1];
   const rightPlayer = players.find((player) => player.position === 'right') || mockGameState.players[2];
 
-  // Change this value from the backend later: 'left' = Stevie / user, 'top' = Bunbun, 'right' = Kiki.
-  const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || 'left';
+  const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || (gameApiAvailable ? 'left' : '');
   const isUserTurn = activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
     ? (topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name)
     : activeTurnPosition === 'right'
       ? rightPlayer.name
       : 'Your';
-  const activeTurnLabel = isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`;
+  const activeTurnLabel = activeTurnPosition
+    ? (isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`)
+    : t('pleaseWaitMatch');
 
-  const playerHandTiles = getFirstTileList(
+  const rawPlayerHandTiles = getFirstRawTileList(
     gameState.handTiles,
     gameState.playerHand,
     gameState.myHand,
     gameState.currentPlayerHand,
-    getPlayerTileList(leftPlayer, 'handTiles', 'hand', 'tiles')
+    ...(gameApiAvailable ? [getPlayerTileList(leftPlayer, 'handTiles', 'hand', 'tiles')] : [])
   );
+  const playerHandTiles = rawPlayerHandTiles.map((tile) => normalizeTileName(tile));
   const topDiscardTiles = getDiscardTilesByPosition(gameState, topPlayer, 'top');
   const rightDiscardTiles = getDiscardTilesByPosition(gameState, rightPlayer, 'right');
   const centerDiscardTiles = getFirstTileList(
@@ -243,7 +522,8 @@ export default function MahjongGamePage() {
     gameState.discards?.center,
     gameState.discardTiles?.center
   );
-  const availableActions = getAvailableActions(gameState);
+  const availableActions = getAvailableActions(gameState, gameApiAvailable);
+  const isClaimWindowOpen = Boolean(gameState.claimWindow);
 
   useEffect(() => {
     const status = String(gameState.status || '').toLowerCase();
@@ -261,25 +541,45 @@ export default function MahjongGamePage() {
     }
   }, [gameState.matchId, gameState.result, gameState.status, gameState.winner, gameState.winnerId, navigate, resolvedMatchId]);
 
-  if (!gameApiAvailable) {
-    return (
-      <section className="gameplay-screen" aria-label="Mahjong gameplay screen">
-        <img className="gameplay-bg" src={asset('BG.png')} alt="" draggable="false" />
-        <div className="gameplay-vignette" aria-hidden="true" />
-        <div className="gameplay-error" role="alert">
-          {gameError || t('gameplayUnavailable')}
-          <br />
-          <button type="button" className="match-cancel-button" onClick={() => navigate(ROUTES.mainMenu)}>
-            {t('backToMainMenu')}
-          </button>
-        </div>
-      </section>
-    );
-  }
+  const handleTileDiscard = (tile) => {
+    if (!isUserTurn) return;
 
-  const handleMahjongAction = async (actionKey) => {
+    const tileId = getTileId(tile);
+    if (!tileId) return;
+
+    const sent = discardTile(tileId);
+    if (!sent) {
+      setGameError('Unable to discard tile. Waiting for gameplay socket connection.');
+    }
+  };
+
+  const handleMahjongAction = (actionKey) => {
     setSelectedAction(actionKey);
-    await sendGameAction(gameState.matchId || resolvedMatchId, { type: actionKey });
+
+    if (actionKey === 'pass') {
+      const sent = passClaimWindow();
+      if (!sent) setGameError('Unable to pass. Waiting for gameplay socket connection.');
+      return;
+    }
+
+    if (actionKey === 'tsumo') {
+      const sent = declareWin('tsumo');
+      if (!sent) setGameError('Unable to declare win. Waiting for gameplay socket connection.');
+      return;
+    }
+
+    if (actionKey === 'riichi') {
+      const drawnTile = gameState.drawnTile || rawPlayerHandTiles[rawPlayerHandTiles.length - 1];
+      const sent = declareRiichi(getTileId(drawnTile));
+      if (!sent) setGameError('Unable to declare Riichi. Waiting for gameplay socket connection.');
+      return;
+    }
+
+    const claimAction = CLAIM_ACTION_ALIASES[actionKey] || actionKey;
+    const sent = claimDiscard(claimAction);
+    if (!sent) {
+      setGameError('Unable to send claim action. Waiting for gameplay socket connection.');
+    }
   };
 
   return (
@@ -363,6 +663,7 @@ export default function MahjongGamePage() {
               key={`${tile}-${index}`}
               aria-label={`Tile ${index + 1}`}
               disabled={!isUserTurn}
+              onClick={() => handleTileDiscard(rawPlayerHandTiles[index] || tile)}
             >
               <GameplayTile name={tile} />
             </button>
@@ -370,7 +671,7 @@ export default function MahjongGamePage() {
         </div>
       </main>
 
-      <nav className={`gameplay-actions ${isUserTurn ? 'player-turn' : 'waiting-turn'}`} aria-label={t('mahjongActions')}>
+      <nav className={`gameplay-actions ${isUserTurn ? 'player-turn' : 'waiting-turn'} ${isClaimWindowOpen ? 'claim-window' : ''}`} aria-label={t('mahjongActions')}>
         {availableActions.map((actionKey) => {
           const action = actionDefinitions[actionKey];
 
@@ -387,7 +688,7 @@ export default function MahjongGamePage() {
               key={actionKey}
               onClick={() => handleMahjongAction(actionKey)}
               aria-pressed={isActive}
-              disabled={!isUserTurn}
+              disabled={!isClaimWindowOpen && !isUserTurn}
             >
               {t(action.labelKey)}
             </button>

@@ -93,11 +93,13 @@ export default function CreateRoomPage() {
         tierId: room.tierId || selectedTierId,
         maxPlayers: 3,
         source: 'private-room',
+        isHost: true,
       };
 
       setCreatedRoom(matchmakingState);
       saveMatchmakingContext(matchmakingState);
       setSuccessMessage(t('roomCreatedSuccessfully'));
+      navigate(ROUTES.matchmaking, { state: matchmakingState });
     } catch (error) {
       console.error('Failed to create private room:', error);
       setErrorMessage(error.message || 'Failed to create private room');

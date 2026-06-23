@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
-import { cancelMatchmaking, getMatchmakingStatus, startMatchmaking } from '../services/matchmakingService.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { clearMatchmakingContext, getMatchmakingContext, saveActiveMatch } from '../store/gameStore.js';
+import { connectGameSocket, disconnectGameSocket, joinPrivateRoom, joinPublicRoom, startPrivateGame } from '../services/socket.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/matchmaking/${name}`;
+const DEFAULT_TIER_ID = 'sakura_garden_3p';
 
 const PROFILE_ASSET_ROOT = '/assets/profile/';
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
@@ -85,14 +86,15 @@ function createFrontendSession(context) {
   const maxPlayers = Math.max(2, Math.min(Number(context.maxPlayers) || 3, 3));
 
   return {
-    id: 'frontend_matchmaking_fallback',
-    sessionId: 'frontend_matchmaking_fallback',
-    status: 'searching',
+    id: context.roomId || context.roomCode || 'socket_matchmaking',
+    sessionId: context.roomId || context.roomCode || 'socket_matchmaking',
+    status: context.roomCode ? 'waiting' : 'searching',
     roomId: context.roomId,
     roomCode: context.roomCode,
     tierId: context.tierId,
     maxPlayers,
-    backendFallback: true,
+    socketMode: true,
+    isHost: Boolean(context.isHost),
     players: Array.from({ length: maxPlayers }, (_, index) => (
       index === 0
         ? {
@@ -102,6 +104,7 @@ function createFrontendSession(context) {
           avatar: currentPlayer.avatar,
           ready: true,
           isCurrentPlayer: true,
+          isHost: Boolean(context.isHost),
         }
         : {
           id: `searching_${index}`,
@@ -124,7 +127,7 @@ function mergeCurrentPlayerIntoSession(session, context) {
   const maxPlayers = Math.max(2, Math.min(Number(session?.maxPlayers || context.maxPlayers) || 3, 3));
   const players = Array.from({ length: maxPlayers }, (_, index) => {
     if (index === 0) {
-      return fallbackSession.players[0];
+      return { ...fallbackSession.players[0], ...(incomingPlayers[0]?.isCurrentPlayer ? incomingPlayers[0] : {}) };
     }
 
     const incomingPlayer = incomingPlayers[index];
@@ -174,12 +177,15 @@ function PlayerSlot({ variant, avatar, name, ready, isCurrentPlayer = false, del
 }
 
 function getRequestedMatchmakingContext(locationState) {
+  const storedContext = getMatchmakingContext() || {};
+
   return {
-    roomId: locationState?.roomId || getMatchmakingContext()?.roomId || 'quick_match',
-    roomCode: locationState?.roomCode || getMatchmakingContext()?.roomCode || null,
-    tierId: locationState?.tierId || getMatchmakingContext()?.tierId || null,
-    maxPlayers: locationState?.maxPlayers || getMatchmakingContext()?.maxPlayers || 3,
-    source: locationState?.source || getMatchmakingContext()?.source || 'quick_match',
+    roomId: locationState?.roomId || storedContext.roomId || 'quick_match',
+    roomCode: locationState?.roomCode || storedContext.roomCode || null,
+    tierId: locationState?.tierId || storedContext.tierId || DEFAULT_TIER_ID,
+    maxPlayers: locationState?.maxPlayers || storedContext.maxPlayers || 3,
+    source: locationState?.source || storedContext.source || 'quick_match',
+    isHost: Boolean(locationState?.isHost ?? storedContext.isHost),
   };
 }
 
@@ -191,111 +197,195 @@ export default function MatchmakingPage() {
   const initialContext = getRequestedMatchmakingContext(location.state);
   const [session, setSession] = useState(() => createFrontendSession(initialContext));
   const [errorMessage, setErrorMessage] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
 
   useEffect(() => {
     let isMounted = true;
-    let activeSessionId = null;
-    let matchWasFound = false;
-    let statusTimerId = null;
+    let gameWasStarted = false;
     const context = getRequestedMatchmakingContext(location.state);
+
     setSession(createFrontendSession(context));
     setErrorMessage('');
+    setConnectionStatus('connecting');
 
     const intervalId = window.setInterval(() => {
       setSeconds((current) => (current >= 59 ? 0 : current + 1));
     }, 1000);
 
-    const openGameWhenReady = (status) => {
-      if (!isMounted || !status) {
-        return;
+    const responseTimeoutId = window.setTimeout(() => {
+      if (isMounted && !gameWasStarted) {
+        setErrorMessage('Connected, but the gameplay server has not returned a lobby event yet.');
       }
+    }, 18000);
 
-      setSession(mergeCurrentPlayerIntoSession(status, context));
+    const updateLobbySession = (payload = {}) => {
+      if (!isMounted || gameWasStarted) return;
 
-      if (!status.matchId) {
-        return;
-      }
+      setConnectionStatus(payload.status || 'waiting');
+      setErrorMessage('');
+      window.clearTimeout(responseTimeoutId);
 
-      matchWasFound = true;
+      setSession((currentSession) => mergeCurrentPlayerIntoSession({
+        ...currentSession,
+        ...payload,
+        id: payload.roomId || payload.id || currentSession?.id || context.roomId,
+        sessionId: payload.roomId || payload.sessionId || currentSession?.sessionId || context.roomId,
+        roomId: payload.roomId || currentSession?.roomId || context.roomId,
+        roomCode: payload.roomCode || currentSession?.roomCode || context.roomCode,
+        tierId: payload.tierId || currentSession?.tierId || context.tierId,
+        maxPlayers: payload.maxPlayers || currentSession?.maxPlayers || context.maxPlayers,
+        status: payload.status || currentSession?.status || 'searching',
+        players: payload.players || currentSession?.players,
+        hostUserId: payload.hostUserId || currentSession?.hostUserId,
+        isHost: context.isHost || payload.isHost || currentSession?.isHost,
+      }, context));
+    };
+
+    const openGame = (payload = {}) => {
+      if (!isMounted || gameWasStarted) return;
+
+      const matchId = payload.matchId || payload.gameId || payload.id || payload.roomId || context.roomId || context.roomCode || 'live_match';
+      gameWasStarted = true;
+      window.clearTimeout(responseTimeoutId);
+      setConnectionStatus('starting');
       clearMatchmakingContext();
       saveActiveMatch({
-        matchId: status.matchId,
-        sessionId: status.id || status.sessionId || activeSessionId,
-        roomId: status.roomId || context.roomId,
-        players: status.players,
+        matchId,
+        roomId: payload.roomId || context.roomId,
+        roomCode: payload.roomCode || context.roomCode,
+        tierId: payload.tierId || context.tierId,
+        players: payload.players,
+        initialGameState: payload,
+        socketMode: true,
       });
 
       window.setTimeout(() => {
         if (isMounted) {
-          navigate(buildGameRoute(status.matchId), {
+          navigate(buildGameRoute(matchId), {
             state: {
-              matchId: status.matchId,
-              roomId: status.roomId || context.roomId,
+              matchId,
+              roomId: payload.roomId || context.roomId,
+              roomCode: payload.roomCode || context.roomCode,
+              initialGameState: payload,
+              socketMode: true,
             },
           });
         }
-      }, 700);
+      }, 450);
     };
 
-    const pollStatus = () => {
-      if (!activeSessionId || matchWasFound) {
+    const handleSocketMessage = (message) => {
+      const payload = message?.payload || {};
+
+      switch (message?.type) {
+        case 'queue_joined':
+          updateLobbySession({ ...payload, status: payload.status || 'searching' });
+          break;
+        case 'private_joined':
+          updateLobbySession({ ...payload, status: payload.status || 'waiting' });
+          break;
+        case 'room_state_update':
+          updateLobbySession({ ...payload, status: payload.status || 'waiting' });
+          break;
+        case 'game_start':
+          openGame(payload);
+          break;
+        case 'error':
+          if (isMounted) {
+            setConnectionStatus('error');
+            setErrorMessage(payload.message || payload.error || 'Socket error. Please try again.');
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    const joinRequestedRoom = () => {
+      const code = String(context.roomCode || '').trim();
+
+      if (code) {
+        setConnectionStatus('joining_private');
+        const joined = joinPrivateRoom(code);
+        if (!joined && isMounted) {
+          setConnectionStatus('error');
+          setErrorMessage('Socket is not connected yet. Please try again.');
+        }
         return;
       }
 
-      getMatchmakingStatus(activeSessionId, context)
-        .then(openGameWhenReady)
-        .catch((error) => {
-          console.error('Matchmaking status failed:', error);
-          if (isMounted) {
-            setSession(createFrontendSession(context));
-            setErrorMessage('');
-          }
-        });
+      const tierId = context.tierId || context.roomId || DEFAULT_TIER_ID;
+      setConnectionStatus('searching');
+      const joined = joinPublicRoom(tierId);
+      if (!joined && isMounted) {
+        setConnectionStatus('error');
+        setErrorMessage('Socket is not connected yet. Please try again.');
+      }
     };
 
-
-    startMatchmaking({
-      roomId: context.roomId,
-      roomCode: context.roomCode,
-      tierId: context.tierId,
-      maxPlayers: context.maxPlayers,
-      source: context.source,
-    })
-      .then((createdSession) => {
-        if (!isMounted) {
-          return;
-        }
-
-        activeSessionId = createdSession.id || createdSession.sessionId;
-        openGameWhenReady(createdSession);
-
-        if (!createdSession.matchId && activeSessionId) {
-          pollStatus();
-          statusTimerId = window.setInterval(pollStatus, 2000);
-        }
-      })
-      .catch((error) => {
-        console.error('Matchmaking failed:', error);
+    const socket = connectGameSocket({
+      onOpen: () => {
+        if (isMounted) setConnectionStatus('connected');
+        joinRequestedRoom();
+      },
+      onMessage: handleSocketMessage,
+      onError: (error) => {
+        console.error('Game socket failed:', error);
         if (isMounted) {
-          setSession(createFrontendSession(context));
-          setErrorMessage('');
+          setConnectionStatus('error');
+          setErrorMessage(error?.message || 'Unable to connect to gameplay server.');
         }
-      });
+      },
+      onClose: () => {
+        if (isMounted && !gameWasStarted) {
+          setConnectionStatus('disconnected');
+          setErrorMessage('Gameplay socket disconnected. Reconnecting if the server allows it.');
+        }
+      },
+    });
 
     return () => {
       isMounted = false;
       window.clearInterval(intervalId);
-      if (statusTimerId) {
-        window.clearInterval(statusTimerId);
-      }
+      window.clearTimeout(responseTimeoutId);
 
-      if (activeSessionId && !matchWasFound) {
-        cancelMatchmaking(activeSessionId).catch(() => {});
+      if (!gameWasStarted) {
+        socket?.disconnect?.();
       }
     };
-  }, [location.state, navigate, t]);
+  }, [location.state, navigate]);
+
+  const currentContext = getRequestedMatchmakingContext(location.state);
+  const canStartPrivateGame = Boolean(currentContext.isHost && (session.roomId || currentContext.roomId));
+
+  const handleStartPrivateGame = () => {
+    const roomId = session.roomId || currentContext.roomId;
+
+    if (!roomId) {
+      setConnectionStatus('error');
+      setErrorMessage('Room ID is missing. Wait for the private lobby event before starting.');
+      return;
+    }
+
+    setConnectionStatus('starting');
+    const started = startPrivateGame(roomId);
+
+    if (!started) {
+      setConnectionStatus('error');
+      setErrorMessage('Unable to start private game. Waiting for socket connection.');
+    }
+  };
 
   const waitTime = useMemo(() => `00:${String(seconds).padStart(2, '0')}`, [seconds]);
+  const statusText = errorMessage || {
+    connecting: 'Connecting to gameplay server...',
+    connected: 'Connected. Joining lobby...',
+    joining_private: 'Joining private lobby...',
+    searching: t('pleaseWaitMatch'),
+    waiting: t('pleaseWaitMatch'),
+    starting: 'Starting game...',
+    disconnected: 'Gameplay socket disconnected. Reconnecting...',
+  }[connectionStatus] || t('pleaseWaitMatch');
 
   return (
     <section className="matchmaking-screen">
@@ -312,7 +402,7 @@ export default function MatchmakingPage() {
       <main className="matchmaking-content">
         <div className="matchmaking-title-block">
           <h2><AnimatedDots base={t('findingPlayers')} /></h2>
-          <p>{errorMessage || t('pleaseWaitMatch')}</p>
+          <p>{statusText}</p>
         </div>
 
         <section className="match-slots" aria-label={t('matchmaking')}>
@@ -336,14 +426,21 @@ export default function MatchmakingPage() {
           <strong>{waitTime}</strong>
         </div>
 
+        {canStartPrivateGame && (
+          <button
+            type="button"
+            className="match-start-button"
+            onClick={handleStartPrivateGame}
+          >
+            START GAME
+          </button>
+        )}
+
         <button
           type="button"
           className="match-cancel-button"
-          onClick={async () => {
-            if (session?.id || session?.sessionId) {
-              await cancelMatchmaking(session.id || session.sessionId);
-            }
-
+          onClick={() => {
+            disconnectGameSocket();
             clearMatchmakingContext();
             navigate(ROUTES.mainMenu);
           }}

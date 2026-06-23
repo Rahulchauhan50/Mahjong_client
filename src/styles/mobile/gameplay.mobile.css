@@ -930,3 +930,22 @@ animation: none;
 }
 
 }
+
+.app-shell[data-device='mobile'] .gameplay-error {
+  position: absolute;
+  left: 50%;
+  top: clamp(40px, 5.5vw, 62px);
+  z-index: 30;
+  max-width: min(760px, 72vw);
+  padding: clamp(6px, .7vw, 10px) clamp(12px, 1.4vw, 18px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 72, .42);
+  background: rgba(12, 16, 26, .86);
+  color: #ffd86a;
+  font-size: clamp(10px, 1vw, 15px);
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .32);
+  transform: translateX(-50%);
+}

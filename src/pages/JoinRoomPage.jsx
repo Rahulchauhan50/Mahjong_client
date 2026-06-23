@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
 import { saveMatchmakingContext } from '../store/gameStore.js';
 import { isMockApiEnabled } from '../services/api.js';
-import { joinRoomByCode } from '../services/roomService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const MAX_ROOM_PLAYERS = 3;
@@ -37,13 +36,16 @@ export default function JoinRoomPage() {
     setIsJoining(true);
 
     try {
-      const joinedRoom = await joinRoomByCode(requestedCode);
-      const roomId = joinedRoom?.id || joinedRoom?.roomId || joinedRoom?.roomCode || fallbackRoomId;
+      const matchmakingState = {
+        roomId: fallbackRoomId,
+        roomCode: requestedCode,
+        maxPlayers,
+        source: room ? 'join-room-list' : 'join-room-code',
+        isHost: false,
+      };
 
-      saveMatchmakingContext({ roomId, roomCode: requestedCode, maxPlayers, source: room ? 'join-room-list' : 'join-room-code' });
-      navigate(ROUTES.matchmaking, {
-        state: { roomId, roomCode: requestedCode, maxPlayers, source: room ? 'join-room-list' : 'join-room-code' },
-      });
+      saveMatchmakingContext(matchmakingState);
+      navigate(ROUTES.matchmaking, { state: matchmakingState });
     } catch (error) {
       console.error('Join room failed:', error);
       setErrorMessage(error.message || t('joinRoomUnavailable'));
