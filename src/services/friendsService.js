@@ -70,7 +70,12 @@ export async function acceptFriendRequest(requestId) {
     throw new Error('requestId is required to accept a friend request.');
   }
 
-  return postToApi('/friends/accept', { requestId }, (mockApi) => mockApi.acceptFriendRequest?.({ requestId }) ?? { success: true });
+  // The API document says /friends/accept expects { requestId },
+  // but the live backend currently returns "friendshipId is required".
+  // Send both keys with the same value so the frontend works with either contract.
+  const payload = { requestId, friendshipId: requestId };
+
+  return postToApi('/friends/accept', payload, (mockApi) => mockApi.acceptFriendRequest?.(payload) ?? { success: true });
 }
 
 export async function declineFriendRequest(requestId) {
@@ -78,7 +83,10 @@ export async function declineFriendRequest(requestId) {
     throw new Error('requestId is required to decline a friend request.');
   }
 
-  return postToApi('/friends/decline', { requestId }, (mockApi) => mockApi.declineFriendRequest?.({ requestId }) ?? { success: true });
+  // Keep decline compatible with both documented and live backend field names.
+  const payload = { requestId, friendshipId: requestId };
+
+  return postToApi('/friends/decline', payload, (mockApi) => mockApi.declineFriendRequest?.(payload) ?? { success: true });
 }
 
 export async function getFriends() {
