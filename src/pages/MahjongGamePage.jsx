@@ -37,22 +37,72 @@ const CLAIM_ACTION_ALIASES = { pong: 'pung', pung: 'pung', chow: 'chow', kong: '
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
 
+const TILE_ASSET_ALIASES = {
+  back: 'tile_back.png',
+  tile_back: 'tile_back.png',
+  Characters_1: 'm_1.png',
+  Characters_2: 'm_2.png',
+  Characters_3: 'm_3.png',
+  Characters_4: 'm_4.png',
+  Characters_5: 'm_5.png',
+  Characters_6: 'm_6.png',
+  Characters_7: 'm_7.png',
+  Characters_8: 'm_8.png',
+  Characters_9: 'm_9.png',
+  'Circles-Dots_1': 'p_1.png',
+  'Circles-Dots_2': 'p_2.png',
+  'Circles-Dots_3': 'p_3.png',
+  'Circles-Dots_4': 'p_4.png',
+  'Circles-Dots_5': 'p_5.png',
+  'Circles-Dots_6': 'p_6.png',
+  'Circles-Dots_7': 'p_7.png',
+  'Circles-Dots_8': 'p_8.png',
+  'Circles-Dots_9': 'p_9.png',
+  Bamboo_1: 's_1.png',
+  Bamboo_2: 's_2.png',
+  Bamboo_3: 's_3.png',
+  Bamboo_4: 's_4.png',
+  Bamboo_5: 's_5.png',
+  Bamboo_6: 's_6.png',
+  Bamboo_7: 's_7.png',
+  Bamboo_8: 's_8.png',
+  Bamboo_9: 's_9.png',
+  Wind_East: 'w_e.png',
+  Wind_South: 'w_s.png',
+  Wind_West: 'w_w.png',
+  Wind_North: 'w_n.png',
+  Dragon_Red: 'd_r.png',
+  Dragon_White: 'd_w.png',
+  Dragon_Green: 'd_g.png',
+};
+
 const tileIdToAssetName = (tileId) => {
   const value = String(tileId || '').trim();
   if (!value) return '';
-  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(value)) return value;
 
-  const parts = value.split('_');
+  const withoutExtension = value.replace(/\.(png|jpe?g|webp|gif|svg)$/i, '');
+  if (TILE_ASSET_ALIASES[withoutExtension]) return TILE_ASSET_ALIASES[withoutExtension];
+
+  const parts = withoutExtension.split('_');
   const suit = parts[0];
   const rank = parts[1];
 
-  if (suit === 'm' && /^\d+$/.test(rank)) return `Characters_${rank}.png`;
-  if (suit === 'p' && /^\d+$/.test(rank)) return `Circles-Dots_${rank}.png`;
-  if (suit === 's' && /^\d+$/.test(rank)) return `Bamboo_${rank}.png`;
+  // Backend tile ids include a copy index, e.g. m_1_0 / p_7_2 / d_g_0.
+  // The asset files are shared per tile face, so the copy index is intentionally ignored.
+  if ((suit === 'm' || suit === 'p' || suit === 's') && /^\d+$/.test(rank)) {
+    return `${suit}_${rank}.png`;
+  }
 
-  // Honour tiles depend on the final art asset names. Keep the backend id as a fallback
-  // instead of dropping the tile, so integration bugs are visible during testing.
-  return value;
+  if (suit === 'w' && ['e', 's', 'w', 'n'].includes(rank)) {
+    return `w_${rank}.png`;
+  }
+
+  if (suit === 'd' && ['r', 'w', 'g'].includes(rank)) {
+    return `d_${rank}.png`;
+  }
+
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(value)) return value;
+  return `${withoutExtension}.png`;
 };
 
 const getTileId = (tile) => {
