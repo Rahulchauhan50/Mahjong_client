@@ -10,6 +10,15 @@ const asset = (name) => `/assets/profile/${name}`;
 const DEFAULT_PROFILE_AVATAR = 'ICO.png';
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
 const AUTH_USER_STORAGE_KEY = 'sakura_auth_user';
+const PROFILE_AVATAR_ID_TO_FILE = {
+  dragon_avatar: 'ICO.png',
+  default: 'ICO.png',
+  default_avatar: 'ICO.png',
+  stevie: 'avatar-stevie.png',
+  kiki: 'avatar-kiki.png',
+  bunbun: 'avatar-bunbun.png',
+  panda: 'avatar-panda.png',
+};
 const PROFILE_AVATAR_OPTIONS = [
   { id: 'stevie', label: 'Stevie', file: 'avatar-stevie.png' },
   { id: 'kiki', label: 'Kiki', file: 'avatar-kiki.png' },
@@ -152,7 +161,7 @@ function getProfileXpData(profile) {
       profile?.rank?.nextLevelXP ??
       profile?.rank?.nextLevelXp ??
       parsedRankProgress?.target ??
-      1,
+      0,
   );
 
   return {
@@ -308,14 +317,22 @@ function normalizeAchievements(items) {
     });
 }
 
-function getAvatarSrc(profile) {
-  const avatarValue = profile?.avatarUrl || profile?.imageUrl || profile?.avatar || profile?.avatarId;
-
-  if (typeof avatarValue !== 'string') {
-    return asset(DEFAULT_PROFILE_AVATAR);
+function getProfileAvatarFile(value) {
+  if (typeof value !== 'string') {
+    return '';
   }
 
-  const avatar = avatarValue.trim();
+  const avatar = value.trim();
+
+  if (!avatar) {
+    return '';
+  }
+
+  return PROFILE_AVATAR_ID_TO_FILE[avatar] || avatar;
+}
+
+function getAvatarSrc(profile) {
+  const avatar = getProfileAvatarFile(profile?.avatarUrl || profile?.imageUrl || profile?.avatar || profile?.avatarId);
 
   if (!avatar) {
     return asset(DEFAULT_PROFILE_AVATAR);
@@ -765,11 +782,11 @@ export default function ProfilePage() {
                     {tx(getProfileTitle(profile))}
                   </button>
                   <span>{profileXp.text}</span>
+                  <XpProgressBar className="profile-rank-xp-bar" percent={profileXp.percent} label={t('xpProgress')} />
                 </div>
               </div>
               {titleSaveError ? <p className="profile-title-save-state profile-title-save-state--error" role="alert">{titleSaveError}</p> : null}
               {titleSaveStatus === 'saved' ? <p className="profile-title-save-state">{t('profileTitleUpdated')}</p> : null}
-              <XpProgressBar className="profile-rank-xp-bar" percent={profileXp.percent} label={t('xpProgress')} />
             </div>
           </div>
 

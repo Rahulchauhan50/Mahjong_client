@@ -14,6 +14,15 @@ const asset = (name) => `/assets/main-menu/${name}`;
 const profileAsset = (name) => `/assets/profile/${name}`;
 const dailyAsset = (name) => `/assets/daily-login/${name}`;
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
+const PROFILE_AVATAR_ID_TO_FILE = {
+  dragon_avatar: 'ICO.png',
+  default: 'ICO.png',
+  default_avatar: 'ICO.png',
+  stevie: 'avatar-stevie.png',
+  kiki: 'avatar-kiki.png',
+  bunbun: 'avatar-bunbun.png',
+  panda: 'avatar-panda.png',
+};
 
 const EMPTY_MENU_PROFILE = {
   id: '',
@@ -21,8 +30,30 @@ const EMPTY_MENU_PROFILE = {
   name: 'Player',
 };
 
+function pickFriendUser(friend = {}) {
+  return friend.user
+    || friend.friend
+    || friend.profile
+    || friend.player
+    || friend.targetUser
+    || friend.target
+    || friend.recipient
+    || friend.sender
+    || friend.from
+    || {};
+}
+
 function getFriendUserId(user) {
-  return user?.userId || user?.id || user?._id || user?.targetUserId || '';
+  const nestedUser = pickFriendUser(user || {});
+  return user?.userId
+    || user?.id
+    || user?._id
+    || user?.targetUserId
+    || user?.friendId
+    || nestedUser.userId
+    || nestedUser.id
+    || nestedUser._id
+    || '';
 }
 
 
@@ -123,11 +154,7 @@ function getFriendRequestAvatar(request = {}) {
 }
 
 function getFriendAvatarSrc(avatarValue) {
-  if (typeof avatarValue !== 'string') {
-    return asset('friend-girl.png');
-  }
-
-  const avatar = avatarValue.trim();
+  const avatar = normalizeProfileAvatarValue(avatarValue);
 
   if (!avatar) {
     return asset('friend-girl.png');
@@ -165,14 +192,71 @@ function getStoredProfileAvatar() {
   }
 }
 
-function getMainMenuAvatarSrc(profile) {
-  const avatarValue = getStoredProfileAvatar() || profile?.avatarUrl || profile?.imageUrl || profile?.avatar || profile?.avatarId;
-
+function normalizeProfileAvatarValue(avatarValue) {
   if (typeof avatarValue !== 'string') {
-    return asset('friend-girl.png');
+    return '';
   }
 
   const avatar = avatarValue.trim();
+
+  if (!avatar) {
+    return '';
+  }
+
+  return PROFILE_AVATAR_ID_TO_FILE[avatar] || avatar;
+}
+
+function getOwnProfileAvatarValue(profile) {
+  return getStoredProfileAvatar() || profile?.avatarUrl || profile?.imageUrl || profile?.avatar || profile?.avatarId || '';
+}
+
+function getFriendDisplayName(friend = {}) {
+  const user = pickFriendUser(friend);
+  return user.username
+    || user.name
+    || user.displayName
+    || friend.username
+    || friend.name
+    || friend.displayName
+    || friend.friendUsername
+    || 'Friend';
+}
+
+function isOwnProfileRecord(friend = {}, profile = {}) {
+  const friendId = String(getFriendUserId(friend) || '').trim();
+  const profileId = String(profile?.userId || profile?.id || profile?._id || '').trim();
+  const friendName = String(getFriendDisplayName(friend) || '').trim().toLowerCase();
+  const profileName = String(profile?.username || profile?.name || '').trim().toLowerCase();
+
+  return Boolean((friendId && profileId && friendId === profileId) || (friendName && profileName && friendName === profileName));
+}
+
+function getFriendAvatarValue(friend = {}, profile = {}) {
+  const user = pickFriendUser(friend);
+
+  if (isOwnProfileRecord(friend, profile)) {
+    const ownAvatar = getOwnProfileAvatarValue(profile);
+
+    if (ownAvatar) {
+      return ownAvatar;
+    }
+  }
+
+  return user.avatarUrl
+    || user.imageUrl
+    || user.avatar
+    || user.avatarId
+    || friend.avatarUrl
+    || friend.imageUrl
+    || friend.avatar
+    || friend.avatarId
+    || friend.profileAvatar
+    || friend.friendAvatar
+    || 'friend-girl.png';
+}
+
+function getMainMenuAvatarSrc(profile) {
+  const avatar = normalizeProfileAvatarValue(getOwnProfileAvatarValue(profile));
 
   if (!avatar) {
     return asset('friend-girl.png');
@@ -183,7 +267,7 @@ function getMainMenuAvatarSrc(profile) {
   }
 
   if (/\.(png|jpe?g|webp|gif|svg)$/i.test(avatar)) {
-    return profileAsset(avatar);
+    return avatar.includes('/') ? avatar : profileAsset(avatar);
   }
 
   return asset('friend-girl.png');
@@ -546,11 +630,12 @@ export default function MainMenuPage() {
 
         if (friendsResult.status === 'fulfilled') {
           setFriendList(backendFriends.map((friend) => ({
-            id: friend.id || friend.userId || friend.friendId || friend.username || friend.name,
-            name: friend.username || friend.name || 'Friend',
-            state: friend.status || friend.state || 'Online',
+            id: getFriendUserId(friend) || friend.username || friend.name,
+            name: getFriendDisplayName(friend),
+            state: friend.status || friend.state || friend.onlineStatus || 'Online',
             action: friend.action || 'INVITE',
-            avatar: friend.avatar || friend.avatarId || 'friend-girl.png',
+            avatar: getFriendAvatarValue(friend, profile),
+            raw: friend,
           })));
         }
 
