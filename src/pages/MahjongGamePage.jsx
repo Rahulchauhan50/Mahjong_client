@@ -193,7 +193,7 @@ function TileWall({ count = 14, direction = 'horizontal', className = '' }) {
   return (
     <div className={`gameplay-tile-wall ${direction} ${className}`} aria-hidden="true">
       {Array.from({ length: count }).map((_, index) => (
-        <img src={asset('card back.png')} alt="" draggable="false" key={index} />
+        <img src={asset('tile_back.png')} alt="" draggable="false" key={index} />
       ))}
     </div>
   );
