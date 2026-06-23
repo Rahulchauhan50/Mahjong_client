@@ -299,3 +299,17 @@
   color: #ffffff;
   background: linear-gradient(180deg, #27d96e, #0b8a42);
 }
+
+.app-shell[data-device='mobile'] .missions-empty-state {
+  min-height: 96px;
+  border: 1px dashed rgba(255, 228, 150, 0.28);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 244, 204, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}

@@ -1,25 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../router/routes.js';
 import { claimMission, getMissions } from '../services/missionsService.js';
 
 const missionIcon = '/assets/missions/icon-missions.png';
-
-const DAILY_FALLBACK_MISSIONS = [
-  { id: 'daily_play_7_games', title: 'Play 7 Games', progress: 0, target: 7, type: 'daily', reward: { type: 'season_xp', amount: 120 } },
-  { id: 'daily_win_3_games', title: 'Win 3 Games', progress: 0, target: 3, type: 'daily', reward: { type: 'season_xp', amount: 160 } },
-  { id: 'daily_spend_200_coins', title: 'Spend 200 Coins', progress: 0, target: 200, type: 'daily', reward: { type: 'season_xp', amount: 100 } },
-  { id: 'daily_earn_500_prize', title: 'Earn 500 Prize', progress: 0, target: 500, type: 'daily', reward: { type: 'season_xp', amount: 140 } },
-  { id: 'daily_claim_daily_reward', title: 'Claim Daily Reward', progress: 0, target: 1, type: 'daily', reward: { type: 'season_xp', amount: 80 } },
-];
-
-const WEEKLY_FALLBACK_MISSIONS = [
-  { id: 'weekly_play_35_games', title: 'Play 35 Games', progress: 0, target: 35, type: 'weekly', reward: { type: 'season_xp', amount: 600 } },
-  { id: 'weekly_win_15_games', title: 'Win 15 Games', progress: 0, target: 15, type: 'weekly', reward: { type: 'season_xp', amount: 750 } },
-  { id: 'weekly_spend_1500_coins', title: 'Spend 1,500 Coins', progress: 0, target: 1500, type: 'weekly', reward: { type: 'season_xp', amount: 500 } },
-  { id: 'weekly_earn_5000_prize', title: 'Earn 5,000 Prize', progress: 0, target: 5000, type: 'weekly', reward: { type: 'season_xp', amount: 650 } },
-  { id: 'weekly_claim_5_daily_rewards', title: 'Claim 5 Daily Rewards', progress: 0, target: 5, type: 'weekly', reward: { type: 'season_xp', amount: 450 } },
-];
 
 function formatNumber(value, fallback = '0') {
   const number = Number(value);
@@ -148,14 +132,16 @@ function MissionSection({ title, subtitle, resetText, missions, onClaim, claimin
       </header>
 
       <div className="mission-grid">
-        {missions.map((mission) => (
+        {missions.length ? missions.map((mission) => (
           <MissionCard
             key={mission.id}
             mission={mission}
             onClaim={onClaim}
             isClaiming={claimingMissionId === mission.id}
           />
-        ))}
+        )) : (
+          <div className="missions-empty-state">No missions returned from backend.</div>
+        )}
       </div>
     </section>
   );
@@ -169,34 +155,27 @@ export default function MissionsPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [resetTick, setResetTick] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadMissions() {
-      setIsLoading(true);
+  const loadMissions = useCallback(async ({ keepStatusMessage = false } = {}) => {
+    setIsLoading(true);
+    if (!keepStatusMessage) {
       setStatusMessage('');
-
-      try {
-        const backendMissions = await getMissions();
-        if (!isMounted) return;
-        setMissions(backendMissions.map(normalizeMission));
-      } catch (error) {
-        console.error('Failed to load missions:', error);
-        if (!isMounted) return;
-        setMissions([]);
-        setStatusMessage(error?.message || 'Failed to load missions from backend');
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
     }
 
-    loadMissions();
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const backendMissions = await getMissions();
+      setMissions(backendMissions.map(normalizeMission));
+    } catch (error) {
+      console.error('Failed to load missions:', error);
+      setMissions([]);
+      setStatusMessage(error?.message || 'Failed to load missions from backend');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadMissions();
+  }, [loadMissions]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setResetTick((value) => value + 1), 60000);
@@ -204,9 +183,7 @@ export default function MissionsPage() {
   }, []);
 
   const groupedMissions = useMemo(() => {
-    const normalized = missions.length
-      ? missions.map(normalizeMission)
-      : [...DAILY_FALLBACK_MISSIONS, ...WEEKLY_FALLBACK_MISSIONS].map(normalizeMission);
+    const normalized = missions.map(normalizeMission);
 
     return {
       daily: normalized.filter((mission) => mission.type === 'daily'),
@@ -222,11 +199,9 @@ export default function MissionsPage() {
 
     try {
       const response = await claimMission(missionId);
-      setMissions((current) => current.map((mission, index) => {
-        const normalized = normalizeMission(mission, index);
-        return normalized.id === missionId ? { ...normalized, claimed: true } : normalized;
-      }));
-      setStatusMessage(`Reward claimed: ${formatReward(response?.reward)}`);
+      const reward = response?.reward || response?.data?.reward;
+      setStatusMessage(`Reward claimed: ${formatReward(reward)}`);
+      await loadMissions({ keepStatusMessage: true });
     } catch (error) {
       console.error('Failed to claim mission:', error);
       setStatusMessage(error?.message || 'Failed to claim mission reward');
@@ -251,6 +226,7 @@ export default function MissionsPage() {
         </div>
       </header>
 
+      {isLoading && <div className="missions-status-message">Loading missions from backend...</div>}
       {statusMessage && <div className="missions-status-message">{statusMessage}</div>}
 
       <main className="missions-content">
