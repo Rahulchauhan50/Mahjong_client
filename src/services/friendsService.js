@@ -1,4 +1,4 @@
-import { getFromApi, postToApi } from './api.js';
+import { apiRequest } from './api.js';
 
 function unwrapPayload(response) {
   if (response?.data && typeof response.data === 'object') {
@@ -7,8 +7,16 @@ function unwrapPayload(response) {
   return response && typeof response === 'object' ? response : {};
 }
 
+function nestedData(payload) {
+  return payload?.data && typeof payload.data === 'object' ? payload.data : {};
+}
+
 function asArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function firstArray(...values) {
+  return values.find(Array.isArray) || [];
 }
 
 function buildQueryPath(basePath, params = {}) {
@@ -22,6 +30,17 @@ function buildQueryPath(basePath, params = {}) {
 
   const queryString = query.toString();
   return queryString ? `${basePath}?${queryString}` : basePath;
+}
+
+async function get(path) {
+  return apiRequest(path);
+}
+
+async function post(path, body) {
+  return apiRequest(path, {
+    method: 'POST',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 }
 
 export function getApiErrorMessage(error, fallback = 'API request failed') {
@@ -45,16 +64,18 @@ export async function searchFriendUsers(query) {
     return [];
   }
 
-  const path = buildQueryPath('/friends/search', { q: searchQuery });
-  const response = await getFromApi(path, (mockApi) => {
-    const mockResults = mockApi.searchFriendUsers?.({ q: searchQuery })
-      || mockApi.searchFriends?.({ q: searchQuery })
-      || { success: true, results: [] };
-    return mockResults;
-  });
-  const payload = unwrapPayload(response);
-  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
-  return asArray(payload.results || payload.users || payload.friends || payload.items || data.results || data.users || data.friends || data.items);
+  const payload = unwrapPayload(await get(buildQueryPath('/friends/search', { q: searchQuery })));
+  const data = nestedData(payload);
+  return firstArray(
+    payload.results,
+    payload.users,
+    payload.friends,
+    payload.items,
+    data.results,
+    data.users,
+    data.friends,
+    data.items,
+  );
 }
 
 export async function sendFriendRequest(targetUserId) {
@@ -62,7 +83,7 @@ export async function sendFriendRequest(targetUserId) {
     throw new Error('targetUserId is required to send a friend request.');
   }
 
-  return postToApi('/friends/request', { targetUserId }, (mockApi) => mockApi.sendFriendRequest?.({ targetUserId }) ?? { success: true });
+  return post('/friends/request', { targetUserId });
 }
 
 export async function acceptFriendRequest(requestId) {
@@ -71,11 +92,9 @@ export async function acceptFriendRequest(requestId) {
   }
 
   // The API document says /friends/accept expects { requestId },
-  // but the live backend currently returns "friendshipId is required".
-  // Send both keys with the same value so the frontend works with either contract.
-  const payload = { requestId, friendshipId: requestId };
-
-  return postToApi('/friends/accept', payload, (mockApi) => mockApi.acceptFriendRequest?.(payload) ?? { success: true });
+  // but one live backend build returned "friendshipId is required".
+  // Sending both keeps the frontend compatible with both contracts.
+  return post('/friends/accept', { requestId, friendshipId: requestId });
 }
 
 export async function declineFriendRequest(requestId) {
@@ -83,42 +102,38 @@ export async function declineFriendRequest(requestId) {
     throw new Error('requestId is required to decline a friend request.');
   }
 
-  // Keep decline compatible with both documented and live backend field names.
-  const payload = { requestId, friendshipId: requestId };
-
-  return postToApi('/friends/decline', payload, (mockApi) => mockApi.declineFriendRequest?.(payload) ?? { success: true });
+  return post('/friends/decline', { requestId, friendshipId: requestId });
 }
 
 export async function getFriends() {
-  const response = await getFromApi('/friends', (mockApi) => mockApi.getFriends?.() ?? { success: true, friends: [] });
-  const payload = unwrapPayload(response);
-  return asArray(payload.friends || payload.items || payload.users);
+  const payload = unwrapPayload(await get('/friends'));
+  const data = nestedData(payload);
+  return firstArray(payload.friends, payload.items, payload.users, data.friends, data.items, data.users);
 }
 
 export async function getIncomingFriendRequests() {
-  const response = await getFromApi('/friends/requests', (mockApi) => mockApi.getIncomingFriendRequests?.() ?? { success: true, requests: [] });
-  const payload = unwrapPayload(response);
-  const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
-  return asArray(
-    payload.requests
-      || payload.items
-      || payload.friendRequests
-      || payload.incomingRequests
-      || payload.receivedRequests
-      || payload.pendingRequests
-      || data.requests
-      || data.items
-      || data.friendRequests
-      || data.incomingRequests
-      || data.receivedRequests
-      || data.pendingRequests
+  const payload = unwrapPayload(await get('/friends/requests'));
+  const data = nestedData(payload);
+  return firstArray(
+    payload.requests,
+    payload.items,
+    payload.friendRequests,
+    payload.incomingRequests,
+    payload.receivedRequests,
+    payload.pendingRequests,
+    data.requests,
+    data.items,
+    data.friendRequests,
+    data.incomingRequests,
+    data.receivedRequests,
+    data.pendingRequests,
   );
 }
 
 export async function getSentFriendRequests() {
-  const response = await getFromApi('/friends/requests/sent', (mockApi) => mockApi.getSentFriendRequests?.() ?? { success: true, requests: [] });
-  const payload = unwrapPayload(response);
-  return asArray(payload.requests || payload.items);
+  const payload = unwrapPayload(await get('/friends/requests/sent'));
+  const data = nestedData(payload);
+  return firstArray(payload.requests, payload.items, payload.sentRequests, data.requests, data.items, data.sentRequests);
 }
 
 export async function removeFriend(friendId) {
@@ -126,7 +141,7 @@ export async function removeFriend(friendId) {
     throw new Error('friendId is required to remove a friend.');
   }
 
-  return postToApi('/friends/remove', { friendId }, (mockApi) => mockApi.removeFriend?.({ friendId }) ?? { success: true });
+  return post('/friends/remove', { friendId });
 }
 
 export async function blockUser(targetUserId) {
@@ -134,7 +149,7 @@ export async function blockUser(targetUserId) {
     throw new Error('targetUserId is required to block a user.');
   }
 
-  return postToApi('/friends/block', { targetUserId }, (mockApi) => mockApi.blockUser?.({ targetUserId }) ?? { success: true });
+  return post('/friends/block', { targetUserId });
 }
 
 export async function unblockUser(targetUserId) {
@@ -142,57 +157,81 @@ export async function unblockUser(targetUserId) {
     throw new Error('targetUserId is required to unblock a user.');
   }
 
-  return postToApi('/friends/unblock', { targetUserId }, (mockApi) => mockApi.unblockUser?.({ targetUserId }) ?? { success: true });
+  return post('/friends/unblock', { targetUserId });
 }
 
 export async function getBulkFriendStatus(userIds = []) {
-  const response = await postToApi('/friends/status', { userIds }, (mockApi) => mockApi.getBulkFriendStatus?.({ userIds }) ?? { success: true, statuses: {} });
-  const payload = unwrapPayload(response);
-  return payload.statuses || {};
+  const cleanUserIds = asArray(userIds).map((id) => String(id || '').trim()).filter(Boolean);
+
+  if (!cleanUserIds.length) {
+    return {};
+  }
+
+  const payload = unwrapPayload(await post('/friends/status', { userIds: cleanUserIds }));
+  const data = nestedData(payload);
+  return payload.statuses || data.statuses || {};
 }
 
 export async function getOnlineUsers() {
-  const response = await getFromApi('/friends/online/users', (mockApi) => mockApi.getOnlineUsers?.() ?? { success: true, users: [] });
-  const payload = unwrapPayload(response);
-  return asArray(payload.users || payload.friends);
+  const payload = unwrapPayload(await get('/friends/online/users'));
+  const data = nestedData(payload);
+  return firstArray(payload.users, payload.friends, payload.items, data.users, data.friends, data.items);
 }
 
 export async function getOnlineCount() {
-  const response = await getFromApi('/friends/online/count', (mockApi) => mockApi.getOnlineCount?.() ?? { success: true, count: 0 });
-  const payload = unwrapPayload(response);
-  return Number(payload.count ?? payload.onlineCount ?? 0) || 0;
+  const payload = unwrapPayload(await get('/friends/online/count'));
+  const data = nestedData(payload);
+  return Number(payload.count ?? payload.onlineCount ?? data.count ?? data.onlineCount ?? 0) || 0;
 }
 
 export async function getFriendSuggestions() {
-  const response = await getFromApi('/friends/suggestions', (mockApi) => mockApi.getFriendSuggestions?.() ?? { success: true, suggestions: [] });
-  const payload = unwrapPayload(response);
-  return asArray(payload.suggestions || payload.users);
+  const payload = unwrapPayload(await get('/friends/suggestions'));
+  const data = nestedData(payload);
+  return firstArray(payload.suggestions, payload.users, payload.items, data.suggestions, data.users, data.items);
 }
 
 export async function createInviteCode() {
-  return postToApi('/friends/invite-codes/create', undefined, (mockApi) => mockApi.createInviteCode?.() ?? { success: true, inviteCode: '' });
+  return post('/friends/invite-codes/create');
 }
 
 export async function getInviteCodes() {
-  const response = await getFromApi('/friends/invite-codes', (mockApi) => mockApi.getInviteCodes?.() ?? { success: true, codes: [] });
-  const payload = unwrapPayload(response);
-  return asArray(payload.codes || payload.inviteCodes);
+  const payload = unwrapPayload(await get('/friends/invite-codes'));
+  const data = nestedData(payload);
+  return firstArray(payload.codes, payload.inviteCodes, payload.items, data.codes, data.inviteCodes, data.items);
 }
 
 export async function redeemInviteCode(code) {
-  return postToApi('/friends/invite-codes/redeem', { code }, (mockApi) => mockApi.redeemInviteCode?.({ code }) ?? { success: true });
+  if (!code) {
+    throw new Error('code is required to redeem an invite code.');
+  }
+
+  return post('/friends/invite-codes/redeem', { code });
 }
 
 export async function validateInviteCode(code) {
-  const response = await postToApi('/friends/invite-codes/validate', { code }, (mockApi) => mockApi.validateInviteCode?.({ code }) ?? { success: true, isValid: true });
-  const payload = unwrapPayload(response);
-  return Boolean(payload.isValid ?? payload.valid ?? payload.success);
+  if (!code) {
+    throw new Error('code is required to validate an invite code.');
+  }
+
+  const payload = unwrapPayload(await post('/friends/invite-codes/validate', { code }));
+  const data = nestedData(payload);
+  return Boolean(payload.isValid ?? payload.valid ?? data.isValid ?? data.valid ?? payload.success);
 }
 
 export async function getReferralStats() {
-  return getFromApi('/friends/invite-codes/stats', (mockApi) => mockApi.getReferralStats?.() ?? { success: true, totalReferred: 0, rewardsEarned: 0 });
+  const payload = unwrapPayload(await get('/friends/invite-codes/stats'));
+  const data = nestedData(payload);
+  return {
+    totalReferred: Number(payload.totalReferred ?? data.totalReferred ?? 0) || 0,
+    rewardsEarned: Number(payload.rewardsEarned ?? data.rewardsEarned ?? 0) || 0,
+    raw: payload,
+  };
 }
 
 export async function disableInviteCode(codeId) {
-  return postToApi('/friends/invite-codes/disable', { codeId }, (mockApi) => mockApi.disableInviteCode?.({ codeId }) ?? { success: true });
+  if (!codeId) {
+    throw new Error('codeId is required to disable an invite code.');
+  }
+
+  return post('/friends/invite-codes/disable', { codeId });
 }

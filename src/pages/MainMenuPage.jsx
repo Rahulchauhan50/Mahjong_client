@@ -7,7 +7,7 @@ import { mockFeaturedRooms } from '../mocks/mockRooms.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { getRoomTiers } from '../services/roomService.js';
 import { isMockApiEnabled } from '../services/api.js';
-import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getApiErrorMessage, getFriends, getIncomingFriendRequests, searchFriendUsers, sendFriendRequest } from '../services/friendsService.js';
+import { acceptFriendRequest as acceptFriendRequestApi, declineFriendRequest as declineFriendRequestApi, getApiErrorMessage, getBulkFriendStatus, getFriends, getIncomingFriendRequests, searchFriendUsers, sendFriendRequest } from '../services/friendsService.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/main-menu/${name}`;
@@ -113,7 +113,7 @@ function getFriendRequestName(request = {}) {
     || request.requesterUsername
     || request.request?.username
     || request.request?.fromUsername
-    || 'Player';
+    || 'Unknown player';
 }
 
 function getFriendRequestLevel(request = {}) {
@@ -134,7 +134,7 @@ function getFriendRequestLevel(request = {}) {
     || request.sender?.levelLabel
     || request.from?.levelLabel
     || request.request?.levelLabel
-    || 'Level 1';
+    || '';
 }
 
 function getFriendRequestAvatar(request = {}) {
@@ -150,7 +150,7 @@ function getFriendRequestAvatar(request = {}) {
     || request.avatarId
     || request.request?.avatar
     || request.request?.avatarId
-    || 'friend-girl.png';
+    || '';
 }
 
 function getFriendAvatarSrc(avatarValue) {
@@ -220,6 +220,33 @@ function getFriendDisplayName(friend = {}) {
     || friend.displayName
     || friend.friendUsername
     || 'Friend';
+}
+
+function getFriendBackendStatus(friend = {}) {
+  const user = pickFriendUser(friend);
+  return user.status
+    || user.state
+    || user.onlineStatus
+    || user.presence
+    || friend.status
+    || friend.state
+    || friend.onlineStatus
+    || friend.presence
+    || '';
+}
+
+function formatFriendStatus(status) {
+  if (status === true) return 'Online';
+  if (status === false) return 'Offline';
+
+  const value = String(status || '').trim();
+  if (!value) return '';
+
+  const normalized = value.toLowerCase();
+  if (normalized === 'online' || normalized === 'active') return 'Online';
+  if (normalized === 'offline' || normalized === 'inactive') return 'Offline';
+
+  return value;
 }
 
 function isOwnProfileRecord(friend = {}, profile = {}) {
@@ -319,12 +346,6 @@ const fallbackRoomCards = [
     route: ROUTES.matchmaking,
   },
 ];
-
-const friends = [];
-
-
-const initialFriendRequests = [];
-
 
 function formatCurrencyValue(value, fallback = '—') {
   if (value === null || value === undefined || value === '') {
@@ -548,7 +569,7 @@ function FriendRow({ friend, tx }) {
       <img src={getFriendAvatarSrc(friend.avatar)} alt="" />
       <div>
         <strong>{friend.name}</strong>
-        <span>{tx(friend.state)}</span>
+        {friend.state && <span>{tx(friend.state)}</span>}
       </div>
       <button type="button">{tx(friend.action)}</button>
     </div>
@@ -629,14 +650,39 @@ export default function MainMenuPage() {
         }
 
         if (friendsResult.status === 'fulfilled') {
-          setFriendList(backendFriends.map((friend) => ({
-            id: getFriendUserId(friend) || friend.username || friend.name,
-            name: getFriendDisplayName(friend),
-            state: friend.status || friend.state || friend.onlineStatus || 'Online',
-            action: friend.action || 'INVITE',
-            avatar: getFriendAvatarValue(friend, profile),
-            raw: friend,
-          })));
+          const mappedFriends = backendFriends.map((friend) => {
+            const userId = getFriendUserId(friend);
+
+            return {
+              id: userId || friend.username || friend.name,
+              userId,
+              name: getFriendDisplayName(friend),
+              state: formatFriendStatus(getFriendBackendStatus(friend)),
+              action: friend.action || 'INVITE',
+              avatar: getFriendAvatarValue(friend, profile),
+              raw: friend,
+            };
+          });
+
+          setFriendList(mappedFriends);
+
+          const friendUserIds = mappedFriends.map((friend) => friend.userId).filter(Boolean);
+          if (friendUserIds.length) {
+            getBulkFriendStatus(friendUserIds)
+              .then((statuses) => {
+                if (!isMounted || !statuses || typeof statuses !== 'object') {
+                  return;
+                }
+
+                setFriendList((current) => current.map((friend) => ({
+                  ...friend,
+                  state: formatFriendStatus(statuses[friend.userId] ?? friend.state),
+                })));
+              })
+              .catch((error) => {
+                console.error('Failed to load friend online statuses:', error);
+              });
+          }
         }
 
         if (requestsResult.status === 'fulfilled') {
@@ -741,7 +787,7 @@ export default function MainMenuPage() {
       await acceptFriendRequestApi(requestId);
       setFriendList((current) => [
         ...current,
-        { id: request.userId || requestId, name: request.name, state: 'Online', action: 'INVITE', avatar: request.avatar },
+        { id: request.userId || requestId, name: request.name, state: '', action: 'INVITE', avatar: request.avatar },
       ]);
       setFriendRequests((current) => current.filter((item) => getFriendRequestId(item) !== requestId));
       setFriendsError('Friend request accepted');
