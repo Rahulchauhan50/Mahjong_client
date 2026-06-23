@@ -13,7 +13,7 @@ function firstArray(...values) {
 
 function assertRealMissionsApi() {
   if (isMockApiEnabled()) {
-    throw new Error('Missions require the real backend API. Disable VITE_USE_MOCK_API to avoid mock mission data.');
+    throw new Error('Missions are unavailable right now. Please try again later.');
   }
 }
 

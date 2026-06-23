@@ -133,7 +133,7 @@ function formatReward(reward) {
   const entries = normalizeRewardEntries(reward);
 
   if (!entries.length) {
-    return 'Reward from backend';
+    return 'Reward';
   }
 
   return entries.map((entry) => {
@@ -230,7 +230,7 @@ function MissionSection({ title, subtitle, resetText, missions, onClaim, claimin
             isClaiming={claimingMissionId === mission.id}
           />
         )) : (
-          <div className="missions-empty-state">No missions returned from backend.</div>
+          <div className="missions-empty-state">No missions available.</div>
         )}
       </div>
     </section>
@@ -257,7 +257,7 @@ export default function MissionsPage() {
     } catch (error) {
       console.error('Failed to load missions:', error);
       setMissions([]);
-      setStatusMessage(error?.message || 'Failed to load missions from backend');
+      setStatusMessage(error?.message || 'Failed to load missions');
     } finally {
       setIsLoading(false);
     }
@@ -316,7 +316,7 @@ export default function MissionsPage() {
         </div>
       </header>
 
-      {isLoading && <div className="missions-status-message">Loading missions from backend...</div>}
+      {isLoading && <div className="missions-status-message">Loading missions...</div>}
       {statusMessage && <div className="missions-status-message">{statusMessage}</div>}
 
       <main className="missions-content">

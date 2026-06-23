@@ -6,7 +6,7 @@ function normalizeProfileResponse(response) {
 
 function assertRealProfileApi() {
   if (isMockApiEnabled()) {
-    throw new Error('Profile requires the real backend API. Disable VITE_USE_MOCK_API to avoid mock profile data.');
+    throw new Error('Profile is unavailable right now. Please try again later.');
   }
 }
 

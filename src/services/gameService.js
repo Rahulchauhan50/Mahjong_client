@@ -1,7 +1,7 @@
 import { getFromApi, isMockApiEnabled, postToApi } from './api.js';
 import { normalizeGameResult, normalizeGameState } from './gameNormalizers.js';
 
-export const MISSING_GAME_API_MESSAGE = 'Backend API reference does not include gameplay endpoints yet. Required: GET /api/games/:matchId, POST /api/games/:matchId/actions, POST /api/games/:matchId/leave, GET /api/games/:matchId/result.';
+export const MISSING_GAME_API_MESSAGE = 'Gameplay is unavailable right now. Please try again later.';
 
 export function isGameApiAvailable() {
   return isMockApiEnabled();

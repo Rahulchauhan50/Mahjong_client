@@ -26,7 +26,7 @@ function extractAchievements(payload) {
 
 function assertRealAchievementsApi() {
   if (isMockApiEnabled()) {
-    throw new Error('Achievements require the real backend API. Disable VITE_USE_MOCK_API to avoid mock achievement data.');
+    throw new Error('Achievements are unavailable right now. Please try again later.');
   }
 }
 

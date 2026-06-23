@@ -1,7 +1,7 @@
 import { apiRequest, isMockApiEnabled, postToApi } from './api.js';
 import { normalizeRoomList, normalizeRoom, normalizeRoomTierList, normalizePrivateRoom } from './gameNormalizers.js';
 
-const MISSING_JOIN_ROOM_ENDPOINT_MESSAGE = 'Backend API reference does not include a join-room endpoint yet. Required: POST /api/rooms/join with { roomCode } or POST /api/rooms/:roomId/join.';
+const MISSING_JOIN_ROOM_ENDPOINT_MESSAGE = 'Join room is unavailable right now. Please try again later.';
 
 export async function getRoomTiers() {
   // Room tiers must always come from the real backend. Do not fall back to mock room cards.

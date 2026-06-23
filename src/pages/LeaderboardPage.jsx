@@ -102,7 +102,7 @@ export default function LeaderboardPage() {
         } else {
           console.error('Failed to load global leaderboard:', globalResult.reason);
           setPlayers([]);
-          setError(globalResult.reason?.message || 'Failed to load leaderboard from backend');
+          setError(globalResult.reason?.message || 'Failed to load leaderboard');
         }
 
         if (myRankResult.status === 'fulfilled') {
@@ -176,7 +176,7 @@ export default function LeaderboardPage() {
             ))}
 
             {!isLoading && !remainingPlayers.length && topPlayers.length > 0 && (
-              <div className="leaderboard-empty-list">Only top 3 returned from backend</div>
+              <div className="leaderboard-empty-list">Only top 3 available</div>
             )}
 
             {!isLoading && error && (

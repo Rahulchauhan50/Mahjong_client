@@ -594,7 +594,7 @@ export default function MainMenuPage() {
 
         if (friendsResult.status === 'rejected') {
           console.error('Failed to load friends:', friendsResult.reason);
-          setFriendsError('Failed to load friends from backend');
+          setFriendsError('Failed to load friends');
           if (!isMockApiEnabled()) {
             setFriendList([]);
           }
@@ -602,7 +602,7 @@ export default function MainMenuPage() {
 
         if (requestsResult.status === 'rejected') {
           console.error('Failed to load friend requests:', requestsResult.reason);
-          setFriendsError('Failed to load friend requests from backend');
+          setFriendsError('Failed to load friend requests');
           if (!isMockApiEnabled()) {
             setFriendRequests([]);
           }
@@ -737,7 +737,7 @@ export default function MainMenuPage() {
     const requestId = getFriendRequestId(request);
 
     if (!requestId) {
-      setFriendsError('Friend request id is missing from backend response');
+      setFriendsError('Friend request id is missing');
       console.error('Failed to accept friend request: missing requestId', request);
       return;
     }
@@ -761,7 +761,7 @@ export default function MainMenuPage() {
     const requestId = getFriendRequestId(request);
 
     if (!requestId) {
-      setFriendsError('Friend request id is missing from backend response');
+      setFriendsError('Friend request id is missing');
       console.error('Failed to decline friend request: missing requestId', request);
       return;
     }
@@ -783,7 +783,7 @@ export default function MainMenuPage() {
     const friendId = friend?.userId || friend?.id || getFriendUserId(friend?.raw || friend);
 
     if (!friendId) {
-      setFriendsError('friendId is missing from backend response');
+      setFriendsError('Friend id is missing');
       console.error('Failed to remove friend: missing friendId', friend);
       return;
     }
@@ -899,7 +899,7 @@ export default function MainMenuPage() {
                   }}
                 />
               )) : (
-                <div className="rooms-empty-state">No room tiers returned from backend.</div>
+                <div className="rooms-empty-state">No rooms available.</div>
               )}
             </div>
 

@@ -1,7 +1,7 @@
 import { deleteFromApi, getFromApi, isMockApiEnabled, postToApi } from './api.js';
 import { normalizeMatchmakingSession } from './gameNormalizers.js';
 
-export const MISSING_MATCHMAKING_API_MESSAGE = 'Matchmaking backend is not available yet. Using frontend waiting fallback.';
+export const MISSING_MATCHMAKING_API_MESSAGE = 'Matchmaking is unavailable right now. Please try again later.';
 
 export function isMatchmakingApiAvailable() {
   // The UI should stay usable while the backend endpoints are being finished.

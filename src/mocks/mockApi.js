@@ -61,17 +61,17 @@ export const mockApi = {
 
   async getProfile() {
     await delay();
-    throw new Error('Mock profile data is disabled. Use the real backend profile API.');
+    throw new Error('Profile is unavailable right now. Please try again later.');
   },
 
   async updateProfile() {
     await delay();
-    throw new Error('Mock profile updates are disabled. Use the real backend profile API.');
+    throw new Error('Profile update is unavailable right now. Please try again later.');
   },
 
   async getPublicProfile() {
     await delay();
-    throw new Error('Mock public profile data is disabled. Use the real backend profile API.');
+    throw new Error('Public profile is unavailable right now. Please try again later.');
   },
 
   async getBalances() {
