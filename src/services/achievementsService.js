@@ -4,24 +4,27 @@ function unwrapPayload(response) {
   return response?.data && typeof response.data === 'object' ? response.data : (response || {});
 }
 
+function firstArray(...values) {
+  return values.find((value) => Array.isArray(value)) || [];
+}
+
 function extractAchievements(payload) {
   if (Array.isArray(payload)) {
     return payload;
   }
 
-  if (Array.isArray(payload?.achievements)) {
-    return payload.achievements;
-  }
-
-  if (Array.isArray(payload?.data?.achievements)) {
-    return payload.data.achievements;
-  }
-
-  if (Array.isArray(payload?.items)) {
-    return payload.items;
-  }
-
-  return [];
+  return firstArray(
+    payload?.achievements,
+    payload?.data?.achievements,
+    payload?.user?.achievements,
+    payload?.profile?.achievements,
+    payload?.data?.user?.achievements,
+    payload?.data?.profile?.achievements,
+    payload?.items,
+    payload?.data?.items,
+    payload?.results,
+    payload?.data?.results,
+  );
 }
 
 function assertRealAchievementsApi() {
@@ -37,12 +40,14 @@ export async function getAchievements() {
 }
 
 export async function claimAchievement(achievementId) {
-  if (!achievementId) {
+  const safeAchievementId = String(achievementId || '').trim();
+
+  if (!safeAchievementId) {
     throw new Error('achievementId is required to claim an achievement.');
   }
 
   assertRealAchievementsApi();
-  return apiRequest(`/achievements/claim/${encodeURIComponent(achievementId)}`, {
+  return apiRequest(`/achievements/claim/${encodeURIComponent(safeAchievementId)}`, {
     method: 'POST',
   });
 }

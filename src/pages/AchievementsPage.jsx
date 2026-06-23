@@ -37,38 +37,93 @@ function getProgressPercent(current, target) {
 }
 
 function getAchievementId(item, fallbackId = '') {
-  return item?.achievementId || item?.id || item?._id || item?.slug || fallbackId || '';
+  return item?.achievementId
+    || item?.achievement_id
+    || item?.achievement?.id
+    || item?.achievement?._id
+    || item?.id
+    || item?._id
+    || item?.slug
+    || item?.key
+    || item?.code
+    || item?.name
+    || fallbackId
+    || '';
+}
+
+function getProgressObjectValue(value, ...keys) {
+  if (!value || typeof value !== 'object') return undefined;
+  for (const key of keys) {
+    if (value[key] !== undefined && value[key] !== null) return value[key];
+  }
+  return undefined;
 }
 
 function getAchievementProgressData(item) {
-  const parsedProgress = parseProgressText(item?.progress);
+  const progressObject = item?.progress && typeof item.progress === 'object' ? item.progress : null;
+  const parsedProgress = parseProgressText(typeof item?.progress === 'string' ? item.progress : item?.progressText);
   const progressNumber = typeof item?.progress === 'number' ? item.progress : null;
-  const current = parseNumber(item?.currentXP ?? item?.currentXp ?? item?.xp ?? item?.current ?? progressNumber ?? parsedProgress?.current ?? 0);
-  const target = parseNumber(item?.requiredXP ?? item?.requiredXp ?? item?.targetXP ?? item?.targetXp ?? item?.target ?? parsedProgress?.target ?? (item?.complete ? current || 1 : 1));
+  const current = parseNumber(
+    item?.currentXP
+      ?? item?.currentXp
+      ?? item?.currentProgress
+      ?? item?.progressCurrent
+      ?? item?.lifetimeProgress
+      ?? item?.userProgress
+      ?? item?.completedCount
+      ?? item?.count
+      ?? item?.xp
+      ?? item?.current
+      ?? getProgressObjectValue(progressObject, 'current', 'value', 'progress', 'count', 'completed')
+      ?? progressNumber
+      ?? parsedProgress?.current
+      ?? 0,
+  );
+  const target = parseNumber(
+    item?.requiredXP
+      ?? item?.requiredXp
+      ?? item?.targetXP
+      ?? item?.targetXp
+      ?? item?.targetProgress
+      ?? item?.requiredProgress
+      ?? item?.required
+      ?? item?.goal
+      ?? item?.max
+      ?? item?.total
+      ?? item?.target
+      ?? getProgressObjectValue(progressObject, 'target', 'required', 'goal', 'max', 'total')
+      ?? parsedProgress?.target
+      ?? (item?.complete || item?.completed || item?.isComplete || item?.unlocked ? current || 1 : 1),
+  );
+
   return {
     current,
     target,
-    percent: item?.complete ? 100 : getProgressPercent(current, target),
-    text: item?.complete && !target ? 'Completed' : `${current}/${target}`,
+    percent: item?.complete || item?.completed || item?.isComplete || item?.unlocked ? 100 : getProgressPercent(current, target),
+    text: (item?.complete || item?.completed || item?.isComplete || item?.unlocked) && !target ? 'Completed' : `${current}/${target}`,
   };
 }
 
 function isAchievementComplete(item) {
-  if (item?.complete ?? item?.completed ?? item?.isComplete ?? item?.unlocked) return true;
+  if (item?.complete ?? item?.completed ?? item?.isComplete ?? item?.unlocked ?? item?.isUnlocked) return true;
+  if (String(item?.status || '').toLowerCase() === 'completed') return true;
   const progressData = getAchievementProgressData(item);
   return progressData.target > 0 && progressData.current >= progressData.target;
 }
 
 function isAchievementClaimable(item) {
-  if (item?.claimed || item?.isClaimed) return false;
-  return Boolean(item?.claimable ?? item?.canClaim ?? isAchievementComplete(item));
+  if (item?.claimed || item?.isClaimed || item?.rewardClaimed) return false;
+  if (String(item?.status || '').toLowerCase() === 'claimed') return false;
+  if (String(item?.status || '').toLowerCase() === 'claimable') return true;
+  return Boolean(item?.claimable ?? item?.canClaim ?? item?.readyToClaim ?? isAchievementComplete(item));
 }
 
 function normalizeAchievements(items) {
   if (!Array.isArray(items)) return [];
   return items.filter((item) => item && typeof item === 'object').map((item, index) => {
-    const title = item?.title || item?.name || item?.achievementName || `Achievement ${index + 1}`;
-    const description = item?.description || item?.details || '';
+    const achievement = item?.achievement && typeof item.achievement === 'object' ? item.achievement : {};
+    const title = item?.title || item?.name || item?.achievementName || achievement?.title || achievement?.name || `Achievement ${index + 1}`;
+    const description = item?.description || item?.details || achievement?.description || achievement?.details || '';
     const id = getAchievementId(item, title);
     return {
       ...item,
@@ -76,10 +131,10 @@ function normalizeAchievements(items) {
       achievementId: id,
       title,
       description,
-      progress: item?.progress,
-      card: item?.card || item?.cardAsset || item?.background || ACHIEVEMENT_CARD_ASSETS[index % ACHIEVEMENT_CARD_ASSETS.length],
+      progress: item?.progress ?? achievement?.progress,
+      card: item?.card || item?.cardAsset || item?.background || achievement?.card || achievement?.cardAsset || achievement?.background || ACHIEVEMENT_CARD_ASSETS[index % ACHIEVEMENT_CARD_ASSETS.length],
       complete: isAchievementComplete(item),
-      claimed: Boolean(item?.claimed ?? item?.isClaimed ?? false),
+      claimed: Boolean(item?.claimed ?? item?.isClaimed ?? item?.rewardClaimed ?? String(item?.status || '').toLowerCase() === 'claimed'),
       claimable: isAchievementClaimable(item),
     };
   });
