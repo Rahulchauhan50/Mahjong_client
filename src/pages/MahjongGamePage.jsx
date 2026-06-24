@@ -245,22 +245,32 @@ const getDiscardTilesByPosition = (state, player, position) => getFirstTileList(
   state[`${position}Discards`]
 );
 
-const getAvailableActions = (state, useMockDefaults = true) => {
+const getAvailableActions = (state, useMockDefaults = false) => {
   const rawActions = [
     state.claimWindow?.yourValidActions,
+    state.claimWindow?.validActions,
+    state.claimWindow?.actions,
     state.validActions,
     state.availableActions,
     state.actions,
     state.allowedActions,
   ].find((actions) => Array.isArray(actions) && actions.length) || (useMockDefaults ? DEFAULT_ACTIONS : []);
 
-  return toArray(rawActions)
+  const actions = toArray(rawActions)
     .map((action) => (typeof action === 'string' ? action : action?.type || action?.key || action?.name || action?.action))
     .filter(Boolean)
     .map((action) => String(action).toLowerCase())
     .map((action) => (action === 'pung' ? 'pong' : action))
+    .map((action) => (action === 'kan' ? 'kong' : action))
+    .map((action) => (action === 'chi' ? 'chow' : action))
     .filter((action) => action !== 'win')
     .filter((action, index, list) => list.indexOf(action) === index);
+
+  if (state.claimWindow && actions.length && !actions.includes('pass')) {
+    return [...actions, 'pass'];
+  }
+
+  return actions;
 };
 
 const normalizeId = (value) => String(value ?? '').trim();
@@ -281,19 +291,22 @@ const getCurrentPlayerIdCandidates = (...sources) => {
   const ids = [];
 
   sources.filter(Boolean).forEach((source) => {
+    // Only include identities that represent this browser/user.
+    // Do not include activeUserId / turnPlayerId here, otherwise every client can
+    // incorrectly resolve the current active player as "me".
     ids.push(
       source.myPlayerId,
-      source.currentPlayerId,
       source.selfPlayerId,
       source.localPlayerId,
-      source.userId,
-      source.playerId,
-      source.activeUserId,
+      source.me?.id,
+      source.me?.userId,
+      source.currentUser?.id,
+      source.currentUser?.userId,
       source.room?.myPlayerId,
-      source.room?.currentPlayerId,
+      source.room?.selfPlayerId,
       source.initialGameState?.myPlayerId,
-      source.initialGameState?.currentPlayerId,
       source.initialGameState?.selfPlayerId,
+      source.initialGameState?.localPlayerId,
     );
   });
 
@@ -428,37 +441,69 @@ function Compass({ round = 'East 1', timer = 18, turnLabel = 'YOUR TURN' }) {
 }
 
 
+function normalizeSeat(value) {
+  const seat = String(value || '').trim().toLowerCase();
+  const aliases = { east: 'e', south: 's', west: 'w', north: 'n' };
+  return aliases[seat] || seat;
+}
+
+function getRelativeSeatPosition(activeSeat, ownSeat, playerCount = 3) {
+  const active = normalizeSeat(activeSeat);
+  const own = normalizeSeat(ownSeat);
+
+  if (!active || !own) return '';
+  if (active === own) return 'left';
+
+  const seats = ['e', 's', 'w', 'n'];
+  const activeIndex = seats.indexOf(active);
+  const ownIndex = seats.indexOf(own);
+
+  if (activeIndex < 0 || ownIndex < 0) return '';
+  if (playerCount <= 2) return 'top';
+
+  const offset = (activeIndex - ownIndex + seats.length) % seats.length;
+  if (offset === 1) return 'right';
+  if (offset === 2) return 'top';
+  if (offset === 3) return 'top';
+
+  return '';
+}
+
 function getSeatPosition(seat, state = {}) {
   if (!seat) return '';
-  const normalizedSeat = String(seat).toLowerCase();
-  const ownSeat = String(state.mySeat || state.seat || '').toLowerCase();
 
-  if (ownSeat && normalizedSeat === ownSeat) return 'left';
-
-  const playerWithSeat = toArray(state.players).find((player) => String(player.seat || '').toLowerCase() === normalizedSeat);
+  const playerWithSeat = toArray(state.players).find((player) => normalizeSeat(player.seat) === normalizeSeat(seat));
   if (playerWithSeat?.position) return playerWithSeat.position;
 
-  const fallbackSeatPositions = { e: 'left', east: 'left', s: 'right', south: 'right', w: 'top', west: 'top', n: 'top', north: 'top' };
-  return fallbackSeatPositions[normalizedSeat] || '';
+  const ownSeat = state.mySeat || state.seat || state.currentPlayerSeat || state.selfSeat;
+  const playerCount = getExpectedGameplayPlayerCount(state);
+  return getRelativeSeatPosition(seat, ownSeat, playerCount);
 }
 
 function mergeTurnStart(current, payload = {}) {
-  const activeTurnPosition = getSeatPosition(payload.activeSeat, current)
-    || current.activeTurnPosition
-    || current.currentTurnPosition
-    || current.turnPosition;
+  const activeUserId = payload.activeUserId || payload.currentTurnPlayerId || payload.turnPlayerId || payload.activePlayerId || payload.playerId;
+  const activeSeat = payload.activeSeat || payload.currentTurnSeat || payload.turnSeat || payload.seat;
+  const activeIds = getEntityIds({ id: activeUserId });
+  const playerWithActiveId = activeIds.length
+    ? toArray(current.players).find((player) => playerMatchesAnyId(player, activeIds))
+    : null;
+  const activeTurnPosition = getSeatPosition(activeSeat, current)
+    || playerWithActiveId?.position
+    || '';
 
   return {
     ...current,
-    status: current.status || 'playing',
-    activeSeat: payload.activeSeat || current.activeSeat,
-    activeUserId: payload.activeUserId || current.activeUserId,
+    status: 'playing',
+    activeSeat: activeSeat || current.activeSeat,
+    activeUserId: activeUserId || current.activeUserId,
     activeTurnPosition,
-    currentTurnPlayerId: payload.activeUserId || current.currentTurnPlayerId,
+    currentTurnPlayerId: activeUserId || current.currentTurnPlayerId,
     timer: payload.timeLimit ?? payload.timer ?? current.timer,
     timeLimit: payload.timeLimit ?? current.timeLimit,
     wallRemaining: payload.wallRemaining ?? current.wallRemaining,
+    turnStartedAt: Date.now(),
     availableActions: [],
+    validActions: [],
     claimWindow: null,
   };
 }
@@ -496,7 +541,14 @@ function mergeClaimWindow(current, payload = {}) {
 function mergeActionBroadcast(current, payload = {}) {
   const action = String(payload.action || '').toLowerCase();
   const tileId = payload.tileId || payload.tile || payload.discardedTile;
-  const seatPosition = getSeatPosition(payload.seat || payload.discardedBySeat, current) || payload.position;
+  const actionUserId = payload.userId || payload.playerId || payload.activeUserId || payload.discardedBy || payload.discardedByUserId || payload.discardedByPlayerId;
+  const actionIds = getEntityIds({ id: actionUserId });
+  const playerWithActionId = actionIds.length
+    ? toArray(current.players).find((player) => playerMatchesAnyId(player, actionIds))
+    : null;
+  const seatPosition = getSeatPosition(payload.seat || payload.discardedBySeat, current)
+    || playerWithActionId?.position
+    || payload.position;
 
   if (!action) return current;
 
@@ -773,7 +825,7 @@ export default function MahjongGamePage() {
     gameState.discardTiles?.center
   );
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
-  const availableActions = getAvailableActions(gameState, gameApiAvailable || isUserTurn || isClaimWindowOpen);
+  const availableActions = getAvailableActions(gameState, gameApiAvailable);
 
 
   useEffect(() => {
