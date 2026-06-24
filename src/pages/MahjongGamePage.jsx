@@ -37,6 +37,63 @@ const DEFAULT_GAMEPLAY_PLAYERS = [
   { id: 'player_right', name: 'Kiki', avatar: 'KIKI.png', coins: '0', position: 'right' },
 ];
 
+const clampGameplayPlayerCount = (value, fallback = 3) => {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return fallback;
+  return Math.max(2, Math.min(numberValue, 3));
+};
+
+const getGameplayPlayerCountFromId = (value) => {
+  const match = String(value || '').match(/(\d+)p/i);
+  return match ? clampGameplayPlayerCount(match[1]) : null;
+};
+
+const getExpectedGameplayPlayerCount = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+
+    const explicitCount = source.maxPlayers
+      ?? source.playerLimit
+      ?? source.capacity
+      ?? source.room?.maxPlayers
+      ?? source.room?.playerLimit
+      ?? source.room?.capacity;
+
+    if (explicitCount !== undefined && explicitCount !== null && explicitCount !== '') {
+      return clampGameplayPlayerCount(explicitCount);
+    }
+
+    const idCount = getGameplayPlayerCountFromId(source.tierId || source.roomId || source.room?.tierId || source.room?.id || source.room?.roomId);
+    if (idCount) return idCount;
+
+    if (Array.isArray(source.players) && source.players.length >= 2 && source.players.length <= 3) {
+      return clampGameplayPlayerCount(source.players.length);
+    }
+  }
+
+  return 3;
+};
+
+const seatPlayersForGameplay = (sourcePlayers, expectedPlayerCount = 3) => {
+  const allowedPositions = expectedPlayerCount <= 2 ? ['left', 'top'] : ['top', 'left', 'right'];
+  const usedPositions = new Set();
+
+  const withValidPositions = toArray(sourcePlayers)
+    .filter(Boolean)
+    .slice(0, expectedPlayerCount)
+    .map((player, index) => {
+      const requestedPosition = String(player.position || '').toLowerCase();
+      const position = allowedPositions.includes(requestedPosition) && !usedPositions.has(requestedPosition)
+        ? requestedPosition
+        : allowedPositions[index] || allowedPositions[allowedPositions.length - 1];
+
+      usedPositions.add(position);
+      return { ...player, position };
+    });
+
+  return withValidPositions;
+};
+
 function resolvePlayerAvatar(avatar, fallbackAvatar = 'Stevie.png') {
   const value = String(avatar || '').trim();
 
@@ -398,6 +455,7 @@ function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
     myHand: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.myHand, normalized.handTiles),
     wallRemaining: payload.wallRemaining ?? normalized.wallRemaining,
     playerCount: payload.playerCount ?? normalized.playerCount,
+    maxPlayers: payload.maxPlayers ?? payload.room?.maxPlayers ?? normalized.maxPlayers ?? normalized.room?.maxPlayers,
   };
 }
 
@@ -569,24 +627,32 @@ export default function MahjongGamePage() {
     const nextTimer = Number(gameState.timer ?? gameState.remainingSeconds ?? gameState.timeLimit ?? 0);
     setDisplayTimer(Number.isFinite(nextTimer) ? nextTimer : 0);
   }, [gameState.timer, gameState.remainingSeconds, gameState.timeLimit, gameState.activeTurnPosition, gameState.claimWindow]);
-  const players = useMemo(() => {
-    if (Array.isArray(gameState.players) && gameState.players.length) {
-      return gameState.players;
-    }
 
-    return gameApiAvailable ? mockGameState.players : DEFAULT_GAMEPLAY_PLAYERS;
-  }, [gameApiAvailable, gameState.players]);
+  const expectedPlayerCount = useMemo(() => getExpectedGameplayPlayerCount(
+    gameState,
+    location.state,
+    storedMatch
+  ), [gameState, location.state, storedMatch]);
+
+  const players = useMemo(() => {
+    const sourcePlayers = Array.isArray(gameState.players) && gameState.players.length
+      ? gameState.players
+      : gameApiAvailable ? mockGameState.players : DEFAULT_GAMEPLAY_PLAYERS;
+
+    return seatPlayersForGameplay(sourcePlayers, expectedPlayerCount);
+  }, [expectedPlayerCount, gameApiAvailable, gameState.players]);
 
   const topPlayer = players.find((player) => player.position === 'top') || DEFAULT_GAMEPLAY_PLAYERS[0];
   const leftPlayer = players.find((player) => player.position === 'left') || DEFAULT_GAMEPLAY_PLAYERS[1];
-  const rightPlayer = players.find((player) => player.position === 'right') || DEFAULT_GAMEPLAY_PLAYERS[2];
+  const rightPlayer = players.find((player) => player.position === 'right') || null;
+  const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 
   const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || ((gameApiAvailable || String(gameState.status || '').toLowerCase() === 'playing') ? 'left' : '');
   const isUserTurn = activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
     ? (topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name)
     : activeTurnPosition === 'right'
-      ? rightPlayer.name
+      ? (rightPlayer?.name || 'Player')
       : 'Your';
   const activeTurnLabel = activeTurnPosition
     ? (isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`)
@@ -601,7 +667,7 @@ export default function MahjongGamePage() {
   );
   const playerHandTiles = rawPlayerHandTiles.map((tile) => normalizeTileName(tile));
   const topDiscardTiles = getDiscardTilesByPosition(gameState, topPlayer, 'top');
-  const rightDiscardTiles = getDiscardTilesByPosition(gameState, rightPlayer, 'right');
+  const rightDiscardTiles = hasRightPlayer ? getDiscardTilesByPosition(gameState, rightPlayer, 'right') : [];
   const centerDiscardTiles = getFirstTileList(
     gameState.centerTiles,
     gameState.centerDiscardTiles,
@@ -725,21 +791,23 @@ export default function MahjongGamePage() {
         turnLabel={activeTurnPosition === 'left' ? activeTurnLabel : ''}
       />
 
-      <PlayerBadge
-        className="right-player"
-        variant="right"
-        avatar={rightPlayer.avatar}
-        name={rightPlayer.name}
-        coins={rightPlayer.coins}
-        isActiveTurn={activeTurnPosition === 'right'}
-        turnLabel={activeTurnPosition === 'right' ? activeTurnLabel : ''}
-      />
+      {hasRightPlayer ? (
+        <PlayerBadge
+          className="right-player"
+          variant="right"
+          avatar={rightPlayer.avatar}
+          name={rightPlayer.name}
+          coins={rightPlayer.coins}
+          isActiveTurn={activeTurnPosition === 'right'}
+          turnLabel={activeTurnPosition === 'right' ? activeTurnLabel : ''}
+        />
+      ) : null}
 
       <main className="gameplay-table-zone">
         <img className="gameplay-table" src={asset('table.png')} alt="Mahjong table" draggable="false" />
 
         <TileWall count={14} direction="horizontal" className="wall-top" />
-        <TileWall count={13} direction="vertical" className="wall-right" />
+        {hasRightPlayer ? <TileWall count={13} direction="vertical" className="wall-right" /> : null}
 
         <Compass round={gameState.round || 'East 1'} timer={displayTimer} turnLabel={activeTurnLabel} />
 
@@ -749,11 +817,13 @@ export default function MahjongGamePage() {
           ))}
         </div>
 
-        <div className="gameplay-right-discard" aria-label="Right discard tiles">
-          {rightDiscardTiles.map((tile, index) => (
-            <GameplayTile name={tile} key={`${tile}-${index}`} />
-          ))}
-        </div>
+        {hasRightPlayer ? (
+          <div className="gameplay-right-discard" aria-label="Right discard tiles">
+            {rightDiscardTiles.map((tile, index) => (
+              <GameplayTile name={tile} key={`${tile}-${index}`} />
+            ))}
+          </div>
+        ) : null}
 
         <div className="gameplay-center-discard" aria-label="Center meld tiles">
           {centerDiscardTiles.map((tile, index) => (

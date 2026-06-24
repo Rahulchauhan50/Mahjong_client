@@ -262,8 +262,9 @@ export default function MatchmakingPage() {
         roomId: payload.roomId || context.roomId,
         roomCode: payload.roomCode || context.roomCode,
         tierId: payload.tierId || context.tierId,
+        maxPlayers: payload.maxPlayers || context.maxPlayers,
         players: payload.players,
-        initialGameState: payload,
+        initialGameState: { ...payload, maxPlayers: payload.maxPlayers || context.maxPlayers },
         socketMode: true,
       });
 
@@ -274,7 +275,8 @@ export default function MatchmakingPage() {
               matchId,
               roomId: payload.roomId || context.roomId,
               roomCode: payload.roomCode || context.roomCode,
-              initialGameState: payload,
+              maxPlayers: payload.maxPlayers || context.maxPlayers,
+              initialGameState: { ...payload, maxPlayers: payload.maxPlayers || context.maxPlayers },
               socketMode: true,
             },
           });
