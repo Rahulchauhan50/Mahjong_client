@@ -379,7 +379,7 @@ top: 58.2%;
 }
 
 .app-shell[data-device='desktop'] .gameplay-left-discard {
-  bottom: 29.2%;
+  bottom: 33.2%;
   left: 50%;
   max-width: 42%;
   transform: translateX(-50%) scale(.64);
@@ -1096,7 +1096,7 @@ animation: none;
 }
 
 .app-shell[data-device='desktop'] .gameplay-left-discard {
-  bottom: 166px;
+  bottom: 196px;
   transform: translateX(-50%) scale(.62);
 }
 
