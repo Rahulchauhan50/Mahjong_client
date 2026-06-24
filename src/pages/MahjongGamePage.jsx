@@ -33,9 +33,9 @@ const PLAYER_AVATAR_FALLBACKS = {
 };
 
 const DEFAULT_GAMEPLAY_PLAYERS = [
-  { id: 'player_top', name: 'Bunbun', avatar: 'Bunbun.png', coins: '0', position: 'top' },
-  { id: 'player_you', name: 'You', avatar: 'Stevie.png', coins: '0', position: 'left' },
-  { id: 'player_right', name: 'Kiki', avatar: 'KIKI.png', coins: '0', position: 'right' },
+  { id: 'player_top', name: 'Opponent', avatar: 'Bunbun.png', coins: '0', position: 'top', isPlaceholder: true },
+  { id: 'player_you', name: 'Player', avatar: 'Stevie.png', coins: '0', position: 'left', isPlaceholder: true },
+  { id: 'player_right', name: 'Opponent 2', avatar: 'KIKI.png', coins: '0', position: 'right', isPlaceholder: true },
 ];
 
 const clampGameplayPlayerCount = (value, fallback = 3) => {
@@ -75,24 +75,82 @@ const getExpectedGameplayPlayerCount = (...sources) => {
   return 3;
 };
 
-const seatPlayersForGameplay = (sourcePlayers, expectedPlayerCount = 3) => {
-  const allowedPositions = expectedPlayerCount <= 2 ? ['left', 'top'] : ['top', 'left', 'right'];
-  const usedPositions = new Set();
 
-  const withValidPositions = toArray(sourcePlayers)
+const getGameplayCurrentIdentity = (...sources) => {
+  const storedUser = getStoredAuthUser() || {};
+
+  for (const source of sources) {
+    if (!source) continue;
+    const candidate = source.me || source.currentUser || source.user || source.profile || source.selfPlayer || source.currentPlayer;
+    if (candidate && typeof candidate === 'object') return candidate;
+  }
+
+  return storedUser;
+};
+
+const normalizeGameplayPlayer = (player = {}, index = 0) => ({
+  ...player,
+  id: player.id || player.userId || player._id || player.playerId || player.clientId || `player_${index + 1}`,
+  userId: player.userId || player.id || player._id || player.playerId,
+  name: player.name || player.username || player.displayName || player.nickname || player.email || `Player ${index + 1}`,
+  username: player.username || player.name || player.displayName || player.nickname,
+  avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || (index === 0 ? 'Stevie.png' : 'Bunbun.png'),
+  coins: player.coins ?? player.balance ?? player.score ?? player.points ?? '0',
+});
+
+const collectGameplayPlayers = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+    const list = source.players || source.room?.players || source.initialGameState?.players || source.gameState?.players;
+    if (Array.isArray(list) && list.length) {
+      return list.map(normalizeGameplayPlayer);
+    }
+  }
+
+  return [];
+};
+
+const seatPlayersForGameplay = (sourcePlayers, expectedPlayerCount = 3, currentIds = [], currentSeat = '') => {
+  const allowedPositions = expectedPlayerCount <= 2 ? ['left', 'top'] : ['left', 'top', 'right'];
+  const normalizedPlayers = toArray(sourcePlayers)
     .filter(Boolean)
-    .slice(0, expectedPlayerCount)
-    .map((player, index) => {
-      const requestedPosition = String(player.position || '').toLowerCase();
-      const position = allowedPositions.includes(requestedPosition) && !usedPositions.has(requestedPosition)
-        ? requestedPosition
-        : allowedPositions[index] || allowedPositions[allowedPositions.length - 1];
+    .map(normalizeGameplayPlayer)
+    .slice(0, expectedPlayerCount);
 
-      usedPositions.add(position);
-      return { ...player, position };
-    });
+  if (!normalizedPlayers.length) return [];
 
-  return withValidPositions;
+  const playersWithPosition = normalizedPlayers.map((player, index) => {
+    const requestedPosition = normalizePosition(player.position);
+    const seatPosition = player.seat && currentSeat
+      ? getRelativeSeatPosition(player.seat, currentSeat, expectedPlayerCount)
+      : '';
+    const isCurrent = player.isCurrentPlayer || player.isMe || player.isSelf || playerMatchesAnyId(player, currentIds);
+
+    return {
+      ...player,
+      position: isCurrent ? 'left' : (requestedPosition || seatPosition || ''),
+    };
+  });
+
+  const currentIndex = playersWithPosition.findIndex((player) => player.position === 'left' || player.isCurrentPlayer || player.isMe || player.isSelf || playerMatchesAnyId(player, currentIds));
+  if (currentIndex > 0) {
+    const [currentPlayer] = playersWithPosition.splice(currentIndex, 1);
+    playersWithPosition.unshift({ ...currentPlayer, position: 'left' });
+  } else if (currentIndex === 0) {
+    playersWithPosition[0] = { ...playersWithPosition[0], position: 'left' };
+  }
+
+  const usedPositions = new Set();
+  return playersWithPosition.map((player, index) => {
+    let position = normalizePosition(player.position);
+
+    if (!position || usedPositions.has(position) || !allowedPositions.includes(position)) {
+      position = allowedPositions.find((candidate) => !usedPositions.has(candidate)) || allowedPositions[index] || 'top';
+    }
+
+    usedPositions.add(position);
+    return { ...player, position };
+  });
 };
 
 function resolvePlayerAvatar(avatar, fallbackAvatar = 'Stevie.png') {
@@ -591,6 +649,7 @@ function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
     status: normalized.status || 'playing',
     mySeat: payload.mySeat || payload.seat || normalized.mySeat || normalized.seat,
     seat: payload.seat || normalized.seat,
+    players: collectGameplayPlayers(payload, normalized),
     handTiles: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.handTiles),
     myHand: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.myHand, normalized.handTiles),
     wallRemaining: payload.wallRemaining ?? normalized.wallRemaining,
@@ -639,6 +698,7 @@ export default function MahjongGamePage() {
       roomCode: location.state?.roomCode || storedMatch?.roomCode,
       socketMode: socketGameplayEnabled,
       maxPlayers: location.state?.maxPlayers || storedMatch?.maxPlayers || initialSocketPayload?.maxPlayers,
+      players: location.state?.players || storedMatch?.players || initialSocketPayload?.players,
     };
 
     if (!gameApiAvailable && !socketGameplayEnabled && !getActiveGameSocket()) {
@@ -775,16 +835,24 @@ export default function MahjongGamePage() {
     storedMatch
   ), [gameState, location.state, storedMatch]);
 
+  const currentPlayerIds = useMemo(() => getCurrentPlayerIdCandidates(gameState, location.state, storedMatch), [gameState, location.state, storedMatch]);
+  const currentPlayerSeat = getCurrentPlayerSeat(gameState, location.state, storedMatch);
+
   const players = useMemo(() => {
-    const sourcePlayers = Array.isArray(gameState.players) && gameState.players.length
-      ? gameState.players
-      : gameApiAvailable ? mockGameState.players : DEFAULT_GAMEPLAY_PLAYERS;
+    const livePlayers = collectGameplayPlayers(gameState, location.state, storedMatch, initialSocketPayload);
+    const currentIdentity = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
+    const sourcePlayers = livePlayers.length
+      ? livePlayers
+      : gameApiAvailable
+        ? mockGameState.players
+        : [{ ...currentIdentity, isCurrentPlayer: true }, ...DEFAULT_GAMEPLAY_PLAYERS.filter((player) => player.position !== 'left')];
 
-    return seatPlayersForGameplay(sourcePlayers, expectedPlayerCount);
-  }, [expectedPlayerCount, gameApiAvailable, gameState.players]);
+    return seatPlayersForGameplay(sourcePlayers, expectedPlayerCount, currentPlayerIds, currentPlayerSeat);
+  }, [currentPlayerIds, currentPlayerSeat, expectedPlayerCount, gameApiAvailable, gameState, initialSocketPayload, location.state, storedMatch]);
 
+  const fallbackCurrentPlayer = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
   const topPlayer = players.find((player) => player.position === 'top') || DEFAULT_GAMEPLAY_PLAYERS[0];
-  const leftPlayer = players.find((player) => player.position === 'left') || DEFAULT_GAMEPLAY_PLAYERS[1];
+  const leftPlayer = players.find((player) => player.position === 'left') || { ...fallbackCurrentPlayer, position: 'left' };
   const rightPlayer = players.find((player) => player.position === 'right') || null;
   const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 

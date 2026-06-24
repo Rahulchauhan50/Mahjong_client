@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
 import { getStoredAuthUser } from '../services/authService.js';
@@ -210,8 +210,13 @@ export default function MatchmakingPage() {
   const [seconds, setSeconds] = useState(12);
   const initialContext = getRequestedMatchmakingContext(location.state);
   const [session, setSession] = useState(() => createFrontendSession(initialContext));
+  const latestSessionRef = useRef(session);
   const [errorMessage, setErrorMessage] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+
+  useEffect(() => {
+    latestSessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     let isMounted = true;
@@ -263,6 +268,10 @@ export default function MatchmakingPage() {
       if (!isMounted || gameWasStarted) return;
 
       const matchId = payload.matchId || payload.gameId || payload.id || payload.roomId || context.roomId || context.roomCode || 'live_match';
+      const latestSession = latestSessionRef.current || createFrontendSession(context);
+      const realPlayers = Array.isArray(payload.players) && payload.players.length
+        ? payload.players
+        : latestSession.players;
       lobbyEventReceived = true;
       gameWasStarted = true;
       window.clearTimeout(responseTimeoutId);
@@ -276,9 +285,14 @@ export default function MatchmakingPage() {
         roomId: payload.roomId || context.roomId,
         roomCode: payload.roomCode || context.roomCode,
         tierId: payload.tierId || context.tierId,
-        maxPlayers: payload.maxPlayers || context.maxPlayers,
-        players: payload.players,
-        initialGameState: { ...payload, maxPlayers: payload.maxPlayers || context.maxPlayers },
+        maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+        players: realPlayers,
+        initialGameState: {
+          ...payload,
+          players: realPlayers,
+          maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+          myPlayerId: getCurrentPlayerIdentity().id,
+        },
         socketMode: true,
       });
 
@@ -289,8 +303,14 @@ export default function MatchmakingPage() {
               matchId,
               roomId: payload.roomId || context.roomId,
               roomCode: payload.roomCode || context.roomCode,
-              maxPlayers: payload.maxPlayers || context.maxPlayers,
-              initialGameState: { ...payload, maxPlayers: payload.maxPlayers || context.maxPlayers },
+              maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+              players: realPlayers,
+              initialGameState: {
+                ...payload,
+                players: realPlayers,
+                maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+                myPlayerId: getCurrentPlayerIdentity().id,
+              },
               socketMode: true,
             },
           });
