@@ -96,19 +96,34 @@ async function loadSocketFactory() {
   return socketFactoryLoadPromise;
 }
 
+function getBackendPlayerName(player = {}) {
+  return player.username
+    || player.name
+    || player.displayName
+    || player.nickname
+    || player.email
+    || player.userId
+    || player.id
+    || player._id
+    || '';
+}
+
 function normalizeRoomPlayers(players) {
   if (!Array.isArray(players)) return players;
 
-  return players.map((player, index) => ({
-    id: player.id || player.userId || player._id || `player_${index}`,
-    name: player.name || player.username || player.displayName || `Player ${index + 1}`,
-    username: player.username || player.name || player.displayName || `Player ${index + 1}`,
-    avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || null,
-    ready: player.ready ?? player.isReady ?? true,
-    seat: player.seat,
-    isHost: Boolean(player.isHost || player.host),
-    ...player,
-  }));
+  return players
+    .filter(Boolean)
+    .map((player) => ({
+      ...player,
+      id: player.id || player.userId || player._id || player.playerId || player.socketId || '',
+      userId: player.userId || player.id || player._id || player.playerId || '',
+      name: getBackendPlayerName(player),
+      username: player.username || getBackendPlayerName(player),
+      avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || null,
+      ready: player.ready ?? player.isReady ?? true,
+      seat: player.seat,
+      isHost: Boolean(player.isHost || player.host),
+    }));
 }
 
 export function normalizeSocketMessage(message) {

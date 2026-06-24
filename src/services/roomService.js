@@ -1,4 +1,4 @@
-import { apiRequest, isMockApiEnabled, postToApi } from './api.js';
+import { apiRequest } from './api.js';
 import { normalizeRoomList, normalizeRoom, normalizeRoomTierList, normalizePrivateRoom } from './gameNormalizers.js';
 
 const MISSING_JOIN_ROOM_ENDPOINT_MESSAGE = 'Join room is unavailable right now. Please try again later.';
@@ -29,10 +29,13 @@ export async function createPrivateRoom(payload = {}) {
 
   const requestPayload = {
     tierId,
-    maxPlayers: Number(payload.maxPlayers) || 2,
+    maxPlayers: Number(payload.maxPlayers) || 3,
   };
 
-  const response = await postToApi('/rooms/private', requestPayload, (mockApi) => mockApi.createPrivateRoom(requestPayload));
+  const response = await apiRequest('/rooms/private', {
+    method: 'POST',
+    body: JSON.stringify(requestPayload),
+  });
   return normalizePrivateRoom(response, requestPayload);
 }
 
@@ -41,9 +44,8 @@ export async function createRoom(payload = {}) {
 }
 
 export async function joinRoom(roomIdOrCode) {
-  if (isMockApiEnabled()) {
-    const response = await postToApi(`/rooms/${encodeURIComponent(roomIdOrCode)}/join`, undefined, (mockApi) => mockApi.joinRoom(roomIdOrCode));
-    return normalizeRoom(response);
+  if (!roomIdOrCode) {
+    throw new Error('Room id or room code is required.');
   }
 
   throw new Error(MISSING_JOIN_ROOM_ENDPOINT_MESSAGE);
@@ -52,10 +54,6 @@ export async function joinRoom(roomIdOrCode) {
 export async function joinRoomByCode(roomCode) {
   if (!roomCode) {
     throw new Error('Room code is required.');
-  }
-
-  if (isMockApiEnabled()) {
-    return joinRoom(roomCode);
   }
 
   throw new Error(MISSING_JOIN_ROOM_ENDPOINT_MESSAGE);

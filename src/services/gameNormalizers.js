@@ -1,14 +1,29 @@
+function getBackendPlayerName(player = {}) {
+  return player.username
+    || player.name
+    || player.displayName
+    || player.nickname
+    || player.email
+    || player.userId
+    || player.id
+    || player._id
+    || '';
+}
+
 export function normalizePlayer(player = {}, index = 0) {
   const fallbackPositions = ['top', 'left', 'right', 'bottom'];
 
   return {
     ...player,
-    id: player.id || player.userId || player.playerId || `player_${index + 1}`,
-    name: player.name || player.username || player.displayName || `Player ${index + 1}`,
-    avatar: player.avatar || player.avatarUrl || player.icon || 'Stevie.png',
-    coins: player.coins ?? player.balance ?? player.score ?? '0',
+    id: player.id || player.userId || player.playerId || player._id || player.socketId || '',
+    userId: player.userId || player.id || player.playerId || player._id || '',
+    name: getBackendPlayerName(player),
+    username: player.username || getBackendPlayerName(player),
+    avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.icon || null,
+    coins: player.coins ?? player.balance ?? player.score ?? player.points ?? '0',
     position: player.position || fallbackPositions[index] || 'left',
     ready: Boolean(player.ready ?? player.isReady),
+    seat: player.seat,
     handTiles: player.handTiles || player.hand || player.tiles || [],
     handCount: player.handCount ?? player.tileCount ?? player.tilesCount ?? player.handTiles?.length ?? player.hand?.length ?? 0,
     discardTiles: player.discardTiles || player.discards || player.discardPile || player.discardedTiles || [],
@@ -229,8 +244,8 @@ export function normalizeResultPlayer(player = {}, index = 0, winnerId = null) {
   return {
     ...player,
     id,
-    name: player.name || player.username || player.displayName || `Player ${index + 1}`,
-    avatar: player.avatar || player.avatarUrl || player.icon || player.resultAvatar || (index === 0 ? 'ic1.png' : index === 1 ? 'ic2.png' : 'ic3.png'),
+    name: getBackendPlayerName(player) || 'Unknown player',
+    avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.icon || player.resultAvatar || null,
     score,
     scoreDelta: score,
     totalScore: player.totalScore ?? player.points ?? player.balance,
@@ -275,7 +290,7 @@ export function normalizeGameResult(response = {}) {
     : players.find((player) => player.isWinner || player.id === winnerId) || players[0];
   const resultType = typeof result.result === 'string'
     ? result.result
-    : result.outcome || result.status || safeResponse.status || 'win';
+    : result.outcome || result.status || safeResponse.status || '';
 
   return {
     ...result,

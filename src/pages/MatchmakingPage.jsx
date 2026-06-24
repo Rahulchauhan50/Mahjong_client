@@ -75,7 +75,7 @@ function getCurrentPlayerIdentity() {
   return {
     id: storedUser.id || storedUser.userId || storedUser._id || getStableGuestPlayerId(),
     userId: storedUser.userId || storedUser.id || storedUser._id,
-    name: storedUser.username || storedUser.name || storedUser.displayName || 'You',
+    name: storedUser.username || storedUser.name || storedUser.displayName || storedUser.email || 'Current player',
     avatar: storedAvatar || storedUser.avatarUrl || storedUser.imageUrl || storedUser.avatar || storedUser.avatarId || DEFAULT_PROFILE_AVATAR,
   };
 }
@@ -104,13 +104,25 @@ function isSearchingPlaceholder(player = {}) {
     || avatar.includes('icon_02_searching');
 }
 
+function getBackendLobbyPlayerName(player = {}) {
+  return player.username
+    || player.name
+    || player.displayName
+    || player.nickname
+    || player.email
+    || player.userId
+    || player.id
+    || player._id
+    || '';
+}
+
 function normalizeLobbyPlayer(player = {}, index = 0) {
   const normalized = {
     ...player,
-    id: player.id || player.userId || player._id || player.playerId || player.uid || `player_${index + 1}`,
-    userId: player.userId || player.id || player._id || player.playerId || player.uid,
-    name: player.name || player.username || player.displayName || player.nickname || player.email || (player.isSearching ? 'Searching' : `Player ${index + 1}`),
-    username: player.username || player.name || player.displayName || player.nickname,
+    id: player.id || player.userId || player._id || player.playerId || player.uid || player.socketId || `slot_${index + 1}`,
+    userId: player.userId || player.id || player._id || player.playerId || player.uid || '',
+    name: player.isSearching ? 'Searching' : getBackendLobbyPlayerName(player),
+    username: player.username || getBackendLobbyPlayerName(player),
     avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon,
   };
 
@@ -269,12 +281,13 @@ function AnimatedDots({ base, className = '' }) {
 }
 
 function PlayerSlot({ variant, avatar, name, ready, isCurrentPlayer = false, delay = 0, t }) {
+  const displayName = name || (ready ? 'Waiting for player data' : t('searching'));
   return (
     <article className={`match-slot match-slot-${variant}`} style={{ '--slot-delay': `${delay}ms` }}>
       <div className="match-avatar-wrap">
         <img src={getMatchAvatarSrc({ avatar, isCurrentPlayer })} alt="" />
       </div>
-      <h2>{name}</h2>
+      <h2>{displayName}</h2>
       {ready ? (
         <p className="match-ready"><span>✓</span>{t('ready')}</p>
       ) : (

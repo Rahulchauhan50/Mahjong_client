@@ -15,7 +15,6 @@ import {
   passClaimWindow,
 } from '../services/socket.js';
 import { clearActiveMatch, getActiveMatch, saveActiveMatch } from '../store/gameStore.js';
-import { mockGameState } from '../mocks/mockGameState.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 import avatarBunbun from '../assets/profile/avatar-bunbun.png';
 import avatarKiki from '../assets/profile/avatar-kiki.png';
@@ -32,12 +31,6 @@ const PLAYER_AVATAR_FALLBACKS = {
   'STEIVE.png': avatarStevie,
   'Panda.png': avatarPanda,
 };
-
-const DEFAULT_GAMEPLAY_PLAYERS = [
-  { id: 'player_top', name: 'Opponent', avatar: 'Bunbun.png', coins: '0', position: 'top', isPlaceholder: true },
-  { id: 'player_you', name: 'Player', avatar: 'Stevie.png', coins: '0', position: 'left', isPlaceholder: true },
-  { id: 'player_right', name: 'Opponent 2', avatar: 'KIKI.png', coins: '0', position: 'right', isPlaceholder: true },
-];
 
 const clampGameplayPlayerCount = (value, fallback = 3) => {
   const numberValue = Number(value);
@@ -90,23 +83,54 @@ const getGameplayCurrentIdentity = (...sources) => {
   return storedUser;
 };
 
+const getRealPlayerName = (player = {}) => (
+  player.username
+  || player.name
+  || player.displayName
+  || player.nickname
+  || player.email
+  || player.userId
+  || player.id
+  || player._id
+  || ''
+);
+
 const normalizeGameplayPlayer = (player = {}, index = 0) => ({
   ...player,
-  id: player.id || player.userId || player._id || player.playerId || player.clientId || `player_${index + 1}`,
-  userId: player.userId || player.id || player._id || player.playerId,
-  name: player.name || player.username || player.displayName || player.nickname || player.email || `Player ${index + 1}`,
-  username: player.username || player.name || player.displayName || player.nickname,
-  avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || (index === 0 ? 'Stevie.png' : 'Bunbun.png'),
+  id: player.id || player.userId || player._id || player.playerId || player.clientId || player.socketId || '',
+  userId: player.userId || player.id || player._id || player.playerId || '',
+  name: getRealPlayerName(player),
+  username: player.username || getRealPlayerName(player),
+  avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || null,
   coins: player.coins ?? player.balance ?? player.score ?? player.points ?? '0',
 });
+
+const listFromSeatMap = (seatMap = {}) => (
+  seatMap && typeof seatMap === 'object' && !Array.isArray(seatMap)
+    ? Object.entries(seatMap).map(([seat, player]) => ({ seat, ...(player || {}) }))
+    : []
+);
 
 const collectGameplayPlayers = (...sources) => {
   for (const source of sources) {
     if (!source) continue;
-    const list = source.players || source.room?.players || source.initialGameState?.players || source.gameState?.players;
-    if (Array.isArray(list) && list.length) {
-      const players = list.map(normalizeGameplayPlayer).filter((player) => !isGameplayPlaceholderPlayer(player));
-      if (players.length) return players;
+    const candidateLists = [
+      source.players,
+      source.playerStates,
+      source.room?.players,
+      source.initialGameState?.players,
+      source.gameState?.players,
+      listFromSeatMap(source.seats),
+      listFromSeatMap(source.playersBySeat),
+      listFromSeatMap(source.room?.seats),
+      listFromSeatMap(source.gameState?.seats),
+    ];
+
+    for (const list of candidateLists) {
+      if (Array.isArray(list) && list.length) {
+        const players = list.map(normalizeGameplayPlayer).filter((player) => !isGameplayPlaceholderPlayer(player));
+        if (players.length) return players;
+      }
     }
   }
 
@@ -737,11 +761,11 @@ export default function MahjongGamePage() {
     || initialSocketPayload?.matchId
     || initialSocketPayload?.gameId
     || initialSocketPayload?.roomId
-    || (gameApiAvailable ? mockGameState.matchId : 'live_match');
+    || 'live_match';
 
   const [selectedAction, setSelectedAction] = useState(null);
   const [gameState, setGameState] = useState(() => ({
-    ...(gameApiAvailable ? mockGameState : EMPTY_SOCKET_GAME_STATE),
+    ...EMPTY_SOCKET_GAME_STATE,
     ...(initialSocketPayload ? normalizeInitialSocketState(initialSocketPayload, resolvedMatchId) : {}),
     matchId: resolvedMatchId,
   }));
@@ -805,12 +829,19 @@ export default function MahjongGamePage() {
 
       switch (message.type) {
         case 'game_start':
-        case 'game_state':
           setGameState((current) => ({
-            ...(current || {}),
+            ...(current || EMPTY_SOCKET_GAME_STATE),
             ...normalizeInitialSocketState(payload, resolvedMatchId),
             matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
           }));
+          setGameError('');
+          break;
+        case 'game_state':
+          setGameState({
+            ...EMPTY_SOCKET_GAME_STATE,
+            ...normalizeInitialSocketState(payload, resolvedMatchId),
+            matchId: payload.matchId || payload.gameId || payload.roomId || resolvedMatchId,
+          });
           setGameError('');
           break;
         case 'turn_changed':
@@ -913,15 +944,13 @@ export default function MahjongGamePage() {
     const currentIdentity = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
     const sourcePlayers = livePlayers.length
       ? livePlayers
-      : gameApiAvailable
-        ? mockGameState.players
-        : [{ ...currentIdentity, isCurrentPlayer: true }];
+      : [{ ...currentIdentity, isCurrentPlayer: true }];
 
     return seatPlayersForGameplay(sourcePlayers, expectedPlayerCount, currentPlayerIds, currentPlayerSeat);
   }, [currentPlayerIds, currentPlayerSeat, expectedPlayerCount, gameApiAvailable, gameState, initialSocketPayload, location.state, storedMatch]);
 
   const fallbackCurrentPlayer = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
-  const topPlayer = players.find((player) => player.position === 'top') || (gameApiAvailable ? DEFAULT_GAMEPLAY_PLAYERS[0] : null);
+  const topPlayer = players.find((player) => player.position === 'top') || null;
   const leftPlayer = players.find((player) => player.position === 'left') || { ...fallbackCurrentPlayer, position: 'left' };
   const rightPlayer = players.find((player) => player.position === 'right') || null;
   const realPlayerCount = players.filter((player) => !isGameplayPlaceholderPlayer(player)).length;
@@ -937,9 +966,9 @@ export default function MahjongGamePage() {
   });
   const isUserTurn = !isLiveGameStateIncomplete && activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
-    ? (topPlayer?.name === 'BUNBUN' ? 'Bunbun' : topPlayer?.name || 'Opponent')
+    ? (topPlayer?.name === 'BUNBUN' ? 'Bunbun' : topPlayer?.name || 'Waiting')
     : activeTurnPosition === 'right'
-      ? (rightPlayer?.name || 'Player')
+      ? (rightPlayer?.name || 'Waiting')
       : 'Your';
   const activeTurnLabel = isLiveGameStateIncomplete
     ? t('pleaseWaitMatch')
@@ -967,7 +996,7 @@ export default function MahjongGamePage() {
     gameState.discardTiles?.center
   );
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
-  const availableActions = isLiveGameStateIncomplete ? [] : getAvailableActions(gameState, gameApiAvailable);
+  const availableActions = isLiveGameStateIncomplete ? [] : getAvailableActions(gameState, false);
 
 
   useEffect(() => {

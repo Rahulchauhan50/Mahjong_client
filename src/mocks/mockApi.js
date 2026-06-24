@@ -1,6 +1,4 @@
 import { mockFeaturedRooms, mockRoomList, mockRoomTiers } from './mockRooms.js';
-import { mockMatchFound, mockMatchmakingSession } from './mockMatchmaking.js';
-import { mockGameResult, mockGameState } from './mockGameState.js';
 
 const delay = (ms = 220) => new Promise((resolve) => {
   window.setTimeout(resolve, ms);
@@ -287,71 +285,5 @@ export const mockApi = {
     };
   },
 
-  async startMatchmaking(payload = {}) {
-    await delay(260);
-    return {
-      ...mockMatchmakingSession,
-      roomId: payload.roomId || 'quick_match',
-      maxPlayers: payload.maxPlayers || 3,
-    };
-  },
 
-  async getMatchmakingStatus(sessionId) {
-    await delay(300);
-    return {
-      ...mockMatchFound,
-      id: sessionId || mockMatchFound.id,
-    };
-  },
-
-  async cancelMatchmaking(sessionId) {
-    await delay();
-    return {
-      id: sessionId,
-      status: 'cancelled',
-    };
-  },
-
-  async getGameState(matchId = mockGameState.matchId) {
-    await delay();
-    return {
-      ...mockGameState,
-      matchId,
-    };
-  },
-
-  async getGameResult(matchId = mockGameResult.matchId) {
-    await delay();
-    return {
-      ...mockGameResult,
-      matchId,
-    };
-  },
-
-  async sendGameAction(matchId, action) {
-    await delay(120);
-    return {
-      matchId,
-      accepted: true,
-      action,
-      serverTime: new Date().toISOString(),
-    };
-  },
-
-  async leaveGame(matchId) {
-    await delay();
-    return {
-      matchId,
-      status: 'left',
-    };
-  },
-
-  async finishGame(matchId, payload = {}) {
-    await delay();
-    return {
-      ...mockGameResult,
-      matchId,
-      ...payload,
-    };
-  },
 };

@@ -1,10 +1,14 @@
-import { getFromApi, isMockApiEnabled, postToApi } from './api.js';
+import { apiRequest } from './api.js';
 import { normalizeGameResult, normalizeGameState } from './gameNormalizers.js';
+import { getActiveGameSocket } from './socket.js';
 
-export const MISSING_GAME_API_MESSAGE = 'Gameplay is unavailable right now. Please try again later.';
+export const MISSING_GAME_API_MESSAGE = 'Gameplay is controlled by the live socket backend. No mock gameplay data is used.';
 
 export function isGameApiAvailable() {
-  return isMockApiEnabled();
+  // Gameplay must not use the frontend mock API. The board is driven by Socket.io events:
+  // game:start, game:turn_start, player:drawn_tile, game:claim_window,
+  // game:action_broadcast, game:sync_state, game:over.
+  return false;
 }
 
 export async function getGameState(matchId) {
@@ -12,11 +16,7 @@ export async function getGameState(matchId) {
     throw new Error('getGameState requires a matchId.');
   }
 
-  if (!isMockApiEnabled()) {
-    throw new Error(MISSING_GAME_API_MESSAGE);
-  }
-
-  const response = await getFromApi(`/games/${encodeURIComponent(matchId)}`, (mockApi) => mockApi.getGameState(matchId));
+  const response = await apiRequest(`/games/${encodeURIComponent(matchId)}`);
   return normalizeGameState(response);
 }
 
@@ -25,11 +25,7 @@ export async function getGameResult(matchId) {
     throw new Error('getGameResult requires a matchId.');
   }
 
-  if (!isMockApiEnabled()) {
-    throw new Error(MISSING_GAME_API_MESSAGE);
-  }
-
-  const response = await getFromApi(`/games/${encodeURIComponent(matchId)}/result`, (mockApi) => mockApi.getGameResult(matchId));
+  const response = await apiRequest(`/games/${encodeURIComponent(matchId)}/result`);
   return normalizeGameResult(response);
 }
 
@@ -38,11 +34,10 @@ export function sendGameAction(matchId, action) {
     throw new Error('sendGameAction requires a matchId.');
   }
 
-  if (!isMockApiEnabled()) {
-    return Promise.reject(new Error(MISSING_GAME_API_MESSAGE));
-  }
-
-  return postToApi(`/games/${encodeURIComponent(matchId)}/actions`, action, (mockApi) => mockApi.sendGameAction(matchId, action));
+  return apiRequest(`/games/${encodeURIComponent(matchId)}/actions`, {
+    method: 'POST',
+    body: JSON.stringify(action ?? {}),
+  });
 }
 
 export function leaveGame(matchId) {
@@ -50,11 +45,13 @@ export function leaveGame(matchId) {
     throw new Error('leaveGame requires a matchId.');
   }
 
-  if (!isMockApiEnabled()) {
-    return Promise.resolve({ success: false, skipped: true, reason: MISSING_GAME_API_MESSAGE });
+  const socket = getActiveGameSocket();
+  if (socket?.connected || socket?.raw?.connected) {
+    socket.emit?.('player:leave', { matchId });
+    return Promise.resolve({ success: true, socket: true });
   }
 
-  return postToApi(`/games/${encodeURIComponent(matchId)}/leave`, undefined, (mockApi) => mockApi.leaveGame(matchId));
+  return Promise.resolve({ success: false, skipped: true, reason: 'No active gameplay socket.' });
 }
 
 export function finishGame(matchId, payload) {
@@ -62,9 +59,8 @@ export function finishGame(matchId, payload) {
     throw new Error('finishGame requires a matchId.');
   }
 
-  if (!isMockApiEnabled()) {
-    return Promise.reject(new Error(MISSING_GAME_API_MESSAGE));
-  }
-
-  return postToApi(`/games/${encodeURIComponent(matchId)}/finish`, payload, (mockApi) => mockApi.finishGame(matchId, payload));
+  return apiRequest(`/games/${encodeURIComponent(matchId)}/finish`, {
+    method: 'POST',
+    body: JSON.stringify(payload ?? {}),
+  });
 }
