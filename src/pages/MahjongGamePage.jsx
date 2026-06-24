@@ -54,7 +54,11 @@ const getExpectedGameplayPlayerCount = (...sources) => {
   for (const source of sources) {
     if (!source) continue;
 
+    const idCount = getGameplayPlayerCountFromId(source.tierId || source.roomId || source.room?.tierId || source.room?.id || source.room?.roomId || source.matchId || source.gameId);
+    if (idCount) return idCount;
+
     const explicitCount = source.maxPlayers
+      ?? source.expectedPlayers
       ?? source.playerLimit
       ?? source.capacity
       ?? source.room?.maxPlayers
@@ -64,9 +68,6 @@ const getExpectedGameplayPlayerCount = (...sources) => {
     if (explicitCount !== undefined && explicitCount !== null && explicitCount !== '') {
       return clampGameplayPlayerCount(explicitCount);
     }
-
-    const idCount = getGameplayPlayerCountFromId(source.tierId || source.roomId || source.room?.tierId || source.room?.id || source.room?.roomId);
-    if (idCount) return idCount;
 
     if (Array.isArray(source.players) && source.players.length >= 2 && source.players.length <= 3) {
       return clampGameplayPlayerCount(source.players.length);
@@ -914,15 +915,17 @@ export default function MahjongGamePage() {
       ? livePlayers
       : gameApiAvailable
         ? mockGameState.players
-        : [{ ...currentIdentity, isCurrentPlayer: true }, ...DEFAULT_GAMEPLAY_PLAYERS.filter((player) => player.position !== 'left')];
+        : [{ ...currentIdentity, isCurrentPlayer: true }];
 
     return seatPlayersForGameplay(sourcePlayers, expectedPlayerCount, currentPlayerIds, currentPlayerSeat);
   }, [currentPlayerIds, currentPlayerSeat, expectedPlayerCount, gameApiAvailable, gameState, initialSocketPayload, location.state, storedMatch]);
 
   const fallbackCurrentPlayer = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
-  const topPlayer = players.find((player) => player.position === 'top') || DEFAULT_GAMEPLAY_PLAYERS[0];
+  const topPlayer = players.find((player) => player.position === 'top') || (gameApiAvailable ? DEFAULT_GAMEPLAY_PLAYERS[0] : null);
   const leftPlayer = players.find((player) => player.position === 'left') || { ...fallbackCurrentPlayer, position: 'left' };
   const rightPlayer = players.find((player) => player.position === 'right') || null;
+  const realPlayerCount = players.filter((player) => !isGameplayPlaceholderPlayer(player)).length;
+  const isLiveGameStateIncomplete = socketGameplayEnabled && !gameApiAvailable && realPlayerCount < expectedPlayerCount;
   const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 
   const activeTurnPosition = resolveActiveTurnPosition({
@@ -932,13 +935,15 @@ export default function MahjongGamePage() {
     storedMatch,
     useMockFallback: gameApiAvailable,
   });
-  const isUserTurn = activeTurnPosition === 'left';
+  const isUserTurn = !isLiveGameStateIncomplete && activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
-    ? (topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name)
+    ? (topPlayer?.name === 'BUNBUN' ? 'Bunbun' : topPlayer?.name || 'Opponent')
     : activeTurnPosition === 'right'
       ? (rightPlayer?.name || 'Player')
       : 'Your';
-  const activeTurnLabel = activeTurnPosition
+  const activeTurnLabel = isLiveGameStateIncomplete
+    ? t('pleaseWaitMatch')
+    : activeTurnPosition
     ? (isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`)
     : t('pleaseWaitMatch');
 
@@ -962,7 +967,7 @@ export default function MahjongGamePage() {
     gameState.discardTiles?.center
   );
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
-  const availableActions = getAvailableActions(gameState, gameApiAvailable);
+  const availableActions = isLiveGameStateIncomplete ? [] : getAvailableActions(gameState, gameApiAvailable);
 
 
   useEffect(() => {
@@ -1061,21 +1066,28 @@ export default function MahjongGamePage() {
       </div>
 
       {gameError ? <div className="gameplay-error" role="alert">{gameError}</div> : null}
+      {isLiveGameStateIncomplete ? (
+        <div className="gameplay-error" role="status">
+          Waiting for synchronized {expectedPlayerCount}P game state. Received {realPlayerCount}/{expectedPlayerCount} real players.
+        </div>
+      ) : null}
 
       <header className="gameplay-room-title">
         <span>{t('room')}</span>
         <strong>{gameState.room?.name || 'My Sakura Room'}</strong>
       </header>
 
-      <PlayerBadge
-        className="top-player"
-        variant="top"
-        avatar={topPlayer.avatar}
-        name={topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name}
-        coins={topPlayer.coins}
-        isActiveTurn={activeTurnPosition === 'top'}
-        turnLabel={activeTurnPosition === 'top' ? activeTurnLabel : ''}
-      />
+      {topPlayer ? (
+        <PlayerBadge
+          className="top-player"
+          variant="top"
+          avatar={topPlayer.avatar}
+          name={topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name}
+          coins={topPlayer.coins}
+          isActiveTurn={activeTurnPosition === 'top'}
+          turnLabel={activeTurnPosition === 'top' ? activeTurnLabel : ''}
+        />
+      ) : null}
 
       <PlayerBadge
         className="left-player"

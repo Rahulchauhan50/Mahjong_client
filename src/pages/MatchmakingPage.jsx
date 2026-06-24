@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
 import { getStoredAuthUser } from '../services/authService.js';
-import { clearMatchmakingContext, getMatchmakingContext, saveActiveMatch } from '../store/gameStore.js';
+import { clearActiveMatch, clearMatchmakingContext, getMatchmakingContext, saveActiveMatch } from '../store/gameStore.js';
 import { connectGameSocket, disconnectGameSocket, startPrivateGame } from '../services/socket.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
@@ -13,6 +13,39 @@ const PROFILE_ASSET_ROOT = '/assets/profile/';
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
 const DEFAULT_PROFILE_AVATAR = 'ICO.png';
 const GUEST_PLAYER_ID_STORAGE_KEY = 'sakura_guest_player_id';
+
+const clampMatchPlayerCount = (value, fallback = 2) => {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue)) return fallback;
+  return Math.max(2, Math.min(numberValue, 3));
+};
+
+const getPlayerCountFromId = (value) => {
+  const match = String(value || '').match(/(\d+)p/i);
+  return match ? clampMatchPlayerCount(match[1]) : null;
+};
+
+function getExpectedMatchPlayerCount(...sources) {
+  for (const source of sources) {
+    if (!source) continue;
+
+    const idCount = getPlayerCountFromId(source.tierId || source.roomId || source.room?.tierId || source.room?.id || source.room?.roomId);
+    if (idCount) return idCount;
+
+    const explicitCount = source.maxPlayers
+      ?? source.playerLimit
+      ?? source.capacity
+      ?? source.room?.maxPlayers
+      ?? source.room?.playerLimit
+      ?? source.room?.capacity;
+
+    if (explicitCount !== undefined && explicitCount !== null && explicitCount !== '') {
+      return clampMatchPlayerCount(explicitCount);
+    }
+  }
+
+  return 2;
+}
 
 function getStableGuestPlayerId() {
   try {
@@ -146,7 +179,7 @@ function getMatchAvatarSrc(player) {
 
 function createFrontendSession(context) {
   const currentPlayer = getCurrentPlayerIdentity();
-  const maxPlayers = Math.max(2, Math.min(Number(context.maxPlayers) || 2, 4));
+  const maxPlayers = getExpectedMatchPlayerCount(context);
 
   return {
     id: context.roomId || context.roomCode || 'socket_matchmaking',
@@ -189,7 +222,7 @@ function mergeCurrentPlayerIntoSession(session, context) {
     ? session.players.map(normalizeLobbyPlayer)
     : fallbackSession.players.map(normalizeLobbyPlayer);
 
-  const maxPlayers = Math.max(2, Math.min(Number(session?.maxPlayers || context.maxPlayers) || 2, 4));
+  const maxPlayers = getExpectedMatchPlayerCount(context, session, fallbackSession);
   const realIncomingPlayers = incomingPlayers.filter((player) => !isSearchingPlaceholder(player));
   const currentFromBackend = realIncomingPlayers.find((player) => player.isCurrentPlayer || player.isMe || player.isSelf || playersShareIdentity(player, currentIds));
   const normalizedCurrentPlayer = normalizeLobbyPlayer({
@@ -216,6 +249,7 @@ function mergeCurrentPlayerIntoSession(session, context) {
   return {
     ...fallbackSession,
     ...(session || {}),
+    maxPlayers,
     players,
   };
 }
@@ -257,7 +291,7 @@ function getRequestedMatchmakingContext(locationState) {
     roomId: locationState?.roomId || storedContext.roomId || '',
     roomCode: locationState?.roomCode || storedContext.roomCode || null,
     tierId: locationState?.tierId || storedContext.tierId || DEFAULT_TIER_ID,
-    maxPlayers: Number(locationState?.maxPlayers || storedContext.maxPlayers) || 2,
+    maxPlayers: getExpectedMatchPlayerCount(locationState, storedContext),
     source: locationState?.source || storedContext.source || 'unknown',
     isHost: Boolean(locationState?.isHost ?? storedContext.isHost),
   };
@@ -286,6 +320,7 @@ export default function MatchmakingPage() {
     setSession(createFrontendSession(context));
     setErrorMessage('');
     setConnectionStatus('connecting');
+    clearActiveMatch();
 
     const intervalId = window.setInterval(() => {
       setSeconds((current) => (current >= 59 ? 0 : current + 1));
@@ -309,6 +344,7 @@ export default function MatchmakingPage() {
       window.clearTimeout(responseTimeoutId);
 
       setSession((currentSession) => {
+        const maxPlayers = getExpectedMatchPlayerCount(context, payload, currentSession);
         const nextSession = mergeCurrentPlayerIntoSession({
           ...currentSession,
           ...payload,
@@ -317,7 +353,7 @@ export default function MatchmakingPage() {
           roomId: payload.roomId || currentSession?.roomId || context.roomId,
           roomCode: payload.roomCode || currentSession?.roomCode || context.roomCode,
           tierId: payload.tierId || currentSession?.tierId || context.tierId,
-          maxPlayers: payload.maxPlayers || currentSession?.maxPlayers || context.maxPlayers,
+          maxPlayers,
           status: payload.status || currentSession?.status || 'searching',
           players: payload.players || currentSession?.players,
           hostUserId: payload.hostUserId || currentSession?.hostUserId,
@@ -334,9 +370,30 @@ export default function MatchmakingPage() {
 
       const matchId = payload.matchId || payload.gameId || payload.id || payload.roomId || context.roomId || context.roomCode || 'live_match';
       const latestSession = latestSessionRef.current || createFrontendSession(context);
+      const expectedPlayers = getExpectedMatchPlayerCount(context, latestSession, payload);
       const payloadPlayers = getRealLobbyPlayers(payload.players);
       const sessionPlayers = getRealLobbyPlayers(latestSession.players);
       const realPlayers = payloadPlayers.length ? payloadPlayers : sessionPlayers;
+      const backendPlayerCount = Number(payload.playerCount ?? payload.playersCount ?? payload.currentPlayers ?? realPlayers.length) || realPlayers.length;
+
+      if (realPlayers.length < expectedPlayers || backendPlayerCount < expectedPlayers) {
+        lobbyEventReceived = true;
+        setConnectionStatus('waiting');
+        setErrorMessage(`Waiting for ${expectedPlayers} real players before starting gameplay. Received ${Math.max(realPlayers.length, backendPlayerCount)}.`);
+        setSession((currentSession) => {
+          const nextSession = mergeCurrentPlayerIntoSession({
+            ...currentSession,
+            ...payload,
+            maxPlayers: expectedPlayers,
+            status: 'waiting',
+            players: realPlayers.length ? realPlayers : currentSession?.players,
+          }, context);
+          latestSessionRef.current = nextSession;
+          return nextSession;
+        });
+        return;
+      }
+
       lobbyEventReceived = true;
       gameWasStarted = true;
       window.clearTimeout(responseTimeoutId);
@@ -350,12 +407,13 @@ export default function MatchmakingPage() {
         roomId: payload.roomId || context.roomId,
         roomCode: payload.roomCode || context.roomCode,
         tierId: payload.tierId || context.tierId,
-        maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+        maxPlayers: expectedPlayers,
         players: realPlayers,
         initialGameState: {
           ...payload,
           players: realPlayers,
-          maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+          maxPlayers: expectedPlayers,
+          playerCount: expectedPlayers,
           myPlayerId: getCurrentPlayerIdentity().id,
         },
         socketMode: true,
@@ -368,12 +426,13 @@ export default function MatchmakingPage() {
               matchId,
               roomId: payload.roomId || context.roomId,
               roomCode: payload.roomCode || context.roomCode,
-              maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+              maxPlayers: expectedPlayers,
               players: realPlayers,
               initialGameState: {
                 ...payload,
                 players: realPlayers,
-                maxPlayers: payload.maxPlayers || latestSession.maxPlayers || context.maxPlayers,
+                maxPlayers: expectedPlayers,
+                playerCount: expectedPlayers,
                 myPlayerId: getCurrentPlayerIdentity().id,
               },
               socketMode: true,
