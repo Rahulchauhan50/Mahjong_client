@@ -15,9 +15,39 @@ import {
 import { clearActiveMatch, getActiveMatch, saveActiveMatch } from '../store/gameStore.js';
 import { mockGameState } from '../mocks/mockGameState.js';
 import { useLanguage } from '../i18n/useLanguage.js';
+import avatarBunbun from '../assets/profile/avatar-bunbun.png';
+import avatarKiki from '../assets/profile/avatar-kiki.png';
+import avatarPanda from '../assets/profile/avatar-panda.png';
+import avatarStevie from '../assets/profile/avatar-stevie.png';
 
 const asset = (name) => `/assets/gameplay/${name}`;
 
+const PLAYER_AVATAR_FALLBACKS = {
+  'Bunbun.png': avatarBunbun,
+  'KIKI.png': avatarKiki,
+  'Kiki.png': avatarKiki,
+  'Stevie.png': avatarStevie,
+  'STEIVE.png': avatarStevie,
+  'Panda.png': avatarPanda,
+};
+
+const DEFAULT_GAMEPLAY_PLAYERS = [
+  { id: 'player_top', name: 'Bunbun', avatar: 'Bunbun.png', coins: '0', position: 'top' },
+  { id: 'player_you', name: 'You', avatar: 'Stevie.png', coins: '0', position: 'left' },
+  { id: 'player_right', name: 'Kiki', avatar: 'KIKI.png', coins: '0', position: 'right' },
+];
+
+function resolvePlayerAvatar(avatar, fallbackAvatar = 'Stevie.png') {
+  const value = String(avatar || '').trim();
+
+  if (/^(https?:|data:|blob:|\/)/i.test(value)) {
+    return value;
+  }
+
+  return PLAYER_AVATAR_FALLBACKS[value]
+    || PLAYER_AVATAR_FALLBACKS[fallbackAvatar]
+    || avatarStevie;
+}
 
 const DEFAULT_ACTIONS = ['chow', 'pong', 'kong', 'pass'];
 const EMPTY_SOCKET_GAME_STATE = {
@@ -224,7 +254,7 @@ function PlayerBadge({ variant = 'small', avatar, name, coins, className = '', i
           <span className="gameplay-turn-arrow" aria-hidden="true">➤</span>
         </>
       ) : null}
-      <img src={asset(avatar)} alt="" className="gameplay-player-avatar" draggable="false" />
+      <img src={resolvePlayerAvatar(avatar)} alt="" className="gameplay-player-avatar" draggable="false" />
       <div className="gameplay-player-info">
         <strong>{name}</strong>
         {coins ? (
@@ -395,6 +425,7 @@ export default function MahjongGamePage() {
     matchId: resolvedMatchId,
   }));
   const [gameError, setGameError] = useState('');
+  const [displayTimer, setDisplayTimer] = useState(() => Number(gameState.timer ?? gameState.timeLimit ?? 0) || 0);
 
   useEffect(() => {
     if (!routeMatchId && resolvedMatchId) {
@@ -534,18 +565,23 @@ export default function MahjongGamePage() {
     };
   }, [gameApiAvailable, initialSocketPayload, location.state, navigate, resolvedMatchId, routeMatchId, socketGameplayEnabled, storedMatch, t]);
 
-  const players = useMemo(
-    () => (Array.isArray(gameState.players) && gameState.players.length
-      ? gameState.players
-      : (gameApiAvailable ? mockGameState.players : [])),
-    [gameApiAvailable, gameState.players]
-  );
-  const emptyPlayer = { id: '', name: '', avatar: '', coins: '', position: '' };
-  const topPlayer = players.find((player) => player.position === 'top') || (gameApiAvailable ? mockGameState.players[0] : emptyPlayer);
-  const leftPlayer = players.find((player) => player.position === 'left') || (gameApiAvailable ? mockGameState.players[1] : emptyPlayer);
-  const rightPlayer = players.find((player) => player.position === 'right') || (gameApiAvailable ? mockGameState.players[2] : emptyPlayer);
+  useEffect(() => {
+    const nextTimer = Number(gameState.timer ?? gameState.remainingSeconds ?? gameState.timeLimit ?? 0);
+    setDisplayTimer(Number.isFinite(nextTimer) ? nextTimer : 0);
+  }, [gameState.timer, gameState.remainingSeconds, gameState.timeLimit, gameState.activeTurnPosition, gameState.claimWindow]);
+  const players = useMemo(() => {
+    if (Array.isArray(gameState.players) && gameState.players.length) {
+      return gameState.players;
+    }
 
-  const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || (gameApiAvailable ? 'left' : '');
+    return gameApiAvailable ? mockGameState.players : DEFAULT_GAMEPLAY_PLAYERS;
+  }, [gameApiAvailable, gameState.players]);
+
+  const topPlayer = players.find((player) => player.position === 'top') || DEFAULT_GAMEPLAY_PLAYERS[0];
+  const leftPlayer = players.find((player) => player.position === 'left') || DEFAULT_GAMEPLAY_PLAYERS[1];
+  const rightPlayer = players.find((player) => player.position === 'right') || DEFAULT_GAMEPLAY_PLAYERS[2];
+
+  const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || ((gameApiAvailable || String(gameState.status || '').toLowerCase() === 'playing') ? 'left' : '');
   const isUserTurn = activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
     ? (topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name)
@@ -575,8 +611,25 @@ export default function MahjongGamePage() {
     gameState.discards?.center,
     gameState.discardTiles?.center
   );
-  const availableActions = getAvailableActions(gameState, gameApiAvailable);
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
+  const availableActions = getAvailableActions(gameState, gameApiAvailable || isUserTurn || isClaimWindowOpen);
+
+
+  useEffect(() => {
+    const status = String(gameState.status || '').toLowerCase();
+    const shouldRunTimer = ['playing', 'resolving', 'active'].includes(status) || isUserTurn || isClaimWindowOpen;
+
+    if (!shouldRunTimer || displayTimer <= 0) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setDisplayTimer((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [displayTimer, gameState.status, isClaimWindowOpen, isUserTurn]);
+
 
   useEffect(() => {
     const status = String(gameState.status || '').toLowerCase();
@@ -688,7 +741,7 @@ export default function MahjongGamePage() {
         <TileWall count={14} direction="horizontal" className="wall-top" />
         <TileWall count={13} direction="vertical" className="wall-right" />
 
-        <Compass round={gameState.round || 'East 1'} timer={gameState.timer || 18} turnLabel={activeTurnLabel} />
+        <Compass round={gameState.round || 'East 1'} timer={displayTimer} turnLabel={activeTurnLabel} />
 
         <div className="gameplay-upper-discard" aria-label="Top discard tiles">
           {topDiscardTiles.map((tile, index) => (
