@@ -7,7 +7,7 @@ import { connectGameSocket, disconnectGameSocket, startPrivateGame } from '../se
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/matchmaking/${name}`;
-const DEFAULT_TIER_ID = 'sakura_garden_3p';
+const DEFAULT_TIER_ID = ''; // No hardcoded tier. Real tierId must come from backend room tier selection.
 
 const PROFILE_ASSET_ROOT = '/assets/profile/';
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
@@ -83,7 +83,7 @@ function getMatchAvatarSrc(player) {
 
 function createFrontendSession(context) {
   const currentPlayer = getCurrentPlayerIdentity();
-  const maxPlayers = Math.max(2, Math.min(Number(context.maxPlayers) || 3, 3));
+  const maxPlayers = Math.max(2, Math.min(Number(context.maxPlayers) || 2, 4));
 
   return {
     id: context.roomId || context.roomCode || 'socket_matchmaking',
@@ -124,7 +124,7 @@ function mergeCurrentPlayerIntoSession(session, context) {
     ? session.players
     : fallbackSession.players;
 
-  const maxPlayers = Math.max(2, Math.min(Number(session?.maxPlayers || context.maxPlayers) || 3, 3));
+  const maxPlayers = Math.max(2, Math.min(Number(session?.maxPlayers || context.maxPlayers) || 2, 4));
   const players = Array.from({ length: maxPlayers }, (_, index) => {
     if (index === 0) {
       return { ...fallbackSession.players[0], ...(incomingPlayers[0]?.isCurrentPlayer ? incomingPlayers[0] : {}) };
@@ -180,11 +180,11 @@ function getRequestedMatchmakingContext(locationState) {
   const storedContext = getMatchmakingContext() || {};
 
   return {
-    roomId: locationState?.roomId || storedContext.roomId || 'quick_match',
+    roomId: locationState?.roomId || storedContext.roomId || '',
     roomCode: locationState?.roomCode || storedContext.roomCode || null,
     tierId: locationState?.tierId || storedContext.tierId || DEFAULT_TIER_ID,
-    maxPlayers: locationState?.maxPlayers || storedContext.maxPlayers || 3,
-    source: locationState?.source || storedContext.source || 'quick_match',
+    maxPlayers: Number(locationState?.maxPlayers || storedContext.maxPlayers) || 2,
+    source: locationState?.source || storedContext.source || 'unknown',
     isHost: Boolean(locationState?.isHost ?? storedContext.isHost),
   };
 }
@@ -318,9 +318,21 @@ export default function MatchmakingPage() {
     const emitRoomJoin = (rawSocket = null) => {
       const code = String(context.roomCode || '').trim();
       const eventName = 'room:join';
+      const tierId = String(context.tierId || '').trim();
       const payload = code
         ? { roomCode: code }
-        : { tierId: context.tierId || DEFAULT_TIER_ID };
+        : tierId
+          ? { tierId }
+          : null;
+
+      if (!payload) {
+        console.error('[matchmaking] room:join blocked: missing tierId/roomCode', context);
+        if (isMounted) {
+          setConnectionStatus('error');
+          setErrorMessage('Missing tierId or roomCode. Select a real backend room tier first.');
+        }
+        return false;
+      }
 
       let joined = false;
 

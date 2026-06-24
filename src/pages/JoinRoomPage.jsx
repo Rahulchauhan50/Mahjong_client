@@ -5,7 +5,7 @@ import { saveMatchmakingContext } from '../store/gameStore.js';
 import { isMockApiEnabled } from '../services/api.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
-const MAX_ROOM_PLAYERS = 3;
+const MAX_ROOM_PLAYERS = 2;
 
 const recentRooms = [
   { id: 'ld_4729', code: 'LD-4729', name: 'Emma’s Room', players: 2, maxPlayers: MAX_ROOM_PLAYERS },
@@ -99,7 +99,7 @@ export default function JoinRoomPage() {
                 <article className="join-room-row">
                   <strong>API</strong>
                   <span>{t('joinRoomUnavailable')}</span>
-                  <em>0 / 3</em>
+                  <em>0 / —</em>
                   <button type="button" disabled>{t('join')}</button>
                 </article>
               )}

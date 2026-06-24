@@ -884,18 +884,14 @@ export default function MainMenuPage() {
                   t={t}
                   tx={tx}
                   onPlay={() => {
-                    saveMatchmakingContext({
-                      roomId: room.id || room.roomId || room.title,
-                      maxPlayers: room.maxPlayers || 3,
+                    const matchmakingState = {
+                      roomId: room.roomId || room.id || room.tierId || room.title,
+                      tierId: room.tierId || room.id || room.roomId || '',
+                      maxPlayers: Number(room.maxPlayers) || 3,
                       source: 'room-card',
-                    });
-                    navigate(ROUTES.matchmaking, {
-                      state: {
-                        roomId: room.id || room.roomId || room.title,
-                        maxPlayers: room.maxPlayers || 3,
-                        source: 'room-card',
-                      },
-                    });
+                    };
+                    saveMatchmakingContext(matchmakingState);
+                    navigate(ROUTES.matchmaking, { state: matchmakingState });
                   }}
                 />
               )) : (

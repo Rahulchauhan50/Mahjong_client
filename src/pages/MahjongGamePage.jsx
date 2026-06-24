@@ -535,12 +535,15 @@ export default function MahjongGamePage() {
   }, [gameApiAvailable, initialSocketPayload, location.state, navigate, resolvedMatchId, routeMatchId, socketGameplayEnabled, storedMatch, t]);
 
   const players = useMemo(
-    () => (Array.isArray(gameState.players) && gameState.players.length ? gameState.players : mockGameState.players),
-    [gameState.players]
+    () => (Array.isArray(gameState.players) && gameState.players.length
+      ? gameState.players
+      : (gameApiAvailable ? mockGameState.players : [])),
+    [gameApiAvailable, gameState.players]
   );
-  const topPlayer = players.find((player) => player.position === 'top') || mockGameState.players[0];
-  const leftPlayer = players.find((player) => player.position === 'left') || mockGameState.players[1];
-  const rightPlayer = players.find((player) => player.position === 'right') || mockGameState.players[2];
+  const emptyPlayer = { id: '', name: '', avatar: '', coins: '', position: '' };
+  const topPlayer = players.find((player) => player.position === 'top') || (gameApiAvailable ? mockGameState.players[0] : emptyPlayer);
+  const leftPlayer = players.find((player) => player.position === 'left') || (gameApiAvailable ? mockGameState.players[1] : emptyPlayer);
+  const rightPlayer = players.find((player) => player.position === 'right') || (gameApiAvailable ? mockGameState.players[2] : emptyPlayer);
 
   const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || (gameApiAvailable ? 'left' : '');
   const isUserTurn = activeTurnPosition === 'left';

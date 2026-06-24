@@ -22,9 +22,14 @@ export async function getRooms() {
 }
 
 export async function createPrivateRoom(payload = {}) {
+  const tierId = payload.tierId || payload.roomId;
+  if (!tierId) {
+    throw new Error('tierId is required to create a private room.');
+  }
+
   const requestPayload = {
-    tierId: payload.tierId || payload.roomId || 'sakura_garden_3p',
-    maxPlayers: Number(payload.maxPlayers) || 3,
+    tierId,
+    maxPlayers: Number(payload.maxPlayers) || 2,
   };
 
   const response = await postToApi('/rooms/private', requestPayload, (mockApi) => mockApi.createPrivateRoom(requestPayload));

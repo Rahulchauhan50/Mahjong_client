@@ -10,9 +10,9 @@ const asset = (name) => `/assets/create-room/${name}`;
 export default function CreateRoomPage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
-  const [maxPlayers, setMaxPlayers] = useState(3);
+  const [maxPlayers, setMaxPlayers] = useState(2);
   const [tiers, setTiers] = useState([]);
-  const [selectedTierId, setSelectedTierId] = useState('sakura_garden_3p');
+  const [selectedTierId, setSelectedTierId] = useState('');
   const [roomType, setRoomType] = useState('Private');
   const [roomName, setRoomName] = useState('My Sakura Room');
   const [roomCode, setRoomCode] = useState('');
@@ -34,7 +34,7 @@ export default function CreateRoomPage() {
 
         if (roomTiers?.[0]?.tierId) {
           setSelectedTierId(roomTiers[0].tierId);
-          setMaxPlayers(3);
+          setMaxPlayers(Number(roomTiers[0].maxPlayers) || 2);
         }
       })
       .catch((error) => {
@@ -47,7 +47,7 @@ export default function CreateRoomPage() {
   }, []);
 
   const roomTierOptions = useMemo(
-    () => (tiers.length ? tiers : [{ tierId: 'sakura_garden_3p', name: 'Sakura Garden', maxPlayers: 3 }]),
+    () => tiers,
     [tiers]
   );
 
@@ -59,7 +59,7 @@ export default function CreateRoomPage() {
   const selectTier = (tierId) => {
     const tier = roomTierOptions.find((item) => item.tierId === tierId);
     setSelectedTierId(tierId);
-    setMaxPlayers(3);
+    setMaxPlayers(Number(tier?.maxPlayers) || 2);
     setIsTierDropdownOpen(false);
   };
 
@@ -78,9 +78,15 @@ export default function CreateRoomPage() {
     setIsCreatingRoom(true);
 
     try {
+      const tierId = selectedTierId || selectedTier?.tierId;
+      if (!tierId) {
+        throw new Error('No backend room tier is selected.');
+      }
+
+      const requestedMaxPlayers = Number(selectedTier?.maxPlayers || maxPlayers) || 2;
       const room = await createPrivateRoom({
-        tierId: selectedTierId || selectedTier?.tierId || 'sakura_garden_3p',
-        maxPlayers: 3,
+        tierId,
+        maxPlayers: requestedMaxPlayers,
       });
 
       const nextRoomCode = room.roomCode || '';
@@ -91,7 +97,7 @@ export default function CreateRoomPage() {
         roomId,
         roomCode: nextRoomCode,
         tierId: room.tierId || selectedTierId,
-        maxPlayers: 3,
+        maxPlayers: requestedMaxPlayers,
         source: 'private-room',
         isHost: true,
       };
@@ -201,12 +207,12 @@ export default function CreateRoomPage() {
           <div className="create-form-row players-row">
             <label>{t('maxPlayers')}</label>
             <div className="segmented-options">
-              {[3].map((value) => (
+              {[Number(selectedTier?.maxPlayers || maxPlayers) || 2].map((value) => (
                 <button
                   type="button"
                   key={value}
                   className="active"
-                  onClick={() => setMaxPlayers(3)}
+                  onClick={() => setMaxPlayers(Number(selectedTier?.maxPlayers || value) || 2)}
                 >
                   {value} {t('players')}
                 </button>
