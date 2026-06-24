@@ -14,7 +14,7 @@ const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
 const DEFAULT_PROFILE_AVATAR = 'ICO.png';
 const GUEST_PLAYER_ID_STORAGE_KEY = 'sakura_guest_player_id';
 
-const clampMatchPlayerCount = (value, fallback = 2) => {
+const clampMatchPlayerCount = (value, fallback = 3) => {
   const numberValue = Number(value);
   if (!Number.isFinite(numberValue)) return fallback;
   return Math.max(2, Math.min(numberValue, 3));
@@ -44,7 +44,7 @@ function getExpectedMatchPlayerCount(...sources) {
     }
   }
 
-  return 2;
+  return 3;
 }
 
 function getStableGuestPlayerId() {
@@ -100,6 +100,9 @@ function isSearchingPlaceholder(player = {}) {
 
   return Boolean(player.isSearching)
     || id.startsWith('searching_')
+    || /^slot_\d+$/i.test(id)
+    || /^slot\s*\d+$/i.test(name)
+    || /^player\s*\d+$/i.test(name)
     || name === 'searching'
     || avatar.includes('icon_02_searching');
 }
@@ -349,8 +352,6 @@ export default function MatchmakingPage() {
       if (!isMounted || gameWasStarted) return;
 
       lobbyEventReceived = true;
-      window.clearTimeout(joinRetryId);
-      window.clearTimeout(joinSecondRetryId);
       window.clearTimeout(controllerJoinGuardId);
       setConnectionStatus(payload.status || 'waiting');
       setErrorMessage('');
@@ -389,10 +390,12 @@ export default function MatchmakingPage() {
       const realPlayers = payloadPlayers.length ? payloadPlayers : sessionPlayers;
       const backendPlayerCount = Number(payload.playerCount ?? payload.playersCount ?? payload.currentPlayers ?? realPlayers.length) || realPlayers.length;
 
-      if (realPlayers.length < expectedPlayers || backendPlayerCount < expectedPlayers) {
+      // Do not block game:start only because the backend did not include full player profiles.
+      // The game engine is already authoritative; missing names can be filled by sync/room updates later.
+      if (backendPlayerCount < expectedPlayers) {
         lobbyEventReceived = true;
         setConnectionStatus('waiting');
-        setErrorMessage(`Waiting for ${expectedPlayers} real players before starting gameplay. Received ${Math.max(realPlayers.length, backendPlayerCount)}.`);
+        setErrorMessage(`Waiting for ${expectedPlayers} players before starting gameplay. Received ${backendPlayerCount}.`);
         setSession((currentSession) => {
           const nextSession = mergeCurrentPlayerIntoSession({
             ...currentSession,
@@ -410,8 +413,6 @@ export default function MatchmakingPage() {
       lobbyEventReceived = true;
       gameWasStarted = true;
       window.clearTimeout(responseTimeoutId);
-      window.clearTimeout(joinRetryId);
-      window.clearTimeout(joinSecondRetryId);
       window.clearTimeout(controllerJoinGuardId);
       setConnectionStatus('starting');
       clearMatchmakingContext();
@@ -471,22 +472,32 @@ export default function MatchmakingPage() {
         case 'game_start':
           openGame(payload);
           break;
-        case 'error':
+        case 'error': {
+          const errorText = payload.message || payload.error || payload.reason || 'Socket error. Please try again.';
+          // Backend can return this if an old duplicate room:join reaches the queue.
+          // Keep the UI in matchmaking instead of stopping the player.
+          if (/already\s+in\s+the\s+queue/i.test(errorText)) {
+            setConnectionStatus('searching');
+            setErrorMessage('');
+            break;
+          }
+
           if (isMounted) {
             setConnectionStatus('error');
-            setErrorMessage(payload.message || payload.error || 'Socket error. Please try again.');
+            setErrorMessage(errorText);
           }
           break;
+        }
         default:
           break;
       }
     };
 
     let lobbyEventReceived = false;
-    let joinRetryId = null;
-    let joinSecondRetryId = null;
     let controllerJoinGuardId = null;
     let socket = null;
+    let roomJoinSent = false;
+    let roomJoinPayloadKey = '';
 
     const emitRoomJoin = (rawSocket = null) => {
       const code = String(context.roomCode || '').trim();
@@ -507,6 +518,12 @@ export default function MatchmakingPage() {
         return false;
       }
 
+      const nextPayloadKey = JSON.stringify(payload);
+      if (roomJoinSent && roomJoinPayloadKey === nextPayloadKey) {
+        console.info('[matchmaking] skip duplicate room:join', payload);
+        return true;
+      }
+
       let joined = false;
 
       if (rawSocket?.connected && typeof rawSocket.emit === 'function') {
@@ -517,6 +534,11 @@ export default function MatchmakingPage() {
         joined = true;
       } else if (socket?.connected && typeof socket.emit === 'function') {
         joined = Boolean(socket.emit(eventName, payload));
+      }
+
+      if (joined) {
+        roomJoinSent = true;
+        roomJoinPayloadKey = nextPayloadKey;
       }
 
       console.info('[matchmaking] emit room:join', payload, {
@@ -540,23 +562,10 @@ export default function MatchmakingPage() {
       setConnectionStatus(code ? 'joining_private' : 'searching');
       emitRoomJoin(rawSocket);
 
-      // Safety retry: the socket can connect before React's controller state is visible in DevTools.
-      // If no lobby event comes back, send room:join again so the backend definitely receives it.
-      window.clearTimeout(joinRetryId);
-      window.clearTimeout(joinSecondRetryId);
+      // Do not retry room:join after a successful emit. The backend charges the match fee
+      // on room:join, so duplicate emits can create duplicate deductions and
+      // "User is already in the queue" errors.
       window.clearTimeout(controllerJoinGuardId);
-
-      joinRetryId = window.setTimeout(() => {
-        if (isMounted && !gameWasStarted && !lobbyEventReceived) {
-          emitRoomJoin(rawSocket);
-        }
-      }, 1500);
-
-      joinSecondRetryId = window.setTimeout(() => {
-        if (isMounted && !gameWasStarted && !lobbyEventReceived) {
-          emitRoomJoin(rawSocket);
-        }
-      }, 5000);
     };
 
     socket = connectGameSocket({
@@ -584,7 +593,7 @@ export default function MatchmakingPage() {
     // Extra guard: if the connect callback was missed because of a hot reload or StrictMode remount,
     // still send room:join on the active connected controller.
     controllerJoinGuardId = window.setTimeout(() => {
-      if (isMounted && !gameWasStarted && !lobbyEventReceived && socket?.raw?.connected) {
+      if (isMounted && !gameWasStarted && !lobbyEventReceived && !roomJoinSent && socket?.raw?.connected) {
         joinRequestedRoom(socket.raw);
       }
     }, 800);
@@ -593,8 +602,6 @@ export default function MatchmakingPage() {
       isMounted = false;
       window.clearInterval(intervalId);
       window.clearTimeout(responseTimeoutId);
-      window.clearTimeout(joinRetryId);
-      window.clearTimeout(joinSecondRetryId);
       window.clearTimeout(controllerJoinGuardId);
 
       if (!gameWasStarted) {

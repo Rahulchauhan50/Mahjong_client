@@ -10,7 +10,7 @@ const asset = (name) => `/assets/create-room/${name}`;
 export default function CreateRoomPage() {
   const navigate = useNavigate();
   const { t, tx } = useLanguage();
-  const [maxPlayers, setMaxPlayers] = useState(2);
+  const [maxPlayers, setMaxPlayers] = useState(3);
   const [tiers, setTiers] = useState([]);
   const [selectedTierId, setSelectedTierId] = useState('');
   const [roomType, setRoomType] = useState('Private');
@@ -34,7 +34,7 @@ export default function CreateRoomPage() {
 
         if (roomTiers?.[0]?.tierId) {
           setSelectedTierId(roomTiers[0].tierId);
-          setMaxPlayers(Number(roomTiers[0].maxPlayers) || 2);
+          setMaxPlayers(Number(roomTiers[0].maxPlayers) || 3);
         }
       })
       .catch((error) => {
@@ -59,7 +59,7 @@ export default function CreateRoomPage() {
   const selectTier = (tierId) => {
     const tier = roomTierOptions.find((item) => item.tierId === tierId);
     setSelectedTierId(tierId);
-    setMaxPlayers(Number(tier?.maxPlayers) || 2);
+    setMaxPlayers(Number(tier?.maxPlayers) || 3);
     setIsTierDropdownOpen(false);
   };
 
@@ -83,7 +83,7 @@ export default function CreateRoomPage() {
         throw new Error('No backend room tier is selected.');
       }
 
-      const requestedMaxPlayers = Number(selectedTier?.maxPlayers || maxPlayers) || 2;
+      const requestedMaxPlayers = Number(selectedTier?.maxPlayers || maxPlayers) || 3;
       const room = await createPrivateRoom({
         tierId,
         maxPlayers: requestedMaxPlayers,
@@ -207,12 +207,12 @@ export default function CreateRoomPage() {
           <div className="create-form-row players-row">
             <label>{t('maxPlayers')}</label>
             <div className="segmented-options">
-              {[Number(selectedTier?.maxPlayers || maxPlayers) || 2].map((value) => (
+              {[Number(selectedTier?.maxPlayers || maxPlayers) || 3].map((value) => (
                 <button
                   type="button"
                   key={value}
                   className="active"
-                  onClick={() => setMaxPlayers(Number(selectedTier?.maxPlayers || value) || 2)}
+                  onClick={() => setMaxPlayers(Number(selectedTier?.maxPlayers || value) || 3)}
                 >
                   {value} {t('players')}
                 </button>

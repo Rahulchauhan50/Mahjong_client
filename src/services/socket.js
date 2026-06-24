@@ -32,6 +32,9 @@ export const GAME_SOCKET_EVENTS = {
   syncState: 'game:sync_state',
   gameOver: 'game:over',
   error: 'error',
+  gameError: 'game:error',
+  roomError: 'room:error',
+  actionRejected: 'player:action_rejected',
 };
 
 const SERVER_EVENTS_TO_LISTEN = [
@@ -46,6 +49,11 @@ const SERVER_EVENTS_TO_LISTEN = [
   GAME_SOCKET_EVENTS.syncState,
   GAME_SOCKET_EVENTS.gameOver,
   GAME_SOCKET_EVENTS.error,
+  GAME_SOCKET_EVENTS.gameError,
+  GAME_SOCKET_EVENTS.roomError,
+  GAME_SOCKET_EVENTS.actionRejected,
+  'action:rejected',
+  'player:error',
   // Legacy / fallback names kept so older backend builds do not silently break.
   'game_state',
   'gameState',
@@ -62,6 +70,43 @@ const SERVER_EVENTS_TO_LISTEN = [
 
 let activeSocket = null;
 let socketFactoryLoadPromise = null;
+const RECENT_GAME_MESSAGE_TTL_MS = 30000;
+const RECENT_GAME_MESSAGE_LIMIT = 60;
+const recentGameMessages = [];
+
+function rememberGameSocketMessage(message) {
+  if (!message?.type) return;
+  const gameplayTypes = new Set([
+    'game_start',
+    'game_state',
+    'turn_changed',
+    'drawn_tile',
+    'claim_window',
+    'action_broadcast',
+    'tile_discarded',
+    'game_finished',
+    'error',
+  ]);
+
+  if (!gameplayTypes.has(message.type)) return;
+
+  const now = Date.now();
+  recentGameMessages.push({ ...message, receivedAt: now });
+
+  while (recentGameMessages.length > RECENT_GAME_MESSAGE_LIMIT) {
+    recentGameMessages.shift();
+  }
+
+  const cutoff = now - RECENT_GAME_MESSAGE_TTL_MS;
+  while (recentGameMessages.length && recentGameMessages[0].receivedAt < cutoff) {
+    recentGameMessages.shift();
+  }
+}
+
+export function getBufferedGameSocketMessages() {
+  const cutoff = Date.now() - RECENT_GAME_MESSAGE_TTL_MS;
+  return recentGameMessages.filter((message) => message.receivedAt >= cutoff);
+}
 
 function addListener(listeners, eventName, callback) {
   if (!listeners.has(eventName)) listeners.set(eventName, new Set());
@@ -97,7 +142,7 @@ async function loadSocketFactory() {
 }
 
 function getBackendPlayerName(player = {}) {
-  return player.username
+  const value = player.username
     || player.name
     || player.displayName
     || player.nickname
@@ -106,6 +151,8 @@ function getBackendPlayerName(player = {}) {
     || player.id
     || player._id
     || '';
+  const normalized = String(value || '').trim();
+  return /^slot[_\s-]*\d+$/i.test(normalized) || /^player\s*\d+$/i.test(normalized) ? '' : normalized;
 }
 
 function normalizeRoomPlayers(players) {
@@ -171,6 +218,17 @@ export function normalizeSocketMessage(message) {
 
   if (originalEvent === GAME_SOCKET_EVENTS.gameOver || originalEvent === 'game_finished' || originalEvent === 'gameFinished') {
     return { type: 'game_finished', payload, originalEvent };
+  }
+
+  if (
+    originalEvent === GAME_SOCKET_EVENTS.error
+    || originalEvent === GAME_SOCKET_EVENTS.gameError
+    || originalEvent === GAME_SOCKET_EVENTS.roomError
+    || originalEvent === GAME_SOCKET_EVENTS.actionRejected
+    || originalEvent === 'action:rejected'
+    || originalEvent === 'player:error'
+  ) {
+    return { type: 'error', payload, originalEvent };
   }
 
   if (originalEvent === GAME_SOCKET_EVENTS.queueJoined) {
@@ -392,6 +450,7 @@ export function connectGameSocket({ matchId = null, onMessage, onOpen, onClose, 
       SERVER_EVENTS_TO_LISTEN.forEach((eventName) => {
         socket.on(eventName, (payload) => {
           const normalizedMessage = normalizeSocketMessage({ eventName, payload });
+          rememberGameSocketMessage(normalizedMessage);
           debugSocket(`event ${eventName}`, payload);
           if (onMessage) onMessage(normalizedMessage);
         });
@@ -418,6 +477,8 @@ export function getActiveGameSocket() {
 }
 
 export function disconnectGameSocket() {
+  recentGameMessages.length = 0;
+
   if (activeSocket) {
     activeSocket.disconnect();
   }

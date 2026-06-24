@@ -1,5 +1,5 @@
 function getBackendPlayerName(player = {}) {
-  return player.username
+  const value = player.username
     || player.name
     || player.displayName
     || player.nickname
@@ -8,6 +8,8 @@ function getBackendPlayerName(player = {}) {
     || player.id
     || player._id
     || '';
+  const normalized = String(value || '').trim();
+  return /^slot[_\s-]*\d+$/i.test(normalized) || /^player\s*\d+$/i.test(normalized) ? '' : normalized;
 }
 
 export function normalizePlayer(player = {}, index = 0) {

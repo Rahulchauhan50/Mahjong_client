@@ -12,9 +12,10 @@ import {
   discardTile,
   disconnectGameSocket,
   getActiveGameSocket,
+  getBufferedGameSocketMessages,
   passClaimWindow,
 } from '../services/socket.js';
-import { clearActiveMatch, getActiveMatch, saveActiveMatch } from '../store/gameStore.js';
+import { clearActiveMatch, clearMatchmakingContext, getActiveMatch, saveActiveMatch } from '../store/gameStore.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 import avatarBunbun from '../assets/profile/avatar-bunbun.png';
 import avatarKiki from '../assets/profile/avatar-kiki.png';
@@ -83,17 +84,19 @@ const getGameplayCurrentIdentity = (...sources) => {
   return storedUser;
 };
 
-const getRealPlayerName = (player = {}) => (
-  player.username
-  || player.name
-  || player.displayName
-  || player.nickname
-  || player.email
-  || player.userId
-  || player.id
-  || player._id
-  || ''
-);
+const getRealPlayerName = (player = {}) => {
+  const value = player.username
+    || player.name
+    || player.displayName
+    || player.nickname
+    || player.email
+    || player.userId
+    || player.id
+    || player._id
+    || '';
+  const normalized = String(value || '').trim();
+  return /^slot[_\s-]*\d+$/i.test(normalized) || /^player\s*\d+$/i.test(normalized) ? '' : normalized;
+};
 
 const normalizeGameplayPlayer = (player = {}, index = 0) => ({
   ...player,
@@ -193,6 +196,32 @@ function resolvePlayerAvatar(avatar, fallbackAvatar = 'Stevie.png') {
 }
 
 const DEFAULT_ACTIONS = ['chow', 'pong', 'kong', 'pass'];
+const ACTION_TO_UI = {
+  pung: 'pong',
+  pon: 'pong',
+  pong: 'pong',
+  chi: 'chow',
+  chow: 'chow',
+  kan: 'kong',
+  kong: 'kong',
+  ron: 'ron',
+  win: 'ron',
+  tsumo: 'tsumo',
+  riichi: 'riichi',
+  pass: 'pass',
+};
+const CLAIM_ACTION_ALIASES = {
+  pong: 'pung',
+  pung: 'pung',
+  pon: 'pung',
+  chow: 'chow',
+  chi: 'chow',
+  kong: 'kong',
+  kan: 'kong',
+  ron: 'ron',
+  win: 'ron',
+};
+const normalizeActionForUi = (action) => ACTION_TO_UI[String(action || '').toLowerCase()] || String(action || '').toLowerCase();
 const EMPTY_SOCKET_GAME_STATE = {
   status: 'waiting',
   players: [],
@@ -205,8 +234,6 @@ const EMPTY_SOCKET_GAME_STATE = {
   timer: 0,
   room: { name: 'Live Match' },
 };
-const CLAIM_ACTION_ALIASES = { pong: 'pung', pung: 'pung', chow: 'chow', kong: 'kong', ron: 'ron' };
-
 const toArray = (value) => (Array.isArray(value) ? value : []);
 
 const isGameplayPlaceholderPlayer = (player = {}) => {
@@ -216,6 +243,9 @@ const isGameplayPlaceholderPlayer = (player = {}) => {
 
   return Boolean(player.isSearching)
     || id.startsWith('searching_')
+    || /^slot_\d+$/i.test(id)
+    || /^slot\s*\d+$/i.test(name)
+    || /^player\s*\d+$/i.test(name)
     || name === 'searching'
     || avatar.includes('icon_02_searching');
 };
@@ -356,6 +386,21 @@ const getFirstTileList = (...values) => {
   return [];
 };
 
+const removeOneTileFromHand = (tiles = [], rawTileId = '', renderedTileName = '') => {
+  const list = toArray(tiles);
+  if (!list.length) return [];
+
+  const raw = String(rawTileId || '');
+  const exactIndex = raw ? list.findIndex((tile) => String(getTileId(tile)) === raw) : -1;
+  const faceIndex = renderedTileName
+    ? list.findIndex((tile) => normalizeTileName(tile) === renderedTileName)
+    : -1;
+  const removeIndex = exactIndex >= 0 ? exactIndex : faceIndex;
+
+  if (removeIndex < 0) return list;
+  return [...list.slice(0, removeIndex), ...list.slice(removeIndex + 1)];
+};
+
 const getPlayerTileList = (player, ...keys) => {
   if (!player) return [];
 
@@ -393,11 +438,8 @@ const getAvailableActions = (state, useMockDefaults = false) => {
   const actions = toArray(rawActions)
     .map((action) => (typeof action === 'string' ? action : action?.type || action?.key || action?.name || action?.action))
     .filter(Boolean)
-    .map((action) => String(action).toLowerCase())
-    .map((action) => (action === 'pung' ? 'pong' : action))
-    .map((action) => (action === 'kan' ? 'kong' : action))
-    .map((action) => (action === 'chi' ? 'chow' : action))
-    .filter((action) => action !== 'win')
+    .map(normalizeActionForUi)
+    .filter(Boolean)
     .filter((action, index, list) => list.indexOf(action) === index);
 
   if (state.claimWindow && actions.length && !actions.includes('pass')) {
@@ -521,13 +563,14 @@ function TileWall({ count = 14, direction = 'horizontal', className = '' }) {
   );
 }
 
-function SideTool({ icon, label, onClick, className = '' }) {
+function SideTool({ icon, label, onClick, className = '', disabled = false }) {
   return (
     <button
       className={`gameplay-side-tool ${className}`}
       type="button"
       aria-label={label}
       onClick={onClick}
+      disabled={disabled}
     >
       <span className="gameplay-side-icon-shell">
         <img src={asset(icon)} alt="" draggable="false" />
@@ -643,6 +686,7 @@ function mergeTurnStart(current, payload = {}) {
     availableActions: [],
     validActions: [],
     claimWindow: null,
+    pendingDiscardTileId: null,
   };
 }
 
@@ -652,11 +696,15 @@ function mergeDrawnTile(current, payload = {}) {
 
   const handTiles = getFirstRawTileList(current.handTiles, current.myHand, current.playerHand);
 
+  const nextHandTiles = handTiles.some((existingTile) => String(existingTile) === String(tile))
+    ? handTiles
+    : [...handTiles, tile];
+
   return {
     ...current,
     drawnTile: tile,
-    handTiles: [...handTiles, tile],
-    myHand: [...handTiles, tile],
+    handTiles: nextHandTiles,
+    myHand: nextHandTiles,
   };
 }
 
@@ -664,8 +712,9 @@ function mergeClaimWindow(current, payload = {}) {
   const validActions = toArray(payload.yourValidActions || payload.validActions || payload.actions)
     .map((action) => (typeof action === 'string' ? action : action?.type || action?.action || action?.key))
     .filter(Boolean)
-    .map((action) => String(action).toLowerCase())
-    .map((action) => (action === 'pung' ? 'pong' : action));
+    .map(normalizeActionForUi)
+    .filter(Boolean)
+    .filter((action, index, list) => list.indexOf(action) === index);
 
   const nextTimeLimit = Number(payload.timeLimit ?? payload.timer ?? payload.remainingSeconds ?? current.timer ?? 0) || 0;
   const timerDeadlineMs = resolveTimerDeadlineMs(payload, nextTimeLimit);
@@ -701,6 +750,7 @@ function mergeActionBroadcast(current, payload = {}) {
     status: action === 'disconnected' || action === 'reconnected' ? current.status : 'playing',
     claimWindow: null,
     availableActions: [],
+    pendingDiscardTileId: null,
   };
 
   if (action === 'discard' && tileId) {
@@ -715,8 +765,11 @@ function mergeActionBroadcast(current, payload = {}) {
 
     if (isLocalDiscard) {
       const discardedRawId = String(tileId);
-      next.handTiles = getFirstRawTileList(current.handTiles, current.myHand, current.playerHand)
-        .filter((tile) => String(tile) !== discardedRawId && normalizeTileName(tile) !== renderedTile);
+      next.handTiles = removeOneTileFromHand(
+        getFirstRawTileList(current.handTiles, current.myHand, current.playerHand),
+        discardedRawId,
+        renderedTile
+      );
       next.myHand = next.handTiles;
     }
   }
@@ -770,6 +823,7 @@ export default function MahjongGamePage() {
     matchId: resolvedMatchId,
   }));
   const [gameError, setGameError] = useState('');
+  const [isLeavingGame, setIsLeavingGame] = useState(false);
   const [displayTimer, setDisplayTimer] = useState(() => Number(gameState.timer ?? gameState.timeLimit ?? 0) || 0);
 
   useEffect(() => {
@@ -799,7 +853,12 @@ export default function MahjongGamePage() {
 
     if (initialSocketPayload) {
       const normalizedInitial = normalizeInitialSocketState(initialSocketPayload, resolvedMatchId);
-      setGameState((current) => ({ ...(current || {}), ...normalizedInitial, matchId: normalizedInitial.matchId || resolvedMatchId }));
+      setGameState((current) => ({
+        ...(current || {}),
+        ...normalizedInitial,
+        players: normalizedInitial.players?.length ? normalizedInitial.players : (current?.players || activeMatchBase.players || []),
+        matchId: normalizedInitial.matchId || resolvedMatchId,
+      }));
       saveActiveMatch({ ...activeMatchBase, initialGameState: normalizedInitial });
     }
 
@@ -829,18 +888,26 @@ export default function MahjongGamePage() {
 
       switch (message.type) {
         case 'game_start':
-          setGameState((current) => ({
-            ...(current || EMPTY_SOCKET_GAME_STATE),
-            ...normalizeInitialSocketState(payload, resolvedMatchId),
-            matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
-          }));
+          setGameState((current) => {
+            const normalizedStart = normalizeInitialSocketState(payload, resolvedMatchId);
+            return {
+              ...(current || EMPTY_SOCKET_GAME_STATE),
+              ...normalizedStart,
+              players: normalizedStart.players?.length ? normalizedStart.players : (current?.players || []),
+              matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
+            };
+          });
           setGameError('');
           break;
         case 'game_state':
-          setGameState({
-            ...EMPTY_SOCKET_GAME_STATE,
-            ...normalizeInitialSocketState(payload, resolvedMatchId),
-            matchId: payload.matchId || payload.gameId || payload.roomId || resolvedMatchId,
+          setGameState((current) => {
+            const normalizedSync = normalizeInitialSocketState(payload, resolvedMatchId);
+            return {
+              ...EMPTY_SOCKET_GAME_STATE,
+              ...normalizedSync,
+              players: normalizedSync.players?.length ? normalizedSync.players : (current?.players || []),
+              matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
+            };
           });
           setGameError('');
           break;
@@ -898,6 +965,9 @@ export default function MahjongGamePage() {
       ['game:action_broadcast', (payload) => handleSocketMessage({ type: 'action_broadcast', payload })],
       ['game:over', (payload) => handleSocketMessage({ type: 'game_finished', payload })],
       ['error', (payload) => handleSocketMessage({ type: 'error', payload })],
+      ['game:error', (payload) => handleSocketMessage({ type: 'error', payload })],
+      ['player:action_rejected', (payload) => handleSocketMessage({ type: 'error', payload })],
+      ['room:error', (payload) => handleSocketMessage({ type: 'error', payload })],
       ['connect', () => { if (isMounted) setGameError(''); }],
       ['disconnect', () => { if (isMounted) setGameError('Gameplay socket disconnected. Reconnect will sync state if the backend supports it.'); }],
     ];
@@ -905,6 +975,13 @@ export default function MahjongGamePage() {
     if (gameSocket?.on) {
       socketHandlers.forEach(([eventName, handler]) => gameSocket.on(eventName, handler));
     }
+
+    // Replay any gameplay events that arrived while React was navigating
+    // from matchmaking to the gameplay page. This prevents missing the first
+    // game:turn_start / player:drawn_tile pair and then waiting until auto-discard.
+    getBufferedGameSocketMessages().forEach((bufferedMessage) => {
+      handleSocketMessage(bufferedMessage);
+    });
 
     return () => {
       isMounted = false;
@@ -955,6 +1032,7 @@ export default function MahjongGamePage() {
   const rightPlayer = players.find((player) => player.position === 'right') || null;
   const realPlayerCount = players.filter((player) => !isGameplayPlaceholderPlayer(player)).length;
   const isLiveGameStateIncomplete = socketGameplayEnabled && !gameApiAvailable && realPlayerCount < expectedPlayerCount;
+  const shouldShowSyncWarning = isLiveGameStateIncomplete && !gameState.activeUserId && !gameState.activeSeat && !gameState.claimWindow;
   const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 
   const activeTurnPosition = resolveActiveTurnPosition({
@@ -964,15 +1042,13 @@ export default function MahjongGamePage() {
     storedMatch,
     useMockFallback: gameApiAvailable,
   });
-  const isUserTurn = !isLiveGameStateIncomplete && activeTurnPosition === 'left';
+  const isUserTurn = activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
     ? (topPlayer?.name === 'BUNBUN' ? 'Bunbun' : topPlayer?.name || 'Waiting')
     : activeTurnPosition === 'right'
       ? (rightPlayer?.name || 'Waiting')
       : 'Your';
-  const activeTurnLabel = isLiveGameStateIncomplete
-    ? t('pleaseWaitMatch')
-    : activeTurnPosition
+  const activeTurnLabel = activeTurnPosition
     ? (isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`)
     : t('pleaseWaitMatch');
 
@@ -996,7 +1072,7 @@ export default function MahjongGamePage() {
     gameState.discardTiles?.center
   );
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
-  const availableActions = isLiveGameStateIncomplete ? [] : getAvailableActions(gameState, false);
+  const availableActions = getAvailableActions(gameState, false);
 
 
   useEffect(() => {
@@ -1043,14 +1119,42 @@ export default function MahjongGamePage() {
     }
   }, [gameState.matchId, gameState.result, gameState.status, gameState.winner, gameState.winnerId, navigate, resolvedMatchId]);
 
+  const handleExitGameplaySession = async () => {
+    if (isLeavingGame) return;
+
+    setIsLeavingGame(true);
+
+    const leavePayload = {
+      matchId: gameState.matchId || resolvedMatchId,
+      gameId: gameState.gameId || gameState.matchId || resolvedMatchId,
+      roomId: gameState.roomId || gameState.room?.id || gameState.room?.roomId || location.state?.roomId || storedMatch?.roomId || resolvedMatchId,
+      roomCode: gameState.roomCode || gameState.room?.roomCode || location.state?.roomCode || storedMatch?.roomCode,
+      tierId: gameState.tierId || gameState.room?.tierId || location.state?.tierId || storedMatch?.tierId,
+    };
+
+    try {
+      await leaveGame(leavePayload);
+    } catch (error) {
+      console.warn('[gameplay] Unable to notify backend before leaving gameplay:', error);
+    } finally {
+      disconnectGameSocket();
+      clearActiveMatch();
+      clearMatchmakingContext();
+      navigate(ROUTES.mainMenu, { replace: true });
+    }
+  };
+
   const handleTileDiscard = (tile) => {
-    if (!isUserTurn) return;
+    if (!isUserTurn || gameState.pendingDiscardTileId) return;
 
     const tileId = getTileId(tile);
     if (!tileId) return;
 
     const sent = discardTile(tileId);
-    if (!sent) {
+    if (sent) {
+      setGameState((current) => ({ ...(current || {}), pendingDiscardTileId: tileId }));
+      setGameError('');
+    } else {
       setGameError('Unable to discard tile. Waiting for gameplay socket connection.');
     }
   };
@@ -1095,7 +1199,7 @@ export default function MahjongGamePage() {
       </div>
 
       {gameError ? <div className="gameplay-error" role="alert">{gameError}</div> : null}
-      {isLiveGameStateIncomplete ? (
+      {shouldShowSyncWarning ? (
         <div className="gameplay-error" role="status">
           Waiting for synchronized {expectedPlayerCount}P game state. Received {realPlayerCount}/{expectedPlayerCount} real players.
         </div>
@@ -1175,7 +1279,7 @@ export default function MahjongGamePage() {
               type="button"
               key={`${tile}-${index}`}
               aria-label={`Tile ${index + 1}`}
-              disabled={!isUserTurn}
+              disabled={!isUserTurn || Boolean(gameState.pendingDiscardTileId)}
               onClick={() => handleTileDiscard(rawPlayerHandTiles[index] || tile)}
             >
               <GameplayTile name={tile} />
@@ -1214,12 +1318,8 @@ export default function MahjongGamePage() {
           icon="exit.png"
           label={t('leave')}
           className="leave"
-          onClick={async () => {
-            await leaveGame(gameState.matchId || resolvedMatchId);
-            disconnectGameSocket();
-            clearActiveMatch();
-            navigate(ROUTES.mainMenu);
-          }}
+          onClick={handleExitGameplaySession}
+          disabled={isLeavingGame}
         />
       </aside>
     </section>
