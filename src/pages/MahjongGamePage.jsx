@@ -235,6 +235,21 @@ const EMPTY_SOCKET_GAME_STATE = {
   room: { name: 'Live Match' },
 };
 const toArray = (value) => (Array.isArray(value) ? value : []);
+const MAX_TABLE_DISCARD_TILES = 7;
+
+const getCircularTableTiles = (tiles = [], maxTiles = MAX_TABLE_DISCARD_TILES) => {
+  const list = toArray(tiles).filter(Boolean);
+  const max = Number(maxTiles) || MAX_TABLE_DISCARD_TILES;
+
+  if (list.length <= max) return list;
+
+  const slots = list.slice(0, max);
+  for (let index = max; index < list.length; index += 1) {
+    slots[index % max] = list[index];
+  }
+
+  return slots.filter(Boolean);
+};
 
 const isGameplayPlaceholderPlayer = (player = {}) => {
   const id = String(player.id || player.userId || player.playerId || '').trim().toLowerCase();
@@ -422,6 +437,10 @@ const getDiscardTilesByPosition = (state, player, position) => getFirstTileList(
   state.discardPiles?.[position],
   state[`${position}DiscardTiles`],
   state[`${position}Discards`]
+);
+
+const getVisibleDiscardTilesByPosition = (state, player, position) => (
+  getCircularTableTiles(getDiscardTilesByPosition(state, player, position))
 );
 
 const getAvailableActions = (state, useMockDefaults = false) => {
@@ -756,9 +775,9 @@ function mergeActionBroadcast(current, payload = {}) {
   if (action === 'discard' && tileId) {
     const renderedTile = tileIdToAssetName(tileId);
     const discards = { ...(current.discards || {}) };
-    const key = seatPosition || 'center';
     const currentIds = getCurrentPlayerIdCandidates(current);
     const isLocalDiscard = seatPosition === 'left' || (actionIds.length && actionIds.some((id) => currentIds.includes(id)));
+    const key = seatPosition || (isLocalDiscard ? 'left' : 'center');
 
     discards[key] = [...normalizeTileList(discards[key]), renderedTile];
     next.discards = discards;
@@ -1060,9 +1079,10 @@ export default function MahjongGamePage() {
     ...(gameApiAvailable ? [getPlayerTileList(leftPlayer, 'handTiles', 'hand', 'tiles')] : [])
   );
   const playerHandTiles = rawPlayerHandTiles.map((tile) => normalizeTileName(tile));
-  const topDiscardTiles = getDiscardTilesByPosition(gameState, topPlayer, 'top');
-  const rightDiscardTiles = hasRightPlayer ? getDiscardTilesByPosition(gameState, rightPlayer, 'right') : [];
-  const centerDiscardTiles = getFirstTileList(
+  const leftDiscardTiles = getVisibleDiscardTilesByPosition(gameState, leftPlayer, 'left');
+  const topDiscardTiles = getVisibleDiscardTilesByPosition(gameState, topPlayer, 'top');
+  const rightDiscardTiles = hasRightPlayer ? getVisibleDiscardTilesByPosition(gameState, rightPlayer, 'right') : [];
+  const centerDiscardTiles = getCircularTableTiles(getFirstTileList(
     gameState.centerTiles,
     gameState.centerDiscardTiles,
     gameState.centerMeldTiles,
@@ -1070,7 +1090,7 @@ export default function MahjongGamePage() {
     gameState.melds?.center,
     gameState.discards?.center,
     gameState.discardTiles?.center
-  );
+  ));
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
   const availableActions = getAvailableActions(gameState, false);
 
@@ -1268,6 +1288,12 @@ export default function MahjongGamePage() {
 
         <div className="gameplay-center-discard" aria-label="Center meld tiles">
           {centerDiscardTiles.map((tile, index) => (
+            <GameplayTile name={tile} key={`${tile}-${index}`} />
+          ))}
+        </div>
+
+        <div className="gameplay-left-discard" aria-label="Your discard tiles">
+          {leftDiscardTiles.map((tile, index) => (
             <GameplayTile name={tile} key={`${tile}-${index}`} />
           ))}
         </div>

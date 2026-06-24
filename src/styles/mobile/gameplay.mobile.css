@@ -351,7 +351,8 @@ display: block;
 
 .app-shell[data-device='mobile'] .gameplay-upper-discard,
 .app-shell[data-device='mobile'] .gameplay-center-discard,
-.app-shell[data-device='mobile'] .gameplay-right-discard {
+.app-shell[data-device='mobile'] .gameplay-right-discard,
+.app-shell[data-device='mobile'] .gameplay-left-discard {
 position: absolute;
   z-index: 8;
   display: flex;
@@ -365,7 +366,8 @@ top: 24.4%;
 }
 
 .app-shell[data-device='mobile'] .gameplay-upper-discard .gameplay-tile,
-.app-shell[data-device='mobile'] .gameplay-center-discard .gameplay-tile {
+.app-shell[data-device='mobile'] .gameplay-center-discard .gameplay-tile,
+.app-shell[data-device='mobile'] .gameplay-left-discard .gameplay-tile {
 margin-left: clamp(1px, -.45vw, -3px);
 }
 
@@ -375,6 +377,16 @@ top:62.2%;
   transform: translate(-50%, -50%) scale(1.2);
   transform-origin: center;
 }
+
+
+.app-shell[data-device='mobile'] .gameplay-left-discard {
+  bottom: 31.8%;
+  left: 50%;
+  max-width: 42%;
+  transform: translateX(-50%) scale(1.08);
+  transform-origin: bottom center;
+}
+
 
 .app-shell[data-device='mobile'] .gameplay-right-discard {
 top: 30%;
