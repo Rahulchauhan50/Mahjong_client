@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { clearMatchmakingContext, getMatchmakingContext, saveActiveMatch } from '../store/gameStore.js';
-import { connectGameSocket, disconnectGameSocket, joinPrivateRoom, joinPublicRoom, startPrivateGame } from '../services/socket.js';
+import { connectGameSocket, startPrivateGame } from '../services/socket.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/matchmaking/${name}`;
@@ -221,6 +221,9 @@ export default function MatchmakingPage() {
     const updateLobbySession = (payload = {}) => {
       if (!isMounted || gameWasStarted) return;
 
+      lobbyEventReceived = true;
+      window.clearTimeout(joinRetryId);
+      window.clearTimeout(joinSecondRetryId);
       setConnectionStatus(payload.status || 'waiting');
       setErrorMessage('');
       window.clearTimeout(responseTimeoutId);
@@ -245,8 +248,11 @@ export default function MatchmakingPage() {
       if (!isMounted || gameWasStarted) return;
 
       const matchId = payload.matchId || payload.gameId || payload.id || payload.roomId || context.roomId || context.roomCode || 'live_match';
+      lobbyEventReceived = true;
       gameWasStarted = true;
       window.clearTimeout(responseTimeoutId);
+      window.clearTimeout(joinRetryId);
+      window.clearTimeout(joinSecondRetryId);
       setConnectionStatus('starting');
       clearMatchmakingContext();
       saveActiveMatch({
@@ -301,32 +307,60 @@ export default function MatchmakingPage() {
       }
     };
 
-    const joinRequestedRoom = () => {
+    let lobbyEventReceived = false;
+    let joinRetryId = null;
+    let joinSecondRetryId = null;
+
+    const emitRoomJoin = (rawSocket = null) => {
       const code = String(context.roomCode || '').trim();
+      const eventName = 'room:join';
+      const payload = code
+        ? { roomCode: code }
+        : { tierId: context.tierId || DEFAULT_TIER_ID };
 
-      if (code) {
-        setConnectionStatus('joining_private');
-        const joined = joinPrivateRoom(code);
-        if (!joined && isMounted) {
-          setConnectionStatus('error');
-          setErrorMessage('Socket is not connected yet. Please try again.');
-        }
-        return;
-      }
+      const emitTarget = rawSocket?.connected ? rawSocket : null;
+      const joined = emitTarget
+        ? (emitTarget.emit(eventName, payload), true)
+        : socket?.emit?.(eventName, payload);
 
-      const tierId = context.tierId || context.roomId || DEFAULT_TIER_ID;
-      setConnectionStatus('searching');
-      const joined = joinPublicRoom(tierId);
+      console.info('[matchmaking] emit room:join', payload, { connected: Boolean(rawSocket?.connected || socket?.connected) });
+
       if (!joined && isMounted) {
         setConnectionStatus('error');
         setErrorMessage('Socket is not connected yet. Please try again.');
+        return false;
       }
+
+      return true;
+    };
+
+    const joinRequestedRoom = (rawSocket = null) => {
+      const code = String(context.roomCode || '').trim();
+      setConnectionStatus(code ? 'joining_private' : 'searching');
+      emitRoomJoin(rawSocket);
+
+      // Safety retry: the socket can connect before React's controller state is visible in DevTools.
+      // If no lobby event comes back, send room:join again so the backend definitely receives it.
+      window.clearTimeout(joinRetryId);
+      window.clearTimeout(joinSecondRetryId);
+
+      joinRetryId = window.setTimeout(() => {
+        if (isMounted && !gameWasStarted && !lobbyEventReceived) {
+          emitRoomJoin(rawSocket);
+        }
+      }, 1500);
+
+      joinSecondRetryId = window.setTimeout(() => {
+        if (isMounted && !gameWasStarted && !lobbyEventReceived) {
+          emitRoomJoin(rawSocket);
+        }
+      }, 5000);
     };
 
     const socket = connectGameSocket({
-      onOpen: () => {
+      onOpen: (rawSocket) => {
         if (isMounted) setConnectionStatus('connected');
-        joinRequestedRoom();
+        joinRequestedRoom(rawSocket);
       },
       onMessage: handleSocketMessage,
       onError: (error) => {
@@ -348,6 +382,8 @@ export default function MatchmakingPage() {
       isMounted = false;
       window.clearInterval(intervalId);
       window.clearTimeout(responseTimeoutId);
+      window.clearTimeout(joinRetryId);
+      window.clearTimeout(joinSecondRetryId);
 
       if (!gameWasStarted) {
         socket?.disconnect?.();
