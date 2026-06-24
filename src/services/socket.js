@@ -250,6 +250,7 @@ export function connectGameSocket({ matchId = null, onMessage, onOpen, onClose, 
     mode: 'socket.io',
     matchId,
     raw: null,
+    closed: false,
     on(eventName, callback) {
       if (!eventName || typeof callback !== 'function') return this;
 
@@ -295,9 +296,13 @@ export function connectGameSocket({ matchId = null, onMessage, onOpen, onClose, 
       return this;
     },
     disconnect() {
+      this.closed = true;
       if (this.raw) {
         SERVER_EVENTS_TO_LISTEN.forEach((eventName) => this.raw.off(eventName));
         forEachListener(listeners, (callback, eventName) => this.raw.off(eventName, callback));
+        this.raw.off('connect');
+        this.raw.off('disconnect');
+        this.raw.off('connect_error');
         this.raw.disconnect();
       }
       this.connected = false;
@@ -315,6 +320,10 @@ export function connectGameSocket({ matchId = null, onMessage, onOpen, onClose, 
         throw new Error('socket.io-client did not expose an io() factory.');
       }
 
+      if (controller.closed) {
+        return;
+      }
+
       const token = getAuthToken();
       const socket = io(getSocketUrl(), {
         auth: token ? { token } : {},
@@ -327,21 +336,32 @@ export function connectGameSocket({ matchId = null, onMessage, onOpen, onClose, 
         timeout: 12000,
       });
 
+      if (controller.closed) {
+        socket.disconnect();
+        return;
+      }
+
       controller.raw = socket;
 
       socket.on('connect', () => {
+        if (controller.closed) {
+          socket.disconnect();
+          return;
+        }
         controller.connected = true;
         debugSocket('connected', { id: socket.id });
         if (onOpen) onOpen(socket);
       });
 
       socket.on('disconnect', (reason) => {
+        if (controller.closed) return;
         controller.connected = false;
         debugSocket('disconnected', { reason });
         if (onClose) onClose({ reason });
       });
 
       socket.on('connect_error', (error) => {
+        if (controller.closed) return;
         controller.connected = false;
         console.warn('[game-socket] connect_error:', getErrorMessage(error, 'Unable to connect to gameplay server.'));
         if (onError) onError(error);
@@ -366,7 +386,7 @@ export function connectGameSocket({ matchId = null, onMessage, onOpen, onClose, 
         socket.on(eventName, callback);
       });
 
-      if (autoConnect) {
+      if (autoConnect && !controller.closed) {
         socket.connect();
       }
     })

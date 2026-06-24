@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
 import { getStoredAuthUser } from '../services/authService.js';
 import { clearMatchmakingContext, getMatchmakingContext, saveActiveMatch } from '../store/gameStore.js';
-import { connectGameSocket, startPrivateGame } from '../services/socket.js';
+import { connectGameSocket, disconnectGameSocket, startPrivateGame } from '../services/socket.js';
 import { useLanguage } from '../i18n/useLanguage.js';
 
 const asset = (name) => `/assets/matchmaking/${name}`;
@@ -224,6 +224,7 @@ export default function MatchmakingPage() {
       lobbyEventReceived = true;
       window.clearTimeout(joinRetryId);
       window.clearTimeout(joinSecondRetryId);
+      window.clearTimeout(controllerJoinGuardId);
       setConnectionStatus(payload.status || 'waiting');
       setErrorMessage('');
       window.clearTimeout(responseTimeoutId);
@@ -253,6 +254,7 @@ export default function MatchmakingPage() {
       window.clearTimeout(responseTimeoutId);
       window.clearTimeout(joinRetryId);
       window.clearTimeout(joinSecondRetryId);
+      window.clearTimeout(controllerJoinGuardId);
       setConnectionStatus('starting');
       clearMatchmakingContext();
       saveActiveMatch({
@@ -310,6 +312,8 @@ export default function MatchmakingPage() {
     let lobbyEventReceived = false;
     let joinRetryId = null;
     let joinSecondRetryId = null;
+    let controllerJoinGuardId = null;
+    let socket = null;
 
     const emitRoomJoin = (rawSocket = null) => {
       const code = String(context.roomCode || '').trim();
@@ -318,16 +322,28 @@ export default function MatchmakingPage() {
         ? { roomCode: code }
         : { tierId: context.tierId || DEFAULT_TIER_ID };
 
-      const emitTarget = rawSocket?.connected ? rawSocket : null;
-      const joined = emitTarget
-        ? (emitTarget.emit(eventName, payload), true)
-        : socket?.emit?.(eventName, payload);
+      let joined = false;
 
-      console.info('[matchmaking] emit room:join', payload, { connected: Boolean(rawSocket?.connected || socket?.connected) });
+      if (rawSocket?.connected && typeof rawSocket.emit === 'function') {
+        rawSocket.emit(eventName, payload);
+        joined = true;
+      } else if (socket?.raw?.connected && typeof socket.raw.emit === 'function') {
+        socket.raw.emit(eventName, payload);
+        joined = true;
+      } else if (socket?.connected && typeof socket.emit === 'function') {
+        joined = Boolean(socket.emit(eventName, payload));
+      }
+
+      console.info('[matchmaking] emit room:join', payload, {
+        joined,
+        rawConnected: Boolean(rawSocket?.connected),
+        controllerConnected: Boolean(socket?.connected),
+        hasRaw: Boolean(socket?.raw),
+      });
 
       if (!joined && isMounted) {
-        setConnectionStatus('error');
-        setErrorMessage('Socket is not connected yet. Please try again.');
+        setConnectionStatus('connected');
+        setErrorMessage('Socket connected, waiting to send room:join...');
         return false;
       }
 
@@ -343,6 +359,7 @@ export default function MatchmakingPage() {
       // If no lobby event comes back, send room:join again so the backend definitely receives it.
       window.clearTimeout(joinRetryId);
       window.clearTimeout(joinSecondRetryId);
+      window.clearTimeout(controllerJoinGuardId);
 
       joinRetryId = window.setTimeout(() => {
         if (isMounted && !gameWasStarted && !lobbyEventReceived) {
@@ -357,9 +374,10 @@ export default function MatchmakingPage() {
       }, 5000);
     };
 
-    const socket = connectGameSocket({
+    socket = connectGameSocket({
       onOpen: (rawSocket) => {
-        if (isMounted) setConnectionStatus('connected');
+        if (!isMounted) return;
+        setConnectionStatus('connected');
         joinRequestedRoom(rawSocket);
       },
       onMessage: handleSocketMessage,
@@ -378,12 +396,21 @@ export default function MatchmakingPage() {
       },
     });
 
+    // Extra guard: if the connect callback was missed because of a hot reload or StrictMode remount,
+    // still send room:join on the active connected controller.
+    controllerJoinGuardId = window.setTimeout(() => {
+      if (isMounted && !gameWasStarted && !lobbyEventReceived && socket?.raw?.connected) {
+        joinRequestedRoom(socket.raw);
+      }
+    }, 800);
+
     return () => {
       isMounted = false;
       window.clearInterval(intervalId);
       window.clearTimeout(responseTimeoutId);
       window.clearTimeout(joinRetryId);
       window.clearTimeout(joinSecondRetryId);
+      window.clearTimeout(controllerJoinGuardId);
 
       if (!gameWasStarted) {
         socket?.disconnect?.();
