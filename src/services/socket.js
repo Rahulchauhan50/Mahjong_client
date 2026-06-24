@@ -96,26 +96,16 @@ async function loadSocketFactory() {
   return socketFactoryLoadPromise;
 }
 
-function isPlaceholderIdentityValue(value) {
-  const clean = String(value || '').trim().toLowerCase();
-  return !clean
-    || clean === 'searching'
-    || clean === 'waiting'
-    || clean === 'unknown'
-    || clean === 'unknown player'
-    || /^slot[_\s-]*\d+$/i.test(clean)
-    || /^player[_\s-]*\d+$/i.test(clean)
-    || clean.startsWith('searching_');
-}
-
 function getBackendPlayerName(player = {}) {
-  const candidates = [player.username, player.displayName, player.nickname, player.name, player.email];
-  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
-}
-
-function getBackendPlayerId(player = {}) {
-  const candidates = [player.userId, player.id, player._id, player.playerId, player.socketId, player.clientId];
-  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
+  return player.username
+    || player.name
+    || player.displayName
+    || player.nickname
+    || player.email
+    || player.userId
+    || player.id
+    || player._id
+    || '';
 }
 
 function normalizeRoomPlayers(players) {
@@ -125,8 +115,8 @@ function normalizeRoomPlayers(players) {
     .filter(Boolean)
     .map((player) => ({
       ...player,
-      id: getBackendPlayerId(player),
-      userId: player.userId || getBackendPlayerId(player),
+      id: player.id || player.userId || player._id || player.playerId || player.socketId || '',
+      userId: player.userId || player.id || player._id || player.playerId || '',
       name: getBackendPlayerName(player),
       username: player.username || getBackendPlayerName(player),
       avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || null,

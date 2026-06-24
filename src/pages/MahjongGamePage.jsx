@@ -83,51 +83,27 @@ const getGameplayCurrentIdentity = (...sources) => {
   return storedUser;
 };
 
-const isPlaceholderIdentityValue = (value) => {
-  const clean = String(value || '').trim().toLowerCase();
-  return !clean
-    || clean === 'searching'
-    || clean === 'waiting'
-    || clean === 'unknown'
-    || clean === 'unknown player'
-    || /^slot[_\s-]*\d+$/i.test(clean)
-    || /^player[_\s-]*\d+$/i.test(clean)
-    || /^guest[_\s-]*\d*$/i.test(clean)
-    || clean.startsWith('searching_');
-};
+const getRealPlayerName = (player = {}) => (
+  player.username
+  || player.name
+  || player.displayName
+  || player.nickname
+  || player.email
+  || player.userId
+  || player.id
+  || player._id
+  || ''
+);
 
-const getRealPlayerName = (player = {}) => {
-  const candidates = [
-    player.username,
-    player.displayName,
-    player.nickname,
-    player.name,
-    player.email,
-  ];
-
-  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
-};
-
-const getReliableBackendPlayerId = (player = {}) => {
-  const candidates = [player.userId, player.id, player._id, player.playerId, player.uid, player.clientId, player.socketId];
-  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
-};
-
-const normalizeGameplayPlayer = (player = {}, index = 0) => {
-  const id = getReliableBackendPlayerId(player);
-  const name = getRealPlayerName(player);
-
-  return {
-    ...player,
-    id,
-    userId: player.userId || id,
-    name,
-    username: player.username || name,
-    avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || null,
-    coins: player.coins ?? player.balance ?? player.score ?? player.points ?? '0',
-    hasRealIdentity: Boolean(id || name),
-  };
-};
+const normalizeGameplayPlayer = (player = {}, index = 0) => ({
+  ...player,
+  id: player.id || player.userId || player._id || player.playerId || player.clientId || player.socketId || '',
+  userId: player.userId || player.id || player._id || player.playerId || '',
+  name: getRealPlayerName(player),
+  username: player.username || getRealPlayerName(player),
+  avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || null,
+  coins: player.coins ?? player.balance ?? player.score ?? player.points ?? '0',
+});
 
 const listFromSeatMap = (seatMap = {}) => (
   seatMap && typeof seatMap === 'object' && !Array.isArray(seatMap)
@@ -237,13 +213,10 @@ const isGameplayPlaceholderPlayer = (player = {}) => {
   const id = String(player.id || player.userId || player.playerId || '').trim().toLowerCase();
   const name = String(player.name || player.username || player.displayName || '').trim().toLowerCase();
   const avatar = String(player.avatar || player.avatarUrl || player.avatarId || '').trim().toLowerCase();
-  const hasRealName = Boolean(getRealPlayerName(player));
-  const hasReliableId = Boolean(getReliableBackendPlayerId(player));
 
   return Boolean(player.isSearching)
-    || (!hasRealName && !hasReliableId)
-    || (Boolean(id) && isPlaceholderIdentityValue(id))
-    || (Boolean(name) && isPlaceholderIdentityValue(name))
+    || id.startsWith('searching_')
+    || name === 'searching'
     || avatar.includes('icon_02_searching');
 };
 
@@ -421,10 +394,10 @@ const getAvailableActions = (state, useMockDefaults = false) => {
     .map((action) => (typeof action === 'string' ? action : action?.type || action?.key || action?.name || action?.action))
     .filter(Boolean)
     .map((action) => String(action).toLowerCase())
-    .map((action) => (action === 'pung' || action === 'pon' ? 'pong' : action))
+    .map((action) => (action === 'pung' ? 'pong' : action))
     .map((action) => (action === 'kan' ? 'kong' : action))
     .map((action) => (action === 'chi' ? 'chow' : action))
-    .map((action) => (action === 'win' ? 'ron' : action))
+    .filter((action) => action !== 'win')
     .filter((action, index, list) => list.indexOf(action) === index);
 
   if (state.claimWindow && actions.length && !actions.includes('pass')) {
@@ -445,7 +418,7 @@ const getEntityIds = (source = {}) => [
   source.socketId,
   source.clientId,
   source.profileId,
-].map(normalizeId).filter((id) => id && !isPlaceholderIdentityValue(id));
+].map(normalizeId).filter(Boolean);
 
 const getCurrentPlayerIdCandidates = (...sources) => {
   const storedUser = getStoredAuthUser() || {};
@@ -485,7 +458,7 @@ const playerMatchesAnyId = (player, ids = []) => {
 const getCurrentPlayerSeat = (...sources) => {
   for (const source of sources) {
     const seat = source?.mySeat || source?.seat || source?.currentPlayerSeat || source?.selfSeat || source?.initialGameState?.mySeat || source?.initialGameState?.seat;
-    if (seat) return normalizeSeat(seat);
+    if (seat) return seat;
   }
 
   return '';
@@ -509,11 +482,11 @@ const resolveActiveTurnPosition = ({ state, players, locationState, storedMatch,
   });
 
   if (activeIds.length) {
+    const activePlayer = toArray(players).find((player) => playerMatchesAnyId(player, activeIds));
+    if (activePlayer?.position) return activePlayer.position;
+
     const currentIds = getCurrentPlayerIdCandidates(state, locationState, storedMatch);
     if (activeIds.some((id) => currentIds.includes(id))) return 'left';
-
-    const activePlayer = toArray(players).find((player) => playerMatchesAnyId(player, activeIds));
-    if (activePlayer?.position && activePlayer.position !== 'left') return activePlayer.position;
   }
 
   const currentSeat = getCurrentPlayerSeat(state, locationState, storedMatch);
@@ -630,17 +603,6 @@ function getRelativeSeatPosition(activeSeat, ownSeat, playerCount = 3) {
   return '';
 }
 
-function getAllSeatCandidates(source = {}) {
-  return [
-    source.mySeat,
-    source.seat,
-    source.currentPlayerSeat,
-    source.selfSeat,
-    source.initialGameState?.mySeat,
-    source.initialGameState?.seat,
-  ].map(normalizeSeat).filter(Boolean);
-}
-
 function getSeatPosition(seat, state = {}) {
   if (!seat) return '';
 
@@ -703,10 +665,7 @@ function mergeClaimWindow(current, payload = {}) {
     .map((action) => (typeof action === 'string' ? action : action?.type || action?.action || action?.key))
     .filter(Boolean)
     .map((action) => String(action).toLowerCase())
-    .map((action) => (action === 'pung' || action === 'pon' ? 'pong' : action))
-    .map((action) => (action === 'kan' ? 'kong' : action))
-    .map((action) => (action === 'chi' ? 'chow' : action))
-    .map((action) => (action === 'win' ? 'ron' : action));
+    .map((action) => (action === 'pung' ? 'pong' : action));
 
   const nextTimeLimit = Number(payload.timeLimit ?? payload.timer ?? payload.remainingSeconds ?? current.timer ?? 0) || 0;
   const timerDeadlineMs = resolveTimerDeadlineMs(payload, nextTimeLimit);
@@ -720,22 +679,6 @@ function mergeClaimWindow(current, payload = {}) {
     timeLimit: nextTimeLimit || current.timeLimit,
     timerDeadlineMs,
   };
-}
-
-function removeOneRawTileFromHand(tiles = [], tileId = '') {
-  const rawTiles = getFirstRawTileList(tiles);
-  const targetRawId = String(tileId || '');
-  const targetFace = normalizeTileName(targetRawId);
-
-  let removeIndex = rawTiles.findIndex((tile) => String(tile) === targetRawId);
-
-  if (removeIndex < 0 && targetFace) {
-    removeIndex = rawTiles.findIndex((tile) => normalizeTileName(tile) === targetFace);
-  }
-
-  if (removeIndex < 0) return rawTiles;
-
-  return rawTiles.filter((_, index) => index !== removeIndex);
 }
 
 function mergeActionBroadcast(current, payload = {}) {
@@ -765,20 +708,15 @@ function mergeActionBroadcast(current, payload = {}) {
     const discards = { ...(current.discards || {}) };
     const key = seatPosition || 'center';
     const currentIds = getCurrentPlayerIdCandidates(current);
-    const actionSeat = normalizeSeat(payload.seat || payload.discardedBySeat);
-    const currentSeat = normalizeSeat(getCurrentPlayerSeat(current));
-    const isLocalDiscard = Boolean(
-      (actionSeat && currentSeat && actionSeat === currentSeat)
-      || (actionIds.length && actionIds.some((id) => currentIds.includes(id)))
-      || payload.isMe
-      || payload.isSelf
-    );
+    const isLocalDiscard = seatPosition === 'left' || (actionIds.length && actionIds.some((id) => currentIds.includes(id)));
 
     discards[key] = [...normalizeTileList(discards[key]), renderedTile];
     next.discards = discards;
 
     if (isLocalDiscard) {
-      next.handTiles = removeOneRawTileFromHand(getFirstRawTileList(current.handTiles, current.myHand, current.playerHand), tileId);
+      const discardedRawId = String(tileId);
+      next.handTiles = getFirstRawTileList(current.handTiles, current.myHand, current.playerHand)
+        .filter((tile) => String(tile) !== discardedRawId && normalizeTileName(tile) !== renderedTile);
       next.myHand = next.handTiles;
     }
   }
@@ -891,26 +829,18 @@ export default function MahjongGamePage() {
 
       switch (message.type) {
         case 'game_start':
-          setGameState((current) => {
-            const normalizedStart = normalizeInitialSocketState(payload, resolvedMatchId);
-            return {
-              ...(current || EMPTY_SOCKET_GAME_STATE),
-              ...normalizedStart,
-              players: normalizedStart.players?.length ? normalizedStart.players : (current?.players || []),
-              matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
-            };
-          });
+          setGameState((current) => ({
+            ...(current || EMPTY_SOCKET_GAME_STATE),
+            ...normalizeInitialSocketState(payload, resolvedMatchId),
+            matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
+          }));
           setGameError('');
           break;
         case 'game_state':
-          setGameState((current) => {
-            const normalizedSync = normalizeInitialSocketState(payload, resolvedMatchId);
-            return {
-              ...EMPTY_SOCKET_GAME_STATE,
-              ...normalizedSync,
-              players: normalizedSync.players?.length ? normalizedSync.players : (current?.players || []),
-              matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
-            };
+          setGameState({
+            ...EMPTY_SOCKET_GAME_STATE,
+            ...normalizeInitialSocketState(payload, resolvedMatchId),
+            matchId: payload.matchId || payload.gameId || payload.roomId || resolvedMatchId,
           });
           setGameError('');
           break;
@@ -1020,24 +950,11 @@ export default function MahjongGamePage() {
   }, [currentPlayerIds, currentPlayerSeat, expectedPlayerCount, gameApiAvailable, gameState, initialSocketPayload, location.state, storedMatch]);
 
   const fallbackCurrentPlayer = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
-  const topPlayer = players.find((player) => player.position === 'top' && !isGameplayPlaceholderPlayer(player)) || null;
+  const topPlayer = players.find((player) => player.position === 'top') || null;
   const leftPlayer = players.find((player) => player.position === 'left') || { ...fallbackCurrentPlayer, position: 'left' };
-  const rightPlayer = players.find((player) => player.position === 'right' && !isGameplayPlaceholderPlayer(player)) || null;
-  const rawPlayerHandTiles = getFirstRawTileList(
-    gameState.handTiles,
-    gameState.playerHand,
-    gameState.myHand,
-    gameState.currentPlayerHand,
-    ...(gameApiAvailable ? [getPlayerTileList(leftPlayer, 'handTiles', 'hand', 'tiles')] : [])
-  );
-  const playerHandTiles = rawPlayerHandTiles.map((tile) => normalizeTileName(tile));
-  const realPlayerCount = players.filter((player) => !isGameplayPlaceholderPlayer(player) || player.position === 'left').length;
-  const hasSocketHand = rawPlayerHandTiles.length > 0 || toArray(gameState.initialHand).length > 0;
-  const isLiveGameStateIncomplete = socketGameplayEnabled
-    && !gameApiAvailable
-    && !hasSocketHand
-    && !gameState.claimWindow
-    && realPlayerCount < expectedPlayerCount;
+  const rightPlayer = players.find((player) => player.position === 'right') || null;
+  const realPlayerCount = players.filter((player) => !isGameplayPlaceholderPlayer(player)).length;
+  const isLiveGameStateIncomplete = socketGameplayEnabled && !gameApiAvailable && realPlayerCount < expectedPlayerCount;
   const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 
   const activeTurnPosition = resolveActiveTurnPosition({
@@ -1059,6 +976,14 @@ export default function MahjongGamePage() {
     ? (isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`)
     : t('pleaseWaitMatch');
 
+  const rawPlayerHandTiles = getFirstRawTileList(
+    gameState.handTiles,
+    gameState.playerHand,
+    gameState.myHand,
+    gameState.currentPlayerHand,
+    ...(gameApiAvailable ? [getPlayerTileList(leftPlayer, 'handTiles', 'hand', 'tiles')] : [])
+  );
+  const playerHandTiles = rawPlayerHandTiles.map((tile) => normalizeTileName(tile));
   const topDiscardTiles = getDiscardTilesByPosition(gameState, topPlayer, 'top');
   const rightDiscardTiles = hasRightPlayer ? getDiscardTilesByPosition(gameState, rightPlayer, 'right') : [];
   const centerDiscardTiles = getFirstTileList(
@@ -1071,7 +996,7 @@ export default function MahjongGamePage() {
     gameState.discardTiles?.center
   );
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
-  const availableActions = getAvailableActions(gameState, false);
+  const availableActions = isLiveGameStateIncomplete ? [] : getAvailableActions(gameState, false);
 
 
   useEffect(() => {
@@ -1119,16 +1044,10 @@ export default function MahjongGamePage() {
   }, [gameState.matchId, gameState.result, gameState.status, gameState.winner, gameState.winnerId, navigate, resolvedMatchId]);
 
   const handleTileDiscard = (tile) => {
-    if (!isUserTurn || isClaimWindowOpen) return;
+    if (!isUserTurn) return;
 
     const tileId = getTileId(tile);
     if (!tileId) return;
-
-    const handHasTile = rawPlayerHandTiles.some((handTile) => String(getTileId(handTile)) === String(tileId));
-    if (!handHasTile) {
-      setGameError('This tile is not in the synchronized backend hand yet. Waiting for game:sync_state.');
-      return;
-    }
 
     const sent = discardTile(tileId);
     if (!sent) {

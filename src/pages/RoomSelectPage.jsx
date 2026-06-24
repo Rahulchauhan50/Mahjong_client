@@ -40,7 +40,7 @@ export default function RoomSelectPage() {
     const matchmakingState = {
       roomId,
       tierId: room.tierId || room.id || room.roomId || '',
-      maxPlayers: Number(room.maxPlayers) || 3,
+      maxPlayers: Number(room.maxPlayers) || 2,
       source: 'room-select',
     };
     saveMatchmakingContext(matchmakingState);
