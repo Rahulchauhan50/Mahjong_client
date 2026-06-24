@@ -54,11 +54,13 @@ const getExpectedGameplayPlayerCount = (...sources) => {
   for (const source of sources) {
     if (!source) continue;
 
-    const explicitCount = source.playerCount
-      ?? source.maxPlayers
+    const idCount = getGameplayPlayerCountFromId(source.tierId || source.roomId || source.room?.tierId || source.room?.id || source.room?.roomId || source.matchId || source.gameId);
+    if (idCount) return idCount;
+
+    const explicitCount = source.maxPlayers
+      ?? source.expectedPlayers
       ?? source.playerLimit
       ?? source.capacity
-      ?? source.room?.playerCount
       ?? source.room?.maxPlayers
       ?? source.room?.playerLimit
       ?? source.room?.capacity;
@@ -67,12 +69,7 @@ const getExpectedGameplayPlayerCount = (...sources) => {
       return clampGameplayPlayerCount(explicitCount);
     }
 
-    const idCount = getGameplayPlayerCountFromId(source.tierId || source.roomId || source.room?.tierId || source.room?.id || source.room?.roomId);
-    if (idCount) return idCount;
-  }
-
-  for (const source of sources) {
-    if (Array.isArray(source?.players) && source.players.length >= 2 && source.players.length <= 3) {
+    if (Array.isArray(source.players) && source.players.length >= 2 && source.players.length <= 3) {
       return clampGameplayPlayerCount(source.players.length);
     }
   }
@@ -194,11 +191,8 @@ const isGameplayPlaceholderPlayer = (player = {}) => {
   const avatar = String(player.avatar || player.avatarUrl || player.avatarId || '').trim().toLowerCase();
 
   return Boolean(player.isSearching)
-    || Boolean(player.isPlaceholder)
     || id.startsWith('searching_')
     || name === 'searching'
-    || name === 'opponent'
-    || name === 'opponent 2'
     || avatar.includes('icon_02_searching');
 };
 
@@ -479,30 +473,6 @@ const resolveActiveTurnPosition = ({ state, players, locationState, storedMatch,
   return useMockFallback ? 'left' : '';
 };
 
-const hasStrictTurnAuthority = ({ state, currentIds = [], currentSeat = '' }) => {
-  const activeSeat = state.activeSeat || state.currentTurnSeat || state.turnSeat || state.turn?.seat;
-  const activeUserId = state.currentTurnPlayerId || state.turnPlayerId || state.activeUserId || state.activePlayerId || state.turn?.playerId || state.turn?.userId;
-  const activeIds = getEntityIds({ id: activeUserId });
-
-  if (activeSeat && currentSeat && normalizeSeat(activeSeat) === normalizeSeat(currentSeat)) return true;
-  if (activeIds.length && activeIds.some((id) => currentIds.includes(id))) return true;
-
-  return false;
-};
-
-const hasAnyTurnIdentity = (state = {}) => Boolean(
-  state.activeSeat
-  || state.currentTurnSeat
-  || state.turnSeat
-  || state.turn?.seat
-  || state.currentTurnPlayerId
-  || state.turnPlayerId
-  || state.activeUserId
-  || state.activePlayerId
-  || state.turn?.playerId
-  || state.turn?.userId
-);
-
 const actionDefinitions = {
   chow: { labelKey: 'chow', className: 'blue' },
   pong: { labelKey: 'pong', className: 'green' },
@@ -737,15 +707,13 @@ function mergeActionBroadcast(current, payload = {}) {
 
 function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
   const normalized = normalizeGameState(payload);
-  const realPlayers = collectGameplayPlayers(payload, normalized);
-
   return {
     ...normalized,
     matchId: normalized.matchId || payload.matchId || payload.gameId || payload.roomId || fallbackMatchId,
     status: normalized.status || 'playing',
     mySeat: payload.mySeat || payload.seat || normalized.mySeat || normalized.seat,
     seat: payload.seat || normalized.seat,
-    ...(realPlayers.length ? { players: realPlayers } : {}),
+    players: collectGameplayPlayers(payload, normalized),
     handTiles: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.handTiles),
     myHand: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.myHand, normalized.handTiles),
     wallRemaining: payload.wallRemaining ?? normalized.wallRemaining,
@@ -838,22 +806,11 @@ export default function MahjongGamePage() {
       switch (message.type) {
         case 'game_start':
         case 'game_state':
-          setGameState((current) => {
-            const normalizedSocketState = normalizeInitialSocketState(payload, resolvedMatchId);
-            const payloadPlayers = collectGameplayPlayers(normalizedSocketState, payload);
-            const preservedPlayers = payloadPlayers.length
-              ? payloadPlayers
-              : collectGameplayPlayers(current, location.state, storedMatch, initialSocketPayload);
-
-            return {
-              ...(current || {}),
-              ...normalizedSocketState,
-              players: preservedPlayers,
-              matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
-              maxPlayers: normalizedSocketState.maxPlayers || current?.maxPlayers || location.state?.maxPlayers || storedMatch?.maxPlayers,
-              playerCount: normalizedSocketState.playerCount || current?.playerCount || location.state?.playerCount || storedMatch?.playerCount,
-            };
-          });
+          setGameState((current) => ({
+            ...(current || {}),
+            ...normalizeInitialSocketState(payload, resolvedMatchId),
+            matchId: payload.matchId || payload.gameId || payload.roomId || current?.matchId || resolvedMatchId,
+          }));
           setGameError('');
           break;
         case 'turn_changed':
@@ -958,15 +915,17 @@ export default function MahjongGamePage() {
       ? livePlayers
       : gameApiAvailable
         ? mockGameState.players
-        : [{ ...currentIdentity, isCurrentPlayer: true }, ...DEFAULT_GAMEPLAY_PLAYERS.filter((player) => player.position !== 'left')];
+        : [{ ...currentIdentity, isCurrentPlayer: true }];
 
     return seatPlayersForGameplay(sourcePlayers, expectedPlayerCount, currentPlayerIds, currentPlayerSeat);
   }, [currentPlayerIds, currentPlayerSeat, expectedPlayerCount, gameApiAvailable, gameState, initialSocketPayload, location.state, storedMatch]);
 
   const fallbackCurrentPlayer = normalizeGameplayPlayer(getGameplayCurrentIdentity(gameState, location.state, storedMatch, initialSocketPayload), 0);
-  const topPlayer = players.find((player) => player.position === 'top') || DEFAULT_GAMEPLAY_PLAYERS[0];
+  const topPlayer = players.find((player) => player.position === 'top') || (gameApiAvailable ? DEFAULT_GAMEPLAY_PLAYERS[0] : null);
   const leftPlayer = players.find((player) => player.position === 'left') || { ...fallbackCurrentPlayer, position: 'left' };
   const rightPlayer = players.find((player) => player.position === 'right') || null;
+  const realPlayerCount = players.filter((player) => !isGameplayPlaceholderPlayer(player)).length;
+  const isLiveGameStateIncomplete = socketGameplayEnabled && !gameApiAvailable && realPlayerCount < expectedPlayerCount;
   const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 
   const activeTurnPosition = resolveActiveTurnPosition({
@@ -976,21 +935,15 @@ export default function MahjongGamePage() {
     storedMatch,
     useMockFallback: gameApiAvailable,
   });
-  const isUserTurn = activeTurnPosition === 'left';
-  const hasBackendTurnIdentity = hasAnyTurnIdentity(gameState);
-  const canDiscardTile = gameApiAvailable
-    ? isUserTurn
-    : isUserTurn && hasBackendTurnIdentity && hasStrictTurnAuthority({
-      state: gameState,
-      currentIds: currentPlayerIds,
-      currentSeat: currentPlayerSeat,
-    });
+  const isUserTurn = !isLiveGameStateIncomplete && activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
-    ? (topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name)
+    ? (topPlayer?.name === 'BUNBUN' ? 'Bunbun' : topPlayer?.name || 'Opponent')
     : activeTurnPosition === 'right'
       ? (rightPlayer?.name || 'Player')
       : 'Your';
-  const activeTurnLabel = activeTurnPosition
+  const activeTurnLabel = isLiveGameStateIncomplete
+    ? t('pleaseWaitMatch')
+    : activeTurnPosition
     ? (isUserTurn ? t('yourTurn') : `${activeTurnName}${t('turnSuffix')}`)
     : t('pleaseWaitMatch');
 
@@ -1014,24 +967,7 @@ export default function MahjongGamePage() {
     gameState.discardTiles?.center
   );
   const isClaimWindowOpen = Boolean(gameState.claimWindow);
-  const backendActions = getAvailableActions(gameState, gameApiAvailable);
-  const availableActions = isClaimWindowOpen
-    ? backendActions
-    : backendActions.filter((action) => ['tsumo', 'riichi'].includes(action));
-  const hasEnoughRealPlayers = gameApiAvailable || collectGameplayPlayers({ players }).length >= expectedPlayerCount;
-
-  useEffect(() => {
-    if (gameApiAvailable) return;
-
-    if (!hasEnoughRealPlayers) {
-      setGameError(`Waiting for synchronized player data (${players.length}/${expectedPlayerCount}).`);
-      return;
-    }
-
-    if (gameError?.startsWith('Waiting for synchronized player data')) {
-      setGameError('');
-    }
-  }, [expectedPlayerCount, gameApiAvailable, gameError, hasEnoughRealPlayers, players.length]);
+  const availableActions = isLiveGameStateIncomplete ? [] : getAvailableActions(gameState, gameApiAvailable);
 
 
   useEffect(() => {
@@ -1079,10 +1015,7 @@ export default function MahjongGamePage() {
   }, [gameState.matchId, gameState.result, gameState.status, gameState.winner, gameState.winnerId, navigate, resolvedMatchId]);
 
   const handleTileDiscard = (tile) => {
-    if (!canDiscardTile) {
-      setGameError('Wait for your confirmed turn before discarding.');
-      return;
-    }
+    if (!isUserTurn) return;
 
     const tileId = getTileId(tile);
     if (!tileId) return;
@@ -1094,19 +1027,6 @@ export default function MahjongGamePage() {
   };
 
   const handleMahjongAction = (actionKey) => {
-    const claimActions = ['pass', 'chow', 'pong', 'kong', 'ron'];
-    const turnActions = ['tsumo', 'riichi'];
-
-    if (claimActions.includes(actionKey) && (!isClaimWindowOpen || !availableActions.includes(actionKey))) {
-      setGameError('This claim action is not available from the backend right now.');
-      return;
-    }
-
-    if (turnActions.includes(actionKey) && (!canDiscardTile || !availableActions.includes(actionKey))) {
-      setGameError('This turn action is not available from the backend right now.');
-      return;
-    }
-
     setSelectedAction(actionKey);
 
     if (actionKey === 'pass') {
@@ -1146,21 +1066,28 @@ export default function MahjongGamePage() {
       </div>
 
       {gameError ? <div className="gameplay-error" role="alert">{gameError}</div> : null}
+      {isLiveGameStateIncomplete ? (
+        <div className="gameplay-error" role="status">
+          Waiting for synchronized {expectedPlayerCount}P game state. Received {realPlayerCount}/{expectedPlayerCount} real players.
+        </div>
+      ) : null}
 
       <header className="gameplay-room-title">
         <span>{t('room')}</span>
         <strong>{gameState.room?.name || 'My Sakura Room'}</strong>
       </header>
 
-      <PlayerBadge
-        className="top-player"
-        variant="top"
-        avatar={topPlayer.avatar}
-        name={topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name}
-        coins={topPlayer.coins}
-        isActiveTurn={activeTurnPosition === 'top'}
-        turnLabel={activeTurnPosition === 'top' ? activeTurnLabel : ''}
-      />
+      {topPlayer ? (
+        <PlayerBadge
+          className="top-player"
+          variant="top"
+          avatar={topPlayer.avatar}
+          name={topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name}
+          coins={topPlayer.coins}
+          isActiveTurn={activeTurnPosition === 'top'}
+          turnLabel={activeTurnPosition === 'top' ? activeTurnLabel : ''}
+        />
+      ) : null}
 
       <PlayerBadge
         className="left-player"
@@ -1219,7 +1146,7 @@ export default function MahjongGamePage() {
               type="button"
               key={`${tile}-${index}`}
               aria-label={`Tile ${index + 1}`}
-              disabled={!canDiscardTile}
+              disabled={!isUserTurn}
               onClick={() => handleTileDiscard(rawPlayerHandTiles[index] || tile)}
             >
               <GameplayTile name={tile} />
@@ -1228,7 +1155,7 @@ export default function MahjongGamePage() {
         </div>
       </main>
 
-      <nav className={`gameplay-actions ${canDiscardTile ? 'player-turn' : 'waiting-turn'} ${isClaimWindowOpen ? 'claim-window' : ''}`} aria-label={t('mahjongActions')}>
+      <nav className={`gameplay-actions ${isUserTurn ? 'player-turn' : 'waiting-turn'} ${isClaimWindowOpen ? 'claim-window' : ''}`} aria-label={t('mahjongActions')}>
         {availableActions.map((actionKey) => {
           const action = actionDefinitions[actionKey];
 
@@ -1245,7 +1172,7 @@ export default function MahjongGamePage() {
               key={actionKey}
               onClick={() => handleMahjongAction(actionKey)}
               aria-pressed={isActive}
-              disabled={!availableActions.includes(actionKey) || (['pass', 'chow', 'pong', 'kong', 'ron'].includes(actionKey) ? !isClaimWindowOpen : !canDiscardTile)}
+              disabled={!isClaimWindowOpen && !isUserTurn}
             >
               {t(action.labelKey)}
             </button>
