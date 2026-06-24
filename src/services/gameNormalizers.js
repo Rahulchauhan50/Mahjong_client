@@ -1,13 +1,23 @@
+function isPlaceholderIdentityValue(value) {
+  const clean = String(value || '').trim().toLowerCase();
+  return !clean
+    || clean === 'searching'
+    || clean === 'waiting'
+    || clean === 'unknown'
+    || clean === 'unknown player'
+    || /^slot[_\s-]*\d+$/i.test(clean)
+    || /^player[_\s-]*\d+$/i.test(clean)
+    || clean.startsWith('searching_');
+}
+
 function getBackendPlayerName(player = {}) {
-  return player.username
-    || player.name
-    || player.displayName
-    || player.nickname
-    || player.email
-    || player.userId
-    || player.id
-    || player._id
-    || '';
+  const candidates = [player.username, player.displayName, player.nickname, player.name, player.email];
+  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
+}
+
+function getBackendPlayerId(player = {}) {
+  const candidates = [player.userId, player.id, player._id, player.playerId, player.socketId, player.clientId];
+  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
 }
 
 export function normalizePlayer(player = {}, index = 0) {
@@ -15,8 +25,8 @@ export function normalizePlayer(player = {}, index = 0) {
 
   return {
     ...player,
-    id: player.id || player.userId || player.playerId || player._id || player.socketId || '',
-    userId: player.userId || player.id || player.playerId || player._id || '',
+    id: getBackendPlayerId(player),
+    userId: player.userId || getBackendPlayerId(player),
     name: getBackendPlayerName(player),
     username: player.username || getBackendPlayerName(player),
     avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.icon || null,
@@ -235,7 +245,7 @@ function normalizeScoreValue(value, fallback = 0) {
 }
 
 export function normalizeResultPlayer(player = {}, index = 0, winnerId = null) {
-  const id = player.id || player.userId || player.playerId || `result_player_${index + 1}`;
+  const id = getBackendPlayerId(player) || `result_player_${index + 1}`;
   const score = normalizeScoreValue(
     player.scoreDelta ?? player.delta ?? player.pointsDelta ?? player.reward ?? player.score,
     index === 0 ? 0 : 0

@@ -14,7 +14,7 @@ const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
 const DEFAULT_PROFILE_AVATAR = 'ICO.png';
 const GUEST_PLAYER_ID_STORAGE_KEY = 'sakura_guest_player_id';
 
-const clampMatchPlayerCount = (value, fallback = 2) => {
+const clampMatchPlayerCount = (value, fallback = 3) => {
   const numberValue = Number(value);
   if (!Number.isFinite(numberValue)) return fallback;
   return Math.max(2, Math.min(numberValue, 3));
@@ -44,7 +44,29 @@ function getExpectedMatchPlayerCount(...sources) {
     }
   }
 
-  return 2;
+  return 3;
+}
+
+function isPlaceholderIdentityValue(value) {
+  const clean = String(value || '').trim().toLowerCase();
+  return !clean
+    || clean === 'searching'
+    || clean === 'waiting'
+    || clean === 'unknown'
+    || clean === 'unknown player'
+    || /^slot[_\s-]*\d+$/i.test(clean)
+    || /^player[_\s-]*\d+$/i.test(clean)
+    || clean.startsWith('searching_');
+}
+
+function getRealBackendName(player = {}) {
+  const candidates = [player.username, player.displayName, player.nickname, player.name, player.email];
+  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
+}
+
+function getReliableBackendId(player = {}) {
+  const candidates = [player.userId, player.id, player._id, player.playerId, player.uid, player.socketId, player.clientId];
+  return candidates.find((candidate) => !isPlaceholderIdentityValue(candidate)) || '';
 }
 
 function getStableGuestPlayerId() {
@@ -85,7 +107,7 @@ const normalizeId = (value) => String(value ?? '').trim();
 function getPlayerIds(player = {}) {
   return [player.id, player._id, player.userId, player.playerId, player.uid, player.socketId, player.clientId]
     .map(normalizeId)
-    .filter(Boolean);
+    .filter((id) => id && !isPlaceholderIdentityValue(id));
 }
 
 function playersShareIdentity(player, ids = []) {
@@ -97,32 +119,29 @@ function isSearchingPlaceholder(player = {}) {
   const id = normalizeId(player.id || player.userId || player.playerId).toLowerCase();
   const name = normalizeId(player.name || player.username || player.displayName).toLowerCase();
   const avatar = normalizeId(player.avatar || player.avatarUrl || player.avatarId).toLowerCase();
+  const hasRealName = Boolean(getRealBackendName(player));
+  const hasReliableId = Boolean(getReliableBackendId(player));
 
   return Boolean(player.isSearching)
-    || id.startsWith('searching_')
-    || name === 'searching'
+    || (!hasRealName && !hasReliableId)
+    || (Boolean(id) && isPlaceholderIdentityValue(id))
+    || (Boolean(name) && isPlaceholderIdentityValue(name))
     || avatar.includes('icon_02_searching');
 }
 
 function getBackendLobbyPlayerName(player = {}) {
-  return player.username
-    || player.name
-    || player.displayName
-    || player.nickname
-    || player.email
-    || player.userId
-    || player.id
-    || player._id
-    || '';
+  return getRealBackendName(player);
 }
 
 function normalizeLobbyPlayer(player = {}, index = 0) {
+  const id = getReliableBackendId(player);
+  const name = player.isSearching ? '' : getBackendLobbyPlayerName(player);
   const normalized = {
     ...player,
-    id: player.id || player.userId || player._id || player.playerId || player.uid || player.socketId || `slot_${index + 1}`,
-    userId: player.userId || player.id || player._id || player.playerId || player.uid || '',
-    name: player.isSearching ? 'Searching' : getBackendLobbyPlayerName(player),
-    username: player.username || getBackendLobbyPlayerName(player),
+    id,
+    userId: player.userId || id,
+    name,
+    username: player.username || name,
     avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon,
   };
 
@@ -390,21 +409,11 @@ export default function MatchmakingPage() {
       const backendPlayerCount = Number(payload.playerCount ?? payload.playersCount ?? payload.currentPlayers ?? realPlayers.length) || realPlayers.length;
 
       if (realPlayers.length < expectedPlayers || backendPlayerCount < expectedPlayers) {
-        lobbyEventReceived = true;
-        setConnectionStatus('waiting');
-        setErrorMessage(`Waiting for ${expectedPlayers} real players before starting gameplay. Received ${Math.max(realPlayers.length, backendPlayerCount)}.`);
-        setSession((currentSession) => {
-          const nextSession = mergeCurrentPlayerIntoSession({
-            ...currentSession,
-            ...payload,
-            maxPlayers: expectedPlayers,
-            status: 'waiting',
-            players: realPlayers.length ? realPlayers : currentSession?.players,
-          }, context);
-          latestSessionRef.current = nextSession;
-          return nextSession;
+        console.warn('[matchmaking] game:start did not include a full player list. Opening gameplay anyway and waiting for game:sync_state.', {
+          expectedPlayers,
+          realPlayers: realPlayers.length,
+          backendPlayerCount,
         });
-        return;
       }
 
       lobbyEventReceived = true;
@@ -471,18 +480,33 @@ export default function MatchmakingPage() {
         case 'game_start':
           openGame(payload);
           break;
-        case 'error':
+        case 'error': {
+          const socketErrorMessage = payload.message || payload.error || 'Socket error. Please try again.';
+          if (/already\s+in\s+the\s+queue/i.test(socketErrorMessage)) {
+            lobbyEventReceived = true;
+            window.clearTimeout(joinRetryId);
+            window.clearTimeout(joinSecondRetryId);
+            window.clearTimeout(controllerJoinGuardId);
+            if (isMounted) {
+              setConnectionStatus('searching');
+              setErrorMessage('');
+            }
+            break;
+          }
+
           if (isMounted) {
             setConnectionStatus('error');
-            setErrorMessage(payload.message || payload.error || 'Socket error. Please try again.');
+            setErrorMessage(socketErrorMessage);
           }
           break;
+        }
         default:
           break;
       }
     };
 
     let lobbyEventReceived = false;
+    let joinSentPayloadKey = '';
     let joinRetryId = null;
     let joinSecondRetryId = null;
     let controllerJoinGuardId = null;
@@ -505,6 +529,12 @@ export default function MatchmakingPage() {
           setErrorMessage('Missing tierId or roomCode. Select a real backend room tier first.');
         }
         return false;
+      }
+
+      const payloadKey = JSON.stringify(payload);
+      if (joinSentPayloadKey === payloadKey) {
+        console.info('[matchmaking] skip duplicate room:join', payload);
+        return true;
       }
 
       let joined = false;
@@ -532,6 +562,7 @@ export default function MatchmakingPage() {
         return false;
       }
 
+      joinSentPayloadKey = payloadKey;
       return true;
     };
 
