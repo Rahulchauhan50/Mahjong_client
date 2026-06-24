@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ROUTES, buildGameRoute } from '../router/routes.js';
+import { getStoredAuthUser } from '../services/authService.js';
 import { getGameState, isGameApiAvailable, leaveGame } from '../services/gameService.js';
 import { normalizeGameState } from '../services/gameNormalizers.js';
 import {
@@ -262,6 +263,93 @@ const getAvailableActions = (state, useMockDefaults = true) => {
     .filter((action, index, list) => list.indexOf(action) === index);
 };
 
+const normalizeId = (value) => String(value ?? '').trim();
+
+const getEntityIds = (source = {}) => [
+  source.id,
+  source._id,
+  source.userId,
+  source.playerId,
+  source.uid,
+  source.socketId,
+  source.clientId,
+  source.profileId,
+].map(normalizeId).filter(Boolean);
+
+const getCurrentPlayerIdCandidates = (...sources) => {
+  const storedUser = getStoredAuthUser() || {};
+  const ids = [];
+
+  sources.filter(Boolean).forEach((source) => {
+    ids.push(
+      source.myPlayerId,
+      source.currentPlayerId,
+      source.selfPlayerId,
+      source.localPlayerId,
+      source.userId,
+      source.playerId,
+      source.activeUserId,
+      source.room?.myPlayerId,
+      source.room?.currentPlayerId,
+      source.initialGameState?.myPlayerId,
+      source.initialGameState?.currentPlayerId,
+      source.initialGameState?.selfPlayerId,
+    );
+  });
+
+  ids.push(...getEntityIds(storedUser));
+
+  return ids.map(normalizeId).filter(Boolean).filter((id, index, list) => list.indexOf(id) === index);
+};
+
+const playerMatchesAnyId = (player, ids = []) => {
+  if (!player || !ids.length) return false;
+  const playerIds = getEntityIds(player);
+  return playerIds.some((id) => ids.includes(id));
+};
+
+const getCurrentPlayerSeat = (...sources) => {
+  for (const source of sources) {
+    const seat = source?.mySeat || source?.seat || source?.currentPlayerSeat || source?.selfSeat || source?.initialGameState?.mySeat || source?.initialGameState?.seat;
+    if (seat) return seat;
+  }
+
+  return '';
+};
+
+const normalizePosition = (value) => {
+  const position = String(value || '').toLowerCase();
+  return ['left', 'top', 'right'].includes(position) ? position : '';
+};
+
+const resolveActiveTurnPosition = ({ state, players, locationState, storedMatch, useMockFallback = false }) => {
+  const explicitPosition = normalizePosition(state.activeTurnPosition || state.currentTurnPosition || state.turnPosition);
+  if (explicitPosition) return explicitPosition;
+
+  const activeSeat = state.activeSeat || state.currentTurnSeat || state.turnSeat || state.turn?.seat;
+  const seatPosition = getSeatPosition(activeSeat, state);
+  if (seatPosition) return seatPosition;
+
+  const activeIds = getEntityIds({
+    id: state.currentTurnPlayerId || state.turnPlayerId || state.activeUserId || state.activePlayerId || state.turn?.playerId || state.turn?.userId,
+  });
+
+  if (activeIds.length) {
+    const activePlayer = toArray(players).find((player) => playerMatchesAnyId(player, activeIds));
+    if (activePlayer?.position) return activePlayer.position;
+
+    const currentIds = getCurrentPlayerIdCandidates(state, locationState, storedMatch);
+    if (activeIds.some((id) => currentIds.includes(id))) return 'left';
+  }
+
+  const currentSeat = getCurrentPlayerSeat(state, locationState, storedMatch);
+  if (currentSeat && activeSeat && String(currentSeat).toLowerCase() === String(activeSeat).toLowerCase()) {
+    return 'left';
+  }
+
+  return useMockFallback ? 'left' : '';
+};
+
 const actionDefinitions = {
   chow: { labelKey: 'chow', className: 'blue' },
   pong: { labelKey: 'pong', className: 'green' },
@@ -498,6 +586,7 @@ export default function MahjongGamePage() {
       roomId: location.state?.roomId || storedMatch?.roomId,
       roomCode: location.state?.roomCode || storedMatch?.roomCode,
       socketMode: socketGameplayEnabled,
+      maxPlayers: location.state?.maxPlayers || storedMatch?.maxPlayers || initialSocketPayload?.maxPlayers,
     };
 
     if (!gameApiAvailable && !socketGameplayEnabled && !getActiveGameSocket()) {
@@ -647,7 +736,13 @@ export default function MahjongGamePage() {
   const rightPlayer = players.find((player) => player.position === 'right') || null;
   const hasRightPlayer = expectedPlayerCount >= 3 && Boolean(rightPlayer);
 
-  const activeTurnPosition = gameState.activeTurnPosition || gameState.currentTurnPosition || gameState.turnPosition || ((gameApiAvailable || String(gameState.status || '').toLowerCase() === 'playing') ? 'left' : '');
+  const activeTurnPosition = resolveActiveTurnPosition({
+    state: gameState,
+    players,
+    locationState: location.state,
+    storedMatch,
+    useMockFallback: gameApiAvailable,
+  });
   const isUserTurn = activeTurnPosition === 'left';
   const activeTurnName = activeTurnPosition === 'top'
     ? (topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name)

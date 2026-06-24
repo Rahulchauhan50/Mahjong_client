@@ -12,6 +12,20 @@ const DEFAULT_TIER_ID = ''; // No hardcoded tier. Real tierId must come from bac
 const PROFILE_ASSET_ROOT = '/assets/profile/';
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
 const DEFAULT_PROFILE_AVATAR = 'ICO.png';
+const GUEST_PLAYER_ID_STORAGE_KEY = 'sakura_guest_player_id';
+
+function getStableGuestPlayerId() {
+  try {
+    const existingId = window.sessionStorage.getItem(GUEST_PLAYER_ID_STORAGE_KEY);
+    if (existingId) return existingId;
+
+    const nextId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    window.sessionStorage.setItem(GUEST_PLAYER_ID_STORAGE_KEY, nextId);
+    return nextId;
+  } catch {
+    return `guest_${Math.random().toString(36).slice(2, 8)}`;
+  }
+}
 
 function getStoredProfileAvatar() {
   try {
@@ -26,7 +40,7 @@ function getCurrentPlayerIdentity() {
   const storedAvatar = getStoredProfileAvatar();
 
   return {
-    id: storedUser.id || storedUser.userId || storedUser._id || 'current_player',
+    id: storedUser.id || storedUser.userId || storedUser._id || getStableGuestPlayerId(),
     name: storedUser.username || storedUser.name || storedUser.displayName || 'You',
     avatar: storedAvatar || storedUser.avatarUrl || storedUser.imageUrl || storedUser.avatar || storedUser.avatarId || DEFAULT_PROFILE_AVATAR,
   };
