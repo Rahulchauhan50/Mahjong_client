@@ -10,6 +10,7 @@ import {
   declareRiichi,
   declareWin,
   discardTile,
+  disconnectGameSocket,
   getActiveGameSocket,
   passClaimWindow,
 } from '../services/socket.js';
@@ -103,7 +104,8 @@ const collectGameplayPlayers = (...sources) => {
     if (!source) continue;
     const list = source.players || source.room?.players || source.initialGameState?.players || source.gameState?.players;
     if (Array.isArray(list) && list.length) {
-      return list.map(normalizeGameplayPlayer);
+      const players = list.map(normalizeGameplayPlayer).filter((player) => !isGameplayPlaceholderPlayer(player));
+      if (players.length) return players;
     }
   }
 
@@ -181,6 +183,55 @@ const EMPTY_SOCKET_GAME_STATE = {
 const CLAIM_ACTION_ALIASES = { pong: 'pung', pung: 'pung', chow: 'chow', kong: 'kong', ron: 'ron' };
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const isGameplayPlaceholderPlayer = (player = {}) => {
+  const id = String(player.id || player.userId || player.playerId || '').trim().toLowerCase();
+  const name = String(player.name || player.username || player.displayName || '').trim().toLowerCase();
+  const avatar = String(player.avatar || player.avatarUrl || player.avatarId || '').trim().toLowerCase();
+
+  return Boolean(player.isSearching)
+    || id.startsWith('searching_')
+    || name === 'searching'
+    || avatar.includes('icon_02_searching');
+};
+
+const parseTimerTimestampMs = (value) => {
+  if (value === undefined || value === null || value === '') return 0;
+
+  if (typeof value === 'number') {
+    return value > 9999999999 ? value : value * 1000;
+  }
+
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue)) {
+    return numericValue > 9999999999 ? numericValue : numericValue * 1000;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const getSecondsRemaining = (deadlineMs) => {
+  const deadline = Number(deadlineMs) || 0;
+  if (!deadline) return 0;
+  return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+};
+
+const resolveTimerDeadlineMs = (payload = {}, fallbackSeconds = 0) => {
+  const explicitDeadline = parseTimerTimestampMs(
+    payload.turnEndsAt
+    || payload.endsAt
+    || payload.expiresAt
+    || payload.deadline
+    || payload.timerEndsAt
+    || payload.claimEndsAt
+  );
+
+  if (explicitDeadline) return explicitDeadline;
+
+  const seconds = Number(payload.timeLimit ?? payload.timer ?? payload.remainingSeconds ?? fallbackSeconds ?? 0);
+  return Number.isFinite(seconds) && seconds > 0 ? Date.now() + seconds * 1000 : 0;
+};
 
 
 const TILE_ASSET_ALIASES = {
@@ -549,6 +600,9 @@ function mergeTurnStart(current, payload = {}) {
     || playerWithActiveId?.position
     || '';
 
+  const nextTimeLimit = Number(payload.timeLimit ?? payload.timer ?? payload.remainingSeconds ?? current.timeLimit ?? current.timer ?? 0) || 0;
+  const timerDeadlineMs = resolveTimerDeadlineMs(payload, nextTimeLimit);
+
   return {
     ...current,
     status: 'playing',
@@ -556,8 +610,9 @@ function mergeTurnStart(current, payload = {}) {
     activeUserId: activeUserId || current.activeUserId,
     activeTurnPosition,
     currentTurnPlayerId: activeUserId || current.currentTurnPlayerId,
-    timer: payload.timeLimit ?? payload.timer ?? current.timer,
-    timeLimit: payload.timeLimit ?? current.timeLimit,
+    timer: timerDeadlineMs ? getSecondsRemaining(timerDeadlineMs) : nextTimeLimit,
+    timeLimit: nextTimeLimit || current.timeLimit,
+    timerDeadlineMs,
     wallRemaining: payload.wallRemaining ?? current.wallRemaining,
     turnStartedAt: Date.now(),
     availableActions: [],
@@ -587,12 +642,17 @@ function mergeClaimWindow(current, payload = {}) {
     .map((action) => String(action).toLowerCase())
     .map((action) => (action === 'pung' ? 'pong' : action));
 
+  const nextTimeLimit = Number(payload.timeLimit ?? payload.timer ?? payload.remainingSeconds ?? current.timer ?? 0) || 0;
+  const timerDeadlineMs = resolveTimerDeadlineMs(payload, nextTimeLimit);
+
   return {
     ...current,
     status: 'resolving',
     claimWindow: payload,
     availableActions: validActions,
-    timer: payload.timeLimit ?? current.timer,
+    timer: timerDeadlineMs ? getSecondsRemaining(timerDeadlineMs) : nextTimeLimit,
+    timeLimit: nextTimeLimit || current.timeLimit,
+    timerDeadlineMs,
   };
 }
 
@@ -622,10 +682,13 @@ function mergeActionBroadcast(current, payload = {}) {
     const renderedTile = tileIdToAssetName(tileId);
     const discards = { ...(current.discards || {}) };
     const key = seatPosition || 'center';
+    const currentIds = getCurrentPlayerIdCandidates(current);
+    const isLocalDiscard = seatPosition === 'left' || (actionIds.length && actionIds.some((id) => currentIds.includes(id)));
+
     discards[key] = [...normalizeTileList(discards[key]), renderedTile];
     next.discards = discards;
 
-    if (seatPosition === 'left' || !seatPosition) {
+    if (isLocalDiscard) {
       const discardedRawId = String(tileId);
       next.handTiles = getFirstRawTileList(current.handTiles, current.myHand, current.playerHand)
         .filter((tile) => String(tile) !== discardedRawId && normalizeTileName(tile) !== renderedTile);
@@ -785,7 +848,6 @@ export default function MahjongGamePage() {
     const existingSocket = getActiveGameSocket();
     const gameSocket = existingSocket || connectGameSocket({
       matchId: resolvedMatchId,
-      onMessage: handleSocketMessage,
       onError(error) {
         console.error('Game socket error:', error);
         if (isMounted) setGameError(error?.message || 'Unable to connect to gameplay server.');
@@ -825,9 +887,16 @@ export default function MahjongGamePage() {
   }, [gameApiAvailable, initialSocketPayload, location.state, navigate, resolvedMatchId, routeMatchId, socketGameplayEnabled, storedMatch, t]);
 
   useEffect(() => {
+    const deadline = Number(gameState.timerDeadlineMs || 0);
+
+    if (deadline) {
+      setDisplayTimer(getSecondsRemaining(deadline));
+      return;
+    }
+
     const nextTimer = Number(gameState.timer ?? gameState.remainingSeconds ?? gameState.timeLimit ?? 0);
     setDisplayTimer(Number.isFinite(nextTimer) ? nextTimer : 0);
-  }, [gameState.timer, gameState.remainingSeconds, gameState.timeLimit, gameState.activeTurnPosition, gameState.claimWindow]);
+  }, [gameState.timerDeadlineMs, gameState.timer, gameState.remainingSeconds, gameState.timeLimit, gameState.activeTurnPosition, gameState.claimWindow]);
 
   const expectedPlayerCount = useMemo(() => getExpectedGameplayPlayerCount(
     gameState,
@@ -899,8 +968,20 @@ export default function MahjongGamePage() {
   useEffect(() => {
     const status = String(gameState.status || '').toLowerCase();
     const shouldRunTimer = ['playing', 'resolving', 'active'].includes(status) || isUserTurn || isClaimWindowOpen;
+    const deadline = Number(gameState.timerDeadlineMs || 0);
 
-    if (!shouldRunTimer || displayTimer <= 0) {
+    if (!shouldRunTimer) {
+      return undefined;
+    }
+
+    if (deadline) {
+      const updateTimer = () => setDisplayTimer(getSecondsRemaining(deadline));
+      updateTimer();
+      const intervalId = window.setInterval(updateTimer, 250);
+      return () => window.clearInterval(intervalId);
+    }
+
+    if (displayTimer <= 0) {
       return undefined;
     }
 
@@ -909,7 +990,7 @@ export default function MahjongGamePage() {
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [displayTimer, gameState.status, isClaimWindowOpen, isUserTurn]);
+  }, [displayTimer, gameState.timerDeadlineMs, gameState.status, isClaimWindowOpen, isUserTurn]);
 
 
   useEffect(() => {
@@ -1094,6 +1175,7 @@ export default function MahjongGamePage() {
           className="leave"
           onClick={async () => {
             await leaveGame(gameState.matchId || resolvedMatchId);
+            disconnectGameSocket();
             clearActiveMatch();
             navigate(ROUTES.mainMenu);
           }}

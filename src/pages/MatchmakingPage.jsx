@@ -41,9 +41,58 @@ function getCurrentPlayerIdentity() {
 
   return {
     id: storedUser.id || storedUser.userId || storedUser._id || getStableGuestPlayerId(),
+    userId: storedUser.userId || storedUser.id || storedUser._id,
     name: storedUser.username || storedUser.name || storedUser.displayName || 'You',
     avatar: storedAvatar || storedUser.avatarUrl || storedUser.imageUrl || storedUser.avatar || storedUser.avatarId || DEFAULT_PROFILE_AVATAR,
   };
+}
+
+const normalizeId = (value) => String(value ?? '').trim();
+
+function getPlayerIds(player = {}) {
+  return [player.id, player._id, player.userId, player.playerId, player.uid, player.socketId, player.clientId]
+    .map(normalizeId)
+    .filter(Boolean);
+}
+
+function playersShareIdentity(player, ids = []) {
+  if (!player || !ids.length) return false;
+  return getPlayerIds(player).some((id) => ids.includes(id));
+}
+
+function isSearchingPlaceholder(player = {}) {
+  const id = normalizeId(player.id || player.userId || player.playerId).toLowerCase();
+  const name = normalizeId(player.name || player.username || player.displayName).toLowerCase();
+  const avatar = normalizeId(player.avatar || player.avatarUrl || player.avatarId).toLowerCase();
+
+  return Boolean(player.isSearching)
+    || id.startsWith('searching_')
+    || name === 'searching'
+    || avatar.includes('icon_02_searching');
+}
+
+function normalizeLobbyPlayer(player = {}, index = 0) {
+  const normalized = {
+    ...player,
+    id: player.id || player.userId || player._id || player.playerId || player.uid || `player_${index + 1}`,
+    userId: player.userId || player.id || player._id || player.playerId || player.uid,
+    name: player.name || player.username || player.displayName || player.nickname || player.email || (player.isSearching ? 'Searching' : `Player ${index + 1}`),
+    username: player.username || player.name || player.displayName || player.nickname,
+    avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon,
+  };
+
+  const placeholder = isSearchingPlaceholder(normalized);
+  return {
+    ...normalized,
+    ready: placeholder ? false : Boolean(player.ready ?? player.isReady ?? true),
+    isSearching: placeholder,
+  };
+}
+
+function getRealLobbyPlayers(players = []) {
+  return (Array.isArray(players) ? players : [])
+    .map(normalizeLobbyPlayer)
+    .filter((player) => !isSearchingPlaceholder(player));
 }
 
 function getProfileAvatarSrc(avatar) {
@@ -134,24 +183,35 @@ function createFrontendSession(context) {
 
 function mergeCurrentPlayerIntoSession(session, context) {
   const fallbackSession = createFrontendSession(context);
+  const currentPlayer = getCurrentPlayerIdentity();
+  const currentIds = getPlayerIds(currentPlayer);
   const incomingPlayers = Array.isArray(session?.players) && session.players.length
-    ? session.players
-    : fallbackSession.players;
+    ? session.players.map(normalizeLobbyPlayer)
+    : fallbackSession.players.map(normalizeLobbyPlayer);
 
   const maxPlayers = Math.max(2, Math.min(Number(session?.maxPlayers || context.maxPlayers) || 2, 4));
-  const players = Array.from({ length: maxPlayers }, (_, index) => {
-    if (index === 0) {
-      return { ...fallbackSession.players[0], ...(incomingPlayers[0]?.isCurrentPlayer ? incomingPlayers[0] : {}) };
-    }
+  const realIncomingPlayers = incomingPlayers.filter((player) => !isSearchingPlaceholder(player));
+  const currentFromBackend = realIncomingPlayers.find((player) => player.isCurrentPlayer || player.isMe || player.isSelf || playersShareIdentity(player, currentIds));
+  const normalizedCurrentPlayer = normalizeLobbyPlayer({
+    ...currentPlayer,
+    ...(currentFromBackend || {}),
+    name: currentFromBackend?.name || currentFromBackend?.username || currentPlayer.name,
+    avatar: currentFromBackend?.avatar || currentPlayer.avatar,
+    ready: true,
+    isCurrentPlayer: true,
+    isHost: Boolean(context.isHost || currentFromBackend?.isHost || currentFromBackend?.host),
+  }, 0);
 
-    const incomingPlayer = incomingPlayers[index];
+  const otherPlayers = realIncomingPlayers
+    .filter((player) => !playersShareIdentity(player, getPlayerIds(normalizedCurrentPlayer)))
+    .map((player) => ({ ...player, isCurrentPlayer: false, ready: Boolean(player.ready ?? true) }));
 
-    if (incomingPlayer && !incomingPlayer.isCurrentPlayer && !incomingPlayer.isSearching && incomingPlayer.name !== 'Searching') {
-      return incomingPlayer;
-    }
+  const players = [normalizedCurrentPlayer, ...otherPlayers].slice(0, maxPlayers);
 
-    return fallbackSession.players[index];
-  });
+  while (players.length < maxPlayers) {
+    const fallbackPlayer = fallbackSession.players[players.length];
+    players.push(fallbackPlayer);
+  }
 
   return {
     ...fallbackSession,
@@ -248,20 +308,25 @@ export default function MatchmakingPage() {
       setErrorMessage('');
       window.clearTimeout(responseTimeoutId);
 
-      setSession((currentSession) => mergeCurrentPlayerIntoSession({
-        ...currentSession,
-        ...payload,
-        id: payload.roomId || payload.id || currentSession?.id || context.roomId,
-        sessionId: payload.roomId || payload.sessionId || currentSession?.sessionId || context.roomId,
-        roomId: payload.roomId || currentSession?.roomId || context.roomId,
-        roomCode: payload.roomCode || currentSession?.roomCode || context.roomCode,
-        tierId: payload.tierId || currentSession?.tierId || context.tierId,
-        maxPlayers: payload.maxPlayers || currentSession?.maxPlayers || context.maxPlayers,
-        status: payload.status || currentSession?.status || 'searching',
-        players: payload.players || currentSession?.players,
-        hostUserId: payload.hostUserId || currentSession?.hostUserId,
-        isHost: context.isHost || payload.isHost || currentSession?.isHost,
-      }, context));
+      setSession((currentSession) => {
+        const nextSession = mergeCurrentPlayerIntoSession({
+          ...currentSession,
+          ...payload,
+          id: payload.roomId || payload.id || currentSession?.id || context.roomId,
+          sessionId: payload.roomId || payload.sessionId || currentSession?.sessionId || context.roomId,
+          roomId: payload.roomId || currentSession?.roomId || context.roomId,
+          roomCode: payload.roomCode || currentSession?.roomCode || context.roomCode,
+          tierId: payload.tierId || currentSession?.tierId || context.tierId,
+          maxPlayers: payload.maxPlayers || currentSession?.maxPlayers || context.maxPlayers,
+          status: payload.status || currentSession?.status || 'searching',
+          players: payload.players || currentSession?.players,
+          hostUserId: payload.hostUserId || currentSession?.hostUserId,
+          isHost: context.isHost || payload.isHost || currentSession?.isHost,
+        }, context);
+
+        latestSessionRef.current = nextSession;
+        return nextSession;
+      });
     };
 
     const openGame = (payload = {}) => {
@@ -269,9 +334,9 @@ export default function MatchmakingPage() {
 
       const matchId = payload.matchId || payload.gameId || payload.id || payload.roomId || context.roomId || context.roomCode || 'live_match';
       const latestSession = latestSessionRef.current || createFrontendSession(context);
-      const realPlayers = Array.isArray(payload.players) && payload.players.length
-        ? payload.players
-        : latestSession.players;
+      const payloadPlayers = getRealLobbyPlayers(payload.players);
+      const sessionPlayers = getRealLobbyPlayers(latestSession.players);
+      const realPlayers = payloadPlayers.length ? payloadPlayers : sessionPlayers;
       lobbyEventReceived = true;
       gameWasStarted = true;
       window.clearTimeout(responseTimeoutId);
