@@ -255,7 +255,14 @@ const seatPlayersForGameplay = (sourcePlayers, expectedPlayerCount = 3, currentI
     };
   });
 
-  const currentIndex = playersWithPosition.findIndex((player) => player.position === 'left' || player.isCurrentPlayer || player.isMe || player.isSelf || playerMatchesAnyId(player, currentIds));
+  // Find the true local player first, ignoring the default 'left' string which might be misassigned
+  let currentIndex = playersWithPosition.findIndex((player) => player.isCurrentPlayer || player.isMe || player.isSelf || playerMatchesAnyId(player, currentIds));
+  
+  // If not found, fallback to 'left'
+  if (currentIndex === -1) {
+    currentIndex = playersWithPosition.findIndex((player) => player.position === 'left');
+  }
+
   if (currentIndex > 0) {
     const [currentPlayer] = playersWithPosition.splice(currentIndex, 1);
     playersWithPosition.unshift({ ...currentPlayer, position: 'left' });
