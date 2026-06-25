@@ -498,6 +498,7 @@ export default function MatchmakingPage() {
           updateLobbySession({ ...payload, status: payload.status || 'waiting' });
           break;
         case 'game_start':
+        case 'game_state':
           openGame(payload);
           break;
         case 'error': {
