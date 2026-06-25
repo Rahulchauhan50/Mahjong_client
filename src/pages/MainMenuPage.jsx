@@ -13,6 +13,8 @@ const asset = (name) => `/assets/main-menu/${name}`;
 const profileAsset = (name) => `/assets/profile/${name}`;
 const dailyAsset = (name) => `/assets/daily-login/${name}`;
 const PROFILE_AVATAR_STORAGE_KEY = 'sakura_profile_avatar';
+const SAKURA_CUP_TIER_ID = 'sakura_garden_3p';
+
 const PROFILE_AVATAR_ID_TO_FILE = {
   dragon_avatar: 'ICO.png',
   default: 'ICO.png',
@@ -946,8 +948,9 @@ export default function MainMenuPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    saveMatchmakingContext({ roomId: 'sakura_cup', maxPlayers: 3, source: 'sakura-cup' });
-                    navigate(ROUTES.matchmaking, { state: { roomId: 'sakura_cup', maxPlayers: 3, source: 'sakura-cup' } });
+                    const matchmakingContext = { tierId: SAKURA_CUP_TIER_ID, maxPlayers: 3, source: 'sakura-cup' };
+                    saveMatchmakingContext(matchmakingContext);
+                    navigate(ROUTES.matchmaking, { state: matchmakingContext });
                   }}
                 >
                   {t('joinNow')}

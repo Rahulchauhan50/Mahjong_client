@@ -98,15 +98,44 @@ const getRealPlayerName = (player = {}) => {
   return /^slot[_\s-]*\d+$/i.test(normalized) || /^player\s*\d+$/i.test(normalized) ? '' : normalized;
 };
 
-const normalizeGameplayPlayer = (player = {}, index = 0) => ({
-  ...player,
-  id: player.id || player.userId || player._id || player.playerId || player.clientId || player.socketId || '',
-  userId: player.userId || player.id || player._id || player.playerId || '',
-  name: getRealPlayerName(player),
-  username: player.username || getRealPlayerName(player),
-  avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || null,
-  coins: player.coins ?? player.balance ?? player.score ?? player.points ?? '0',
-});
+const normalizeGameplayPlayer = (player = {}, index = 0) => {
+  const handTiles = player.handTiles || player.hand || player.tiles || [];
+  const score = player.score ?? player.points ?? player.balance ?? player.coins ?? '0';
+
+  return {
+    ...player,
+    id: player.id || player.userId || player._id || player.playerId || player.uid || player.clientId || player.socketId || '',
+    userId: player.userId || player.id || player._id || player.playerId || player.uid || '',
+    name: getRealPlayerName(player),
+    username: player.username || getRealPlayerName(player),
+    avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || player.photoUrl || player.icon || null,
+    title: player.title || player.rankTitle || player.profileTitle || '',
+    coins: score,
+    score,
+    seat: player.seat,
+    seatLabel: player.seatLabel || player.seatName || '',
+    isDealer: Boolean(player.isDealer ?? player.dealer),
+    isRiichi: Boolean(player.isRiichi ?? player.riichi),
+    isDisconnected: Boolean(player.isDisconnected ?? player.disconnected),
+    handTiles,
+    hand: player.hand || player.handTiles || [],
+    handSize: player.handSize ?? player.handCount ?? player.tileCount ?? player.tilesCount ?? handTiles.length ?? 0,
+    discardTiles: player.discardTiles || player.discards || player.discardPile || player.discardedTiles || [],
+    discards: player.discards || player.discardTiles || player.discardPile || player.discardedTiles || [],
+    openMelds: player.openMelds || player.melds || [],
+  };
+};
+
+const getPrivateHandPlayer = (players = []) => (
+  toArray(players).find((player) => Array.isArray(player?.hand) && player.hand.length)
+  || toArray(players).find((player) => Array.isArray(player?.handTiles) && player.handTiles.length)
+  || null
+);
+
+const getPrivateHandTiles = (players = []) => {
+  const player = getPrivateHandPlayer(players);
+  return player?.hand || player?.handTiles || player?.tiles || [];
+};
 
 const listFromSeatMap = (seatMap = {}) => (
   seatMap && typeof seatMap === 'object' && !Array.isArray(seatMap)
@@ -599,7 +628,9 @@ function SideTool({ icon, label, onClick, className = '', disabled = false }) {
   );
 }
 
-function PlayerBadge({ variant = 'small', avatar, name, coins, className = '', isActiveTurn = false, turnLabel = '' }) {
+function PlayerBadge({ variant = 'small', avatar, name, title = '', seatLabel = '', coins, className = '', isActiveTurn = false, turnLabel = '' }) {
+  const subtitle = [title, seatLabel].filter(Boolean).join(' • ');
+
   return (
     <article className={`gameplay-player-badge ${variant} ${className} ${isActiveTurn ? 'active-turn' : ''}`}>
       {isActiveTurn ? (
@@ -611,6 +642,7 @@ function PlayerBadge({ variant = 'small', avatar, name, coins, className = '', i
       <img src={resolvePlayerAvatar(avatar)} alt="" className="gameplay-player-avatar" draggable="false" />
       <div className="gameplay-player-info">
         <strong>{name}</strong>
+        {subtitle ? <small>{subtitle}</small> : null}
         {coins ? (
           <span>
             <i aria-hidden="true" />
@@ -803,17 +835,34 @@ function mergeActionBroadcast(current, payload = {}) {
 
 function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
   const normalized = normalizeGameState(payload);
+  const players = collectGameplayPlayers(payload, normalized);
+  const privateHandPlayer = getPrivateHandPlayer(players);
+  const privateHandTiles = getPrivateHandTiles(players);
+  const handTiles = getFirstRawTileList(
+    payload.initialHand,
+    payload.myHand,
+    payload.handTiles,
+    normalized.myHand,
+    normalized.handTiles,
+    privateHandTiles
+  );
+
   return {
     ...normalized,
     matchId: normalized.matchId || payload.matchId || payload.gameId || payload.roomId || fallbackMatchId,
+    roomId: normalized.roomId || payload.roomId,
+    tierId: normalized.tierId || payload.tierId || payload.room?.tierId,
     status: normalized.status || 'playing',
-    mySeat: payload.mySeat || payload.seat || normalized.mySeat || normalized.seat,
-    seat: payload.seat || normalized.seat,
-    players: collectGameplayPlayers(payload, normalized),
-    handTiles: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.handTiles),
-    myHand: getFirstRawTileList(payload.initialHand, payload.myHand, payload.handTiles, normalized.myHand, normalized.handTiles),
+    myPlayerId: normalized.myPlayerId || payload.myPlayerId || privateHandPlayer?.userId || privateHandPlayer?.id,
+    selfPlayerId: normalized.selfPlayerId || payload.selfPlayerId || privateHandPlayer?.userId || privateHandPlayer?.id,
+    mySeat: payload.mySeat || payload.selfSeat || payload.seat || normalized.mySeat || privateHandPlayer?.seat || normalized.seat,
+    seat: payload.seat || normalized.seat || privateHandPlayer?.seat,
+    players,
+    handTiles,
+    myHand: handTiles,
     wallRemaining: payload.wallRemaining ?? normalized.wallRemaining,
-    playerCount: payload.playerCount ?? normalized.playerCount,
+    currentDiscard: payload.currentDiscard ?? normalized.currentDiscard,
+    playerCount: payload.playerCount ?? normalized.playerCount ?? players.length,
     maxPlayers: payload.maxPlayers ?? payload.room?.maxPlayers ?? normalized.maxPlayers ?? normalized.room?.maxPlayers,
   };
 }
@@ -857,6 +906,7 @@ export default function MahjongGamePage() {
       matchId: resolvedMatchId,
       roomId: location.state?.roomId || storedMatch?.roomId,
       roomCode: location.state?.roomCode || storedMatch?.roomCode,
+      tierId: location.state?.tierId || storedMatch?.tierId || initialSocketPayload?.tierId,
       socketMode: socketGameplayEnabled,
       maxPlayers: location.state?.maxPlayers || storedMatch?.maxPlayers || initialSocketPayload?.maxPlayers,
       players: location.state?.players || storedMatch?.players || initialSocketPayload?.players,
@@ -945,15 +995,27 @@ export default function MahjongGamePage() {
           setGameState((current) => mergeActionBroadcast(current || {}, payload));
           break;
         case 'game_finished':
-          setGameState((current) => ({
-            ...(current || {}),
-            ...payload,
-            status: 'finished',
-            result: payload,
-            winner: payload.winner || payload.winnerId || current?.winner,
-            winnerId: payload.winnerId || payload.winner?.id || current?.winnerId,
-            matchId: payload.matchId || current?.matchId || resolvedMatchId,
-          }));
+          setGameState((current) => {
+            const currentPlayers = toArray(current?.players);
+            const resultPayload = {
+              ...payload,
+              players: Array.isArray(payload.players) && payload.players.length ? payload.players : currentPlayers,
+              roomId: payload.roomId || current?.roomId || activeMatchBase.roomId,
+              tierId: payload.tierId || current?.tierId || activeMatchBase.tierId,
+              maxPlayers: payload.maxPlayers || current?.maxPlayers || activeMatchBase.maxPlayers,
+            };
+
+            return {
+              ...(current || {}),
+              ...payload,
+              status: 'finished',
+              result: resultPayload,
+              winner: payload.winner || payload.winnerId || current?.winner,
+              winnerId: payload.winnerId || payload.winner?.id || current?.winnerId,
+              matchId: payload.matchId || current?.matchId || resolvedMatchId,
+              players: currentPlayers,
+            };
+          });
           break;
         case 'error':
           setGameError(payload.message || payload.error || 'Gameplay socket error.');
@@ -1236,6 +1298,8 @@ export default function MahjongGamePage() {
           variant="top"
           avatar={topPlayer.avatar}
           name={topPlayer.name === 'BUNBUN' ? 'Bunbun' : topPlayer.name}
+          title={topPlayer.title}
+          seatLabel={topPlayer.seatLabel}
           coins={topPlayer.coins}
           isActiveTurn={activeTurnPosition === 'top'}
           turnLabel={activeTurnPosition === 'top' ? activeTurnLabel : ''}
@@ -1247,6 +1311,8 @@ export default function MahjongGamePage() {
         variant="left"
         avatar={leftPlayer.avatar}
         name={leftPlayer.name === 'STEIVE' ? 'Stevie' : leftPlayer.name}
+        title={leftPlayer.title}
+        seatLabel={leftPlayer.seatLabel}
         coins={leftPlayer.coins}
         isActiveTurn={activeTurnPosition === 'left'}
         turnLabel={activeTurnPosition === 'left' ? activeTurnLabel : ''}
@@ -1258,6 +1324,8 @@ export default function MahjongGamePage() {
           variant="right"
           avatar={rightPlayer.avatar}
           name={rightPlayer.name}
+          title={rightPlayer.title}
+          seatLabel={rightPlayer.seatLabel}
           coins={rightPlayer.coins}
           isActiveTurn={activeTurnPosition === 'right'}
           turnLabel={activeTurnPosition === 'right' ? activeTurnLabel : ''}

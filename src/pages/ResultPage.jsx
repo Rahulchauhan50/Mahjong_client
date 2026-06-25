@@ -179,20 +179,16 @@ export default function ResultPage() {
             type="button"
             className="win-image-button again lui-85f70a04"
             onClick={() => {
-              saveMatchmakingContext({
-                roomId: activeMatch?.roomId || result.roomId || 'quick_match',
-                maxPlayers: activeMatch?.maxPlayers || result.maxPlayers || 3,
+              const tierId = activeMatch?.tierId || result.tierId || activeMatch?.room?.tierId || 'sakura_garden_3p';
+              const matchmakingContext = {
+                tierId,
+                maxPlayers: activeMatch?.maxPlayers || result.maxPlayers || (String(tierId).match(/(\d+)p/i)?.[1] ? Number(String(tierId).match(/(\d+)p/i)[1]) : 3),
                 source: 'play-again',
                 previousMatchId: matchId || result.matchId,
-              });
-              navigate(ROUTES.matchmaking, {
-                state: {
-                  roomId: activeMatch?.roomId || result.roomId || 'quick_match',
-                  maxPlayers: activeMatch?.maxPlayers || result.maxPlayers || 3,
-                  source: 'play-again',
-                  previousMatchId: matchId || result.matchId,
-                },
-              });
+              };
+
+              saveMatchmakingContext(matchmakingContext);
+              navigate(ROUTES.matchmaking, { state: matchmakingContext });
             }}
           >
             {t('playAgain')}
