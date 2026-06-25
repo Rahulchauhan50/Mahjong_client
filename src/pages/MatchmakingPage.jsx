@@ -143,6 +143,20 @@ function getRealLobbyPlayers(players = []) {
     .filter((player) => !isSearchingPlaceholder(player));
 }
 
+function getGameStartPlayers(players = []) {
+  return (Array.isArray(players) ? players : [])
+    .filter((player) => player && typeof player === 'object')
+    .filter((player) => !isSearchingPlaceholder(normalizeLobbyPlayer(player)));
+}
+
+function getPrivateHandPlayer(players = []) {
+  return getGameStartPlayers(players).find((player) => (
+    (Array.isArray(player.hand) && player.hand.length)
+    || (Array.isArray(player.handTiles) && player.handTiles.length)
+    || (Array.isArray(player.tiles) && player.tiles.length)
+  )) || null;
+}
+
 function getProfileAvatarSrc(avatar) {
   if (typeof avatar !== 'string' || !avatar.trim()) {
     return `${PROFILE_ASSET_ROOT}${DEFAULT_PROFILE_AVATAR}`;
@@ -182,6 +196,10 @@ function getMatchAvatarSrc(player) {
       return value;
     }
 
+    if (/^default(\.png)?$/i.test(value)) {
+      return getProfileAvatarSrc(DEFAULT_PROFILE_AVATAR);
+    }
+
     if (/^(avatar-|ICO\.png)/i.test(value)) {
       return getProfileAvatarSrc(value);
     }
@@ -189,7 +207,7 @@ function getMatchAvatarSrc(player) {
     return asset(value);
   }
 
-  return asset('icon_02_searching.png');
+  return player?.ready ? getProfileAvatarSrc(DEFAULT_PROFILE_AVATAR) : asset('icon_02_searching.png');
 }
 
 function createFrontendSession(context) {
@@ -385,9 +403,13 @@ export default function MatchmakingPage() {
       const matchId = payload.matchId || payload.gameId || payload.id || payload.roomId || context.roomId || context.roomCode || 'live_match';
       const latestSession = latestSessionRef.current || createFrontendSession(context);
       const expectedPlayers = getExpectedMatchPlayerCount(context, latestSession, payload);
+      const gameStartPlayers = getGameStartPlayers(payload.players);
       const payloadPlayers = getRealLobbyPlayers(payload.players);
       const sessionPlayers = getRealLobbyPlayers(latestSession.players);
-      const realPlayers = payloadPlayers.length ? payloadPlayers : sessionPlayers;
+      const realPlayers = gameStartPlayers.length ? gameStartPlayers : (payloadPlayers.length ? payloadPlayers : sessionPlayers);
+      const privateHandPlayer = getPrivateHandPlayer(realPlayers);
+      const privateHandPlayerId = privateHandPlayer?.userId || privateHandPlayer?.id || privateHandPlayer?._id || privateHandPlayer?.playerId || '';
+      const privateHandSeat = privateHandPlayer?.seat || privateHandPlayer?.seatLabel || '';
       const backendPlayerCount = Number(payload.playerCount ?? payload.playersCount ?? payload.currentPlayers ?? realPlayers.length) || realPlayers.length;
 
       // Do not block game:start only because the backend did not include full player profiles.
@@ -428,7 +450,10 @@ export default function MatchmakingPage() {
           players: realPlayers,
           maxPlayers: expectedPlayers,
           playerCount: expectedPlayers,
-          myPlayerId: getCurrentPlayerIdentity().id,
+          myPlayerId: payload.myPlayerId || payload.selfPlayerId || privateHandPlayerId || getCurrentPlayerIdentity().id,
+          selfPlayerId: payload.selfPlayerId || payload.myPlayerId || privateHandPlayerId || getCurrentPlayerIdentity().id,
+          mySeat: payload.mySeat || payload.selfSeat || privateHandSeat,
+          seat: payload.seat || payload.mySeat || payload.selfSeat || privateHandSeat,
         },
         socketMode: true,
       });
@@ -447,7 +472,10 @@ export default function MatchmakingPage() {
                 players: realPlayers,
                 maxPlayers: expectedPlayers,
                 playerCount: expectedPlayers,
-                myPlayerId: getCurrentPlayerIdentity().id,
+                myPlayerId: payload.myPlayerId || payload.selfPlayerId || privateHandPlayerId || getCurrentPlayerIdentity().id,
+                selfPlayerId: payload.selfPlayerId || payload.myPlayerId || privateHandPlayerId || getCurrentPlayerIdentity().id,
+                mySeat: payload.mySeat || payload.selfSeat || privateHandSeat,
+                seat: payload.seat || payload.mySeat || payload.selfSeat || privateHandSeat,
               },
               socketMode: true,
             },

@@ -160,17 +160,33 @@ function normalizeRoomPlayers(players) {
 
   return players
     .filter(Boolean)
-    .map((player) => ({
-      ...player,
-      id: player.id || player.userId || player._id || player.playerId || player.socketId || '',
-      userId: player.userId || player.id || player._id || player.playerId || '',
-      name: getBackendPlayerName(player),
-      username: player.username || getBackendPlayerName(player),
-      avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || null,
-      ready: player.ready ?? player.isReady ?? true,
-      seat: player.seat,
-      isHost: Boolean(player.isHost || player.host),
-    }));
+    .map((player, index) => {
+      if (typeof player === 'string') {
+        return {
+          id: player,
+          userId: player,
+          name: `Player ${index + 1}`,
+          username: `Player ${index + 1}`,
+          avatar: null,
+          ready: true,
+        };
+      }
+
+      return {
+        ...player,
+        id: player.id || player.userId || player._id || player.playerId || player.socketId || '',
+        userId: player.userId || player.id || player._id || player.playerId || '',
+        name: getBackendPlayerName(player),
+        username: player.username || getBackendPlayerName(player),
+        avatar: player.avatar || player.avatarUrl || player.avatarId || player.imageUrl || null,
+        title: player.title || player.rankTitle || player.profileTitle || '',
+        ready: player.ready ?? player.isReady ?? true,
+        seat: player.seat,
+        seatLabel: player.seatLabel || player.seatName || '',
+        score: player.score,
+        isHost: Boolean(player.isHost || player.host),
+      };
+    });
 }
 
 export function normalizeSocketMessage(message) {

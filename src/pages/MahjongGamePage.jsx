@@ -143,7 +143,66 @@ const listFromSeatMap = (seatMap = {}) => (
     : []
 );
 
+const getPlayerProfileRichnessScore = (player = {}) => [
+  player.name,
+  player.username,
+  player.avatar,
+  player.avatarUrl,
+  player.title,
+  player.seat,
+  player.seatLabel,
+  player.score,
+  player.coins,
+  player.handSize,
+  Array.isArray(player.hand) && player.hand.length ? 'hand' : '',
+  Array.isArray(player.handTiles) && player.handTiles.length ? 'handTiles' : '',
+  Array.isArray(player.discards) && player.discards.length ? 'discards' : '',
+  Array.isArray(player.openMelds) && player.openMelds.length ? 'openMelds' : '',
+].filter(Boolean).length;
+
+const getPlayerMergeKey = (player = {}, fallbackIndex = 0) => String(
+  player.userId
+  || player.id
+  || player.playerId
+  || player._id
+  || player.uid
+  || player.socketId
+  || player.seat
+  || player.name
+  || player.username
+  || `player_${fallbackIndex}`
+).trim();
+
+const mergeGameplayPlayerLists = (basePlayers = [], nextPlayers = []) => {
+  const merged = [];
+  const indexes = new Map();
+
+  [...basePlayers, ...nextPlayers].forEach((player, index) => {
+    if (!player) return;
+    const key = getPlayerMergeKey(player, index);
+    const existingIndex = indexes.get(key);
+
+    if (existingIndex === undefined) {
+      indexes.set(key, merged.length);
+      merged.push(player);
+      return;
+    }
+
+    const existing = merged[existingIndex];
+    const existingScore = getPlayerProfileRichnessScore(existing);
+    const nextScore = getPlayerProfileRichnessScore(player);
+
+    merged[existingIndex] = nextScore >= existingScore
+      ? { ...existing, ...player }
+      : { ...player, ...existing };
+  });
+
+  return merged;
+};
+
 const collectGameplayPlayers = (...sources) => {
+  let bestPlayers = [];
+
   for (const source of sources) {
     if (!source) continue;
     const candidateLists = [
@@ -159,14 +218,19 @@ const collectGameplayPlayers = (...sources) => {
     ];
 
     for (const list of candidateLists) {
-      if (Array.isArray(list) && list.length) {
-        const players = list.map(normalizeGameplayPlayer).filter((player) => !isGameplayPlaceholderPlayer(player));
-        if (players.length) return players;
-      }
+      if (!Array.isArray(list) || !list.length) continue;
+
+      const players = list
+        .filter((player) => player && typeof player === 'object')
+        .map(normalizeGameplayPlayer)
+        .filter((player) => !isGameplayPlaceholderPlayer(player));
+
+      if (!players.length) continue;
+      bestPlayers = mergeGameplayPlayerLists(bestPlayers, players);
     }
   }
 
-  return [];
+  return bestPlayers;
 };
 
 const seatPlayersForGameplay = (sourcePlayers, expectedPlayerCount = 3, currentIds = [], currentSeat = '') => {
@@ -215,11 +279,33 @@ const seatPlayersForGameplay = (sourcePlayers, expectedPlayerCount = 3, currentI
 function resolvePlayerAvatar(avatar, fallbackAvatar = 'Stevie.png') {
   const value = String(avatar || '').trim();
 
+  if (!value || /^default(\.png)?$/i.test(value)) {
+    return PLAYER_AVATAR_FALLBACKS[fallbackAvatar] || avatarStevie;
+  }
+
   if (/^(https?:|data:|blob:|\/)/i.test(value)) {
     return value;
   }
 
-  return PLAYER_AVATAR_FALLBACKS[value]
+  if (PLAYER_AVATAR_FALLBACKS[value]) {
+    return PLAYER_AVATAR_FALLBACKS[value];
+  }
+
+  const profileAvatarMap = {
+    stevie: avatarStevie,
+    'avatar-stevie.png': avatarStevie,
+    kiki: avatarKiki,
+    'avatar-kiki.png': avatarKiki,
+    bunbun: avatarBunbun,
+    'avatar-bunbun.png': avatarBunbun,
+    panda: avatarPanda,
+    'avatar-panda.png': avatarPanda,
+    ico: avatarStevie,
+    'ico.png': avatarStevie,
+  };
+  const lowerValue = value.toLowerCase();
+
+  return profileAvatarMap[lowerValue]
     || PLAYER_AVATAR_FALLBACKS[fallbackAvatar]
     || avatarStevie;
 }
@@ -515,10 +601,15 @@ const getCurrentPlayerIdCandidates = (...sources) => {
   const ids = [];
 
   sources.filter(Boolean).forEach((source) => {
+    const privateHandPlayer = getPrivateHandPlayer(source.players || source.initialGameState?.players || source.gameState?.players || []);
+
     // Only include identities that represent this browser/user.
     // Do not include activeUserId / turnPlayerId here, otherwise every client can
     // incorrectly resolve the current active player as "me".
     ids.push(
+      privateHandPlayer?.id,
+      privateHandPlayer?.userId,
+      privateHandPlayer?.playerId,
       source.myPlayerId,
       source.selfPlayerId,
       source.localPlayerId,
@@ -629,6 +720,7 @@ function SideTool({ icon, label, onClick, className = '', disabled = false }) {
 }
 
 function PlayerBadge({ variant = 'small', avatar, name, title = '', seatLabel = '', coins, className = '', isActiveTurn = false, turnLabel = '' }) {
+  const displayName = String(name || '').trim() || 'Player';
   const subtitle = [title, seatLabel].filter(Boolean).join(' • ');
 
   return (
@@ -641,7 +733,7 @@ function PlayerBadge({ variant = 'small', avatar, name, title = '', seatLabel = 
       ) : null}
       <img src={resolvePlayerAvatar(avatar)} alt="" className="gameplay-player-avatar" draggable="false" />
       <div className="gameplay-player-info">
-        <strong>{name}</strong>
+        <strong>{displayName}</strong>
         {subtitle ? <small>{subtitle}</small> : null}
         {coins ? (
           <span>
@@ -847,16 +939,19 @@ function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
     privateHandTiles
   );
 
+  const privateHandPlayerId = privateHandPlayer?.userId || privateHandPlayer?.id || privateHandPlayer?.playerId || privateHandPlayer?._id || '';
+  const privateHandSeat = privateHandPlayer?.seat || privateHandPlayer?.seatLabel || '';
+
   return {
     ...normalized,
     matchId: normalized.matchId || payload.matchId || payload.gameId || payload.roomId || fallbackMatchId,
     roomId: normalized.roomId || payload.roomId,
     tierId: normalized.tierId || payload.tierId || payload.room?.tierId,
     status: normalized.status || 'playing',
-    myPlayerId: normalized.myPlayerId || payload.myPlayerId || privateHandPlayer?.userId || privateHandPlayer?.id,
-    selfPlayerId: normalized.selfPlayerId || payload.selfPlayerId || privateHandPlayer?.userId || privateHandPlayer?.id,
-    mySeat: payload.mySeat || payload.selfSeat || payload.seat || normalized.mySeat || privateHandPlayer?.seat || normalized.seat,
-    seat: payload.seat || normalized.seat || privateHandPlayer?.seat,
+    myPlayerId: privateHandPlayerId || normalized.myPlayerId || payload.myPlayerId,
+    selfPlayerId: privateHandPlayerId || normalized.selfPlayerId || payload.selfPlayerId || payload.myPlayerId,
+    mySeat: privateHandSeat || payload.mySeat || payload.selfSeat || payload.seat || normalized.mySeat || normalized.seat,
+    seat: privateHandSeat || payload.seat || normalized.seat,
     players,
     handTiles,
     myHand: handTiles,
