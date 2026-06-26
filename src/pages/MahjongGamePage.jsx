@@ -799,12 +799,22 @@ function getRelativeSeatPosition(activeSeat, ownSeat, playerCount = 3) {
 function getSeatPosition(seat, state = {}) {
   if (!seat) return '';
 
+  // Always prefer the relative seat calculation based on mySeat.
+  // This gives each client a DIFFERENT perspective (the whole point).
+  // Do NOT use player.position from state.players — those positions are
+  // assigned by array index during normalization and are the SAME on all clients.
+  const ownSeat = state.mySeat || state.seat || state.currentPlayerSeat || state.selfSeat;
+  if (ownSeat) {
+    const playerCount = getExpectedGameplayPlayerCount(state);
+    const relative = getRelativeSeatPosition(seat, ownSeat, playerCount);
+    if (relative) return relative;
+  }
+
+  // Fallback: check rendered player objects (only if mySeat is unknown)
   const playerWithSeat = toArray(state.players).find((player) => normalizeSeat(player.seat) === normalizeSeat(seat));
   if (playerWithSeat?.position) return playerWithSeat.position;
 
-  const ownSeat = state.mySeat || state.seat || state.currentPlayerSeat || state.selfSeat;
-  const playerCount = getExpectedGameplayPlayerCount(state);
-  return getRelativeSeatPosition(seat, ownSeat, playerCount);
+  return '';
 }
 
 function mergeTurnStart(current, payload = {}) {
@@ -913,6 +923,16 @@ function mergeActionBroadcast(current, payload = {}) {
     discards[key] = [...normalizeTileList(discards[key]), renderedTile];
     next.discards = discards;
 
+    // Also update the per-player discards array so that getDiscardTilesByPosition
+    // picks up discards from the correct player object (already positioned by seat).
+    if (actionIds.length && Array.isArray(current.players)) {
+      next.players = current.players.map((player) => {
+        if (!playerMatchesAnyId(player, actionIds)) return player;
+        const playerDiscards = toArray(player.discards || player.discardTiles || []);
+        return { ...player, discards: [...playerDiscards, tileId], discardTiles: [...playerDiscards, tileId] };
+      });
+    }
+
     if (isLocalDiscard) {
       const discardedRawId = String(tileId);
       next.handTiles = removeOneTileFromHand(
@@ -955,9 +975,9 @@ function normalizeInitialSocketState(payload = {}, fallbackMatchId = '') {
     roomId: normalized.roomId || payload.roomId,
     tierId: normalized.tierId || payload.tierId || payload.room?.tierId,
     status: normalized.status || 'playing',
-    myPlayerId: privateHandPlayerId || normalized.myPlayerId || payload.myPlayerId,
-    selfPlayerId: privateHandPlayerId || normalized.selfPlayerId || payload.selfPlayerId || payload.myPlayerId,
-    mySeat: privateHandSeat || payload.mySeat || payload.selfSeat || payload.seat || normalized.mySeat || normalized.seat,
+    myPlayerId: payload.myPlayerId || payload.selfPlayerId || privateHandPlayerId || normalized.myPlayerId,
+    selfPlayerId: payload.selfPlayerId || payload.myPlayerId || privateHandPlayerId || normalized.selfPlayerId,
+    mySeat: payload.mySeat || payload.selfSeat || privateHandSeat || payload.seat || normalized.mySeat || normalized.seat,
     seat: privateHandSeat || payload.seat || normalized.seat,
     players,
     handTiles,
@@ -1185,7 +1205,7 @@ export default function MahjongGamePage() {
       }
       // Keep the live socket alive while navigating from the game to the result screen.
       if (!socketGameplayEnabled) {
-        gameSocket?.disconnect?.();
+        disconnectGameSocket();
       }
     };
   }, [gameApiAvailable, initialSocketPayload, location.state, navigate, resolvedMatchId, routeMatchId, socketGameplayEnabled, storedMatch, t]);
@@ -1296,7 +1316,7 @@ export default function MahjongGamePage() {
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [displayTimer, gameState.timerDeadlineMs, gameState.status, isClaimWindowOpen, isUserTurn]);
+  }, [gameState.timerDeadlineMs, gameState.status, gameState.turnStartedAt, isClaimWindowOpen, isUserTurn]);
 
 
   useEffect(() => {

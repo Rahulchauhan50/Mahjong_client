@@ -634,7 +634,7 @@ export default function MatchmakingPage() {
       window.clearTimeout(controllerJoinGuardId);
 
       if (!gameWasStarted) {
-        socket?.disconnect?.();
+        disconnectGameSocket();
       }
     };
   }, [location.state, navigate]);
