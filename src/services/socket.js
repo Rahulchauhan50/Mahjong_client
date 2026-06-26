@@ -21,8 +21,8 @@ function getErrorMessage(error, fallback = 'Gameplay socket error.') {
 }
 
 export const GAME_SOCKET_EVENTS = {
-  queueJoined: 'QUEUE_JOINED',
-  privateJoined: 'PRIVATE_JOINED',
+  queueJoined: 'queue_joined',
+  privateJoined: 'private_joined',
   roomStateUpdate: 'room:state_update',
   gameStart: 'game:start',
   turnStart: 'game:turn_start',
