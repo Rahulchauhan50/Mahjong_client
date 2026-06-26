@@ -974,7 +974,19 @@ export default function MahjongGamePage() {
   const { t } = useLanguage();
   const location = useLocation();
   const { matchId: routeMatchId } = useParams();
-  const [storedMatch] = useState(() => getActiveMatch());
+  const [storedMatch] = useState(() => {
+    const match = getActiveMatch();
+    const user = getStoredAuthUser();
+    if (match && user) {
+      const userIds = getEntityIds(user);
+      const matchUserId = match.myPlayerId || match.selfPlayerId;
+      if (matchUserId && userIds.length && !userIds.includes(matchUserId)) {
+        clearActiveMatch();
+        return null;
+      }
+    }
+    return match;
+  });
   const gameApiAvailable = isGameApiAvailable();
   const initialSocketPayload = location.state?.initialGameState || storedMatch?.initialGameState || null;
   const socketGameplayEnabled = Boolean(location.state?.socketMode || storedMatch?.socketMode || initialSocketPayload || !gameApiAvailable);
@@ -1328,10 +1340,13 @@ export default function MahjongGamePage() {
     }
   };
 
-  const handleTileDiscard = (tile) => {
+  const handleTileDiscard = (visualTile) => {
     if (!isUserTurn || gameState.pendingDiscardTileId) return;
 
-    const tileId = getTileId(tile);
+    const rawList = getFirstRawTileList(gameState.handTiles, gameState.myHand, gameState.playerHand);
+    const rawTileId = rawList.find(t => tileIdToAssetName(t) === visualTile) || visualTile;
+
+    const tileId = getTileId(rawTileId);
     if (!tileId) return;
 
     const sent = discardTile(tileId);
@@ -1476,7 +1491,7 @@ export default function MahjongGamePage() {
               key={`${tile}-${index}`}
               aria-label={`Tile ${index + 1}`}
               disabled={!isUserTurn || Boolean(gameState.pendingDiscardTileId)}
-              onClick={() => handleTileDiscard(rawPlayerHandTiles[index] || tile)}
+              onClick={() => handleTileDiscard(tile)}
             >
               <GameplayTile name={tile} />
             </button>

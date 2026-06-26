@@ -143,4 +143,6 @@ export async function continueAsGuest() {
 export function logout() {
   clearAuthTokens();
   persistAuthUser(null);
+  localStorage.removeItem('mahjong_active_match');
+  localStorage.removeItem('mahjong_game_location_state');
 }
