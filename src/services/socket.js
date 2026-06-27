@@ -561,3 +561,12 @@ export function declareRiichi(tileId) {
 
   return emitOnActiveSocket('player:declare_riichi', { tileId });
 }
+
+export function leaveLobby(roomId) {
+  if (!roomId) {
+    console.warn('[game-socket] leaveLobby called without roomId.');
+    return false;
+  }
+
+  return emitOnActiveSocket('lobby:leave', { roomId });
+}

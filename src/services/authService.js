@@ -153,3 +153,12 @@ export function logout() {
     disconnectGameSocket();
   }).catch(() => {});
 }
+
+export async function getUserMatchHistory() {
+  if (isMockApiEnabled()) {
+    return { success: true, history: [] }; // Return mock data for now
+  }
+  
+  const response = await getFromApi('/auth/history', () => ({ success: true, history: [] }));
+  return response?.history || [];
+}

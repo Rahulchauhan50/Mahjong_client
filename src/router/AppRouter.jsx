@@ -9,12 +9,14 @@ import ProfilePage from '../pages/ProfilePage.jsx';
 import RoomSelectPage from '../pages/RoomSelectPage.jsx';
 import CreateRoomPage from '../pages/CreateRoomPage.jsx';
 import JoinRoomPage from '../pages/JoinRoomPage.jsx';
+import PrivateLobbyPage from '../pages/PrivateLobbyPage.jsx';
 import MatchmakingPage from '../pages/MatchmakingPage.jsx';
 import MahjongGamePage from '../pages/MahjongGamePage.jsx';
 import ResultPage from '../pages/ResultPage.jsx';
 import ShopPage from '../pages/ShopPage.jsx';
 import LeaderboardPage from '../pages/LeaderboardPage.jsx';
 import MissionsPage from '../pages/MissionsPage.jsx';
+import MatchHistoryPage from '../pages/MatchHistoryPage.jsx';
 import AchievementsPage from '../pages/AchievementsPage.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 
@@ -33,10 +35,12 @@ export default function AppRouter() {
         <Route path={ROUTES.shop} element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
         <Route path={ROUTES.leaderboard} element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
         <Route path={ROUTES.missions} element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
+        <Route path={ROUTES.matchHistory} element={<ProtectedRoute><MatchHistoryPage /></ProtectedRoute>} />
         <Route path={ROUTES.achievements} element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
         <Route path={ROUTES.rooms} element={<ProtectedRoute><RoomSelectPage /></ProtectedRoute>} />
         <Route path={ROUTES.createRoom} element={<ProtectedRoute><CreateRoomPage /></ProtectedRoute>} />
         <Route path={ROUTES.joinRoom} element={<ProtectedRoute><JoinRoomPage /></ProtectedRoute>} />
+        <Route path={ROUTES.privateLobby} element={<ProtectedRoute><PrivateLobbyPage /></ProtectedRoute>} />
         <Route path={ROUTES.matchmaking} element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
         <Route path={ROUTES.game} element={<ProtectedRoute><MahjongGamePage /></ProtectedRoute>} />
         <Route path={ROUTES.result} element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
