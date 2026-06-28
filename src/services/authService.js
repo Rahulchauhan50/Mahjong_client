@@ -1,4 +1,4 @@
-import { clearAuthTokens, getAuthToken, getRefreshToken, isMockApiEnabled, postToApi, setAuthTokens } from './api.js';
+import { clearAuthTokens, getAuthToken, getRefreshToken, isMockApiEnabled, postToApi, setAuthTokens, getFromApi } from './api.js';
 
 const AUTH_USER_STORAGE_KEY = 'sakura_auth_user';
 
